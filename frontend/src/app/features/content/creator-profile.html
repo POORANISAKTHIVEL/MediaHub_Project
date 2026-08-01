@@ -1,0 +1,39 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else if (creator(); as c) {
+  <div class="crumbs">Home / Creators / <b>{{ c.displayName }}</b></div>
+  <div class="page-head">
+    <div><h1>{{ c.displayName }} <app-status-badge [status]="c.status" style="vertical-align:middle;margin-left:8px"></app-status-badge></h1><p>CRT-{{ c.creatorId }} · {{ c.genre }}</p></div>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="card__head"><h3>Content Catalog</h3><span class="t-sub">{{ content_().length }} item{{ content_().length === 1 ? '' : 's' }}</span></div>
+      <table>
+        <thead><tr><th>Content</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>
+          @for (r of content_(); track r.contentId) {
+            <tr><td class="t-primary" style="font-weight:600">{{ r.title }}</td><td>{{ r.type }}</td><td><app-status-badge [status]="r.status"></app-status-badge></td></tr>
+          } @empty {
+            <tr><td colspan="3" class="t-sub" style="text-align:center;padding:24px">No content yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>Creator Details</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Creator ID</dt><dd class="mono">CRT-{{ c.creatorId }}</dd>
+          <dt>Linked User</dt><dd>#{{ c.userId }}</dd>
+          <dt>Genre</dt><dd>{{ c.genre }}</dd>
+          <dt>Country</dt><dd>{{ c.country }}</dd>
+          <dt>Royalty Tier</dt><dd><span class="badge b-violet">{{ c.royaltyTier }}</span></dd>
+          <dt>Bank Ref</dt><dd class="mono">{{ c.bankAccountRef }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="c.status"></app-status-badge></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="empty"><div class="empty__ico">👤</div><h3>Creator not found</h3></div>
+}

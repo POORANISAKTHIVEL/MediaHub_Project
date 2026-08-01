@@ -1,0 +1,106 @@
+<div class="crumbs">Home / Platform / <b>IAM &amp; Users</b></div>
+<div class="tabs">
+  <a class="tab active" routerLink="/iam/users">Users</a>
+  <a class="tab" routerLink="/iam/roles">Roles</a>
+  <a class="tab" routerLink="/iam/permissions">Permissions</a>
+</div>
+<div class="page-head"><div><h1>User Management</h1><p>View and manage platform users. Roles are managed under Roles &amp; Permissions.</p></div></div>
+
+<div class="toolbar">
+  <div class="search">⌕ &nbsp;Search by name, email or ID…</div>
+  <app-filter-chip label="Role" [value]="roleFilter()" [options]="roleOptions" (valueChange)="roleFilter.set($event)"></app-filter-chip>
+  <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="statusFilter.set($event)"></app-filter-chip>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Country</th><th>Status</th><th style="width:70px">Actions</th></tr></thead>
+      <tbody>
+        @for (u of rows(); track u.userId) {
+          <tr>
+            <td><div class="avatar-cell"><div class="avatar" style="width:30px;height:30px;font-size:12px">{{ initials(u.name) }}</div><span class="t-primary">{{ u.name }}</span></div></td>
+            <td>{{ u.email }}</td>
+            <td><span class="mono">{{ u.roleType }}</span></td>
+            <td>{{ u.country }}</td>
+            <td><app-status-badge [status]="u.status"></app-status-badge></td>
+            <td><app-row-menu [items]="menuFor(u)" (actionSelected)="onAction($event, u)"></app-row-menu></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="t-sub" style="text-align:center;padding:24px">No users match these filters.</td></tr>
+        }
+      </tbody>
+    </table>
+    <div class="pagination"><span>Showing <b>1–{{ rows().length }}</b> of <b>{{ allUsers().length }}</b></span></div>
+  }
+</div>
+
+@if (viewing(); as u) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>User details</h3></div>
+      <div class="modal__body">
+        <dl class="kv">
+          <dt>Name</dt><dd>{{ u.name }}</dd>
+          <dt>Email</dt><dd>{{ u.email }}</dd>
+          <dt>Role</dt><dd><span class="mono">{{ u.roleType }}</span></dd>
+          <dt>Phone</dt><dd>{{ u.phone }}</dd>
+          <dt>Country</dt><dd>{{ u.country }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="u.status"></app-status-badge></dd>
+        </dl>
+      </div>
+      <div class="modal__foot"><button class="btn btn--ghost" (click)="viewing.set(null)">Cancel</button></div>
+    </div>
+  </div>
+}
+
+@if (editing(); as u) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Edit User</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Full name</label><input class="input" [(ngModel)]="editName"></div>
+        <div class="field"><label>Phone</label><input class="input" [(ngModel)]="editPhone"></div>
+        <div class="field"><label>Country</label><input class="input" [(ngModel)]="editCountry"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="editing.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="saveEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (confirmingSuspend(); as u) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Suspend User</h3></div>
+      <div class="modal__body">
+        <p style="color:var(--ink-700);font-size:14px">Suspend {{ u.name }}'s account? They will lose access immediately.</p>
+        <div class="field"><label>Reason <span class="req">*</span></label><textarea class="textarea" rows="3" [(ngModel)]="suspendReason"></textarea></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="confirmingSuspend.set(null)">Cancel</button>
+        <button class="btn btn--red" (click)="confirmSuspend()">Suspend</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (confirmingDeactivate(); as u) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Deactivate User (soft-delete)</h3></div>
+      <div class="modal__body">
+        <p style="color:var(--ink-700);font-size:14px">Deactivate {{ u.name }}'s account? This revokes their session and login access.</p>
+        <div class="field"><label>Reason <span class="req">*</span></label><textarea class="textarea" rows="3" [(ngModel)]="deactivateReason"></textarea></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="confirmingDeactivate.set(null)">Cancel</button>
+        <button class="btn btn--red" (click)="confirmDeactivate()">Deactivate</button>
+      </div>
+    </div>
+  </div>
+}

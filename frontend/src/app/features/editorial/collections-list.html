@@ -1,0 +1,66 @@
+<div class="crumbs">Home / Editorial / <b>Collections</b></div>
+<div class="page-head">
+  <div><h1>Collections</h1><p>Group content into Featured, Trending, Curated or New collections.</p></div>
+  <div class="page-head__actions">
+    <app-filter-chip label="Category" [value]="categoryFilter()" [options]="categoryOptions" (valueChange)="categoryFilter.set($event)"></app-filter-chip>
+    <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="statusFilter.set($event)"></app-filter-chip>
+    @if (auth.hasPermission('content:write')) {
+      <button class="btn btn--primary" (click)="openCreate()">+ Collection</button>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else {
+  <div class="coll-grid">
+    @for (c of rows(); track c.collectionID) {
+      <div class="card">
+        <div class="coll-cover" style="background:linear-gradient(135deg,#c7d2fe,#a5b4fc)"></div>
+        <div class="card__body">
+          <div class="row-between"><b>{{ c.name }}</b><app-status-badge [status]="c.status"></app-status-badge></div>
+          <div class="t-sub" style="margin:6px 0 14px">{{ c.category }} · {{ c.contentIDs.length }} item{{ c.contentIDs.length === 1 ? '' : 's' }}</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn--ghost btn--sm" (click)="manage(c)">Manage Items</button>
+            @if (c.status === 'Active') {
+              @if (auth.hasPermission('content:publish')) {
+                <button class="btn btn--ghost btn--sm" (click)="expire(c)">Expire</button>
+              }
+            } @else if (auth.hasPermission('content:delete')) {
+              <button class="btn btn--danger btn--sm" (click)="remove(c)">Delete</button>
+            }
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty"><div class="empty__ico">▦</div><h3>No collections match these filters.</h3></div>
+    }
+  </div>
+}
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Collection</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Name <span class="req">*</span></label><input class="input" [(ngModel)]="form.name"></div>
+        <div class="field"><label>Category</label>
+          <select class="select" [(ngModel)]="form.category">
+            <option>Featured</option><option>Trending</option><option>Curated</option><option>New</option>
+          </select>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Publish Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.publishDate"></div>
+          <div class="field"><label>Expiry Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.expiryDate"></div>
+        </div>
+        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentID">
+          <div class="note">A collection needs at least one content item. Add more from the collection's Manage Items page.</div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}

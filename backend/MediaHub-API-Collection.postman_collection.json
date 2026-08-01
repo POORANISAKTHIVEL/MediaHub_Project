@@ -1,0 +1,1261 @@
+{
+  "info": {
+    "name": "MediaHub Integrated API",
+    "description": "Complete API collection for MediaHub Content Catalog, IAM, and Audit services via Gateway",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Creator\",\n  \"email\": \"alice@mediahub.com\",\n  \"password\": \"SecurePass123\",\n  \"phone\": \"+919876543210\",\n  \"country\": \"IN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/auth/register/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "auth",
+                "register",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.token);",
+                  "    pm.environment.set('userId', jsonData.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@mediahub.com\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/auth/login/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "auth",
+                "login",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/auth/logout/v1.0?userId={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "auth",
+                "logout",
+                "v1.0"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/auth/refreshToken/v1.0?userId={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "auth",
+                "refreshToken",
+                "v1.0"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Content Catalog - Assets",
+      "item": [
+        {
+          "name": "Create Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creatorId\": 1,\n  \"title\": \"Quantum Physics 101\",\n  \"type\": \"Video\",\n  \"genre\": \"Education\",\n  \"language\": \"en\",\n  \"durationSeconds\": 7200,\n  \"synopsis\": \"Complete course on quantum mechanics\",\n  \"filePath\": \"/videos/quantum-101.mp4\",\n  \"thumbnailPath\": \"/thumbs/quantum-101.jpg\",\n  \"status\": \"Draft\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/createContent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "createContent"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/fetchContents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "fetchContents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Content by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/fetchContentById/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "fetchContentById",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Content",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creatorId\": 1,\n  \"title\": \"Updated Title\",\n  \"type\": \"Video\",\n  \"genre\": \"Science\",\n  \"language\": \"en\",\n  \"durationSeconds\": 7200,\n  \"synopsis\": \"Updated synopsis\",\n  \"filePath\": \"/videos/quantum-101.mp4\",\n  \"thumbnailPath\": \"/thumbs/quantum-101.jpg\",\n  \"status\": \"Draft\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/updateContent/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "updateContent",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Content Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Published\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/updateContentStatus/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "updateContentStatus",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Access Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/accessContent/1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "accessContent",
+                "1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Content",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/deleteContent/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "deleteContent",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentAsset/validateContent/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentAsset",
+                "validateContent",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Content Catalog - Creators",
+      "item": [
+        {
+          "name": "Create Creator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"displayName\": \"Alice Creator\",\n  \"genre\": \"Documentary\",\n  \"country\": \"IN\",\n  \"royaltyTier\": \"Tier1\",\n  \"bankAccountRef\": \"ACC-12345\",\n  \"status\": \"PendingReview\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/createCreator",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "createCreator"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Creators",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/fetchCreators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "fetchCreators"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Creator by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/fetchCreatorById/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "fetchCreatorById",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Creator",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"displayName\": \"Updated Name\",\n  \"genre\": \"Drama\",\n  \"country\": \"IN\",\n  \"royaltyTier\": \"Tier2\",\n  \"bankAccountRef\": \"ACC-12345\",\n  \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/updateCreator/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "updateCreator",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Creator Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/updateCreatorStatus/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "updateCreatorStatus",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Creator",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/creator/validateCreator/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "creator",
+                "validateCreator",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Content Catalog - Tags",
+      "item": [
+        {
+          "name": "Add Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentId\": 1,\n  \"tagName\": \"Action\",\n  \"tagCategory\": \"Genre\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentTag/addTag",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentTag",
+                "addTag"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tags by Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentTag/fetchTagsByContent/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentTag",
+                "fetchTagsByContent",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/mediahub/contentCatalog/contentTag/removeTag/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "mediahub",
+                "contentCatalog",
+                "contentTag",
+                "removeTag",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. MediaHub - Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/users/getAllUsers/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "users",
+                "getAllUsers",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/users/getUser/v1/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "users",
+                "getUser",
+                "v1",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Suspend User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/users/suspendUser/v1/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "users",
+                "suspendUser",
+                "v1",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/users/activateUser/v1/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "users",
+                "activateUser",
+                "v1",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. MediaHub - Roles",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/roles/getAllRoles/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "roles",
+                "getAllRoles",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/roles/getRole/v1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "roles",
+                "getRole",
+                "v1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleType\": \"ContentReviewer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/roles/createRole/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "roles",
+                "createRole",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Permission to Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/roles/assignPermission/v1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "roles",
+                "assignPermission",
+                "v1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions for Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/roles/getPermissions/v1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "roles",
+                "getPermissions",
+                "v1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. MediaHub - Permissions",
+      "item": [
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/permissions/getAllPermissions/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "permissions",
+                "getAllPermissions",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permission by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/permissions/getPermission/v1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "permissions",
+                "getPermission",
+                "v1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionType\": \"CONTENT_EDIT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/iam/permissions/createPermission/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "iam",
+                "permissions",
+                "createPermission",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. MediaHub - Audit Events",
+      "item": [
+        {
+          "name": "Log Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"CONTENT_CREATED\",\n  \"moduleSource\": \"CONTENTCATALOG\",\n  \"performedBy\": 1,\n  \"performedByRole\": \"Creator\",\n  \"targetEntityType\": \"ContentAsset\",\n  \"targetEntityId\": \"123\",\n  \"oldValue\": null,\n  \"newValue\": \"{\\\"title\\\": \\\"New Video\\\"}\",\n  \"ipAddress\": \"192.168.1.1\",\n  \"severity\": \"INFO\",\n  \"status\": \"SUCCESS\",\n  \"description\": \"Creator uploaded new video content\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/auditlog/events/logEvent/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "auditlog",
+                "events",
+                "logEvent",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/auditlog/events/getAllEvents/v1.0?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "auditlog",
+                "events",
+                "getAllEvents",
+                "v1.0"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/auditlog/events/getEvent/v1/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "auditlog",
+                "events",
+                "getEvent",
+                "v1",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. MediaHub - Audit Reports",
+      "item": [
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportName\": \"July 2026 Audit Report\",\n  \"reportType\": \"USAGE\",\n  \"moduleScope\": \"CONTENTCATALOG\",\n  \"fromDate\": \"2026-07-01T00:00:00\",\n  \"toDate\": \"2026-07-07T23:59:59\",\n  \"generatedBy\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/auditlog/reports/generateReport/v1.0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "auditlog",
+                "reports",
+                "generateReport",
+                "v1.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/mediaHub/auditlog/reports/getAllReports/v1.0?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "media",
+                "mediaHub",
+                "auditlog",
+                "reports",
+                "getAllReports",
+                "v1.0"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    }
+  ]
+}

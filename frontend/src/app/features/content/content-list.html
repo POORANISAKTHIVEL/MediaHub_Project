@@ -1,0 +1,43 @@
+<div class="crumbs">Home / Content / <b>Content Catalog</b></div>
+<div class="page-head">
+  <div><h1>Content Catalog</h1><p>Manage all digital content assets, tags and creators.</p></div>
+  <div class="page-head__actions">
+    <button class="btn btn--ghost">⤓ Export</button>
+    @if (auth.hasPermission('content:write')) {
+      <a class="btn btn--primary tip" data-tip="New Content" routerLink="/content/create">+ Content</a>
+    }
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="search">⌕ &nbsp;Search by title or ID…</div>
+  <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="statusFilter.set($event)"></app-filter-chip>
+  <app-filter-chip label="Type" [value]="typeFilter()" [options]="typeOptions" (valueChange)="typeFilter.set($event)"></app-filter-chip>
+  <div class="toolbar__spacer"></div>
+  <span style="font-size:13px;color:var(--ink-400)">{{ rows().length }} items</span>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Content</th><th>Type</th><th>Genre</th><th>Status</th><th>Published</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (c of rows(); track c.contentId) {
+          <tr>
+            <td><div class="avatar-cell"><span class="thumb"></span><div><div class="t-primary">{{ c.title }}</div><div class="t-sub">CNT-{{ c.contentId }} · {{ c.genre }}</div></div></div></td>
+            <td>{{ c.type }}</td>
+            <td>{{ c.genre }}</td>
+            <td><app-status-badge [status]="c.status"></app-status-badge></td>
+            <td class="t-sub">{{ c.publishedDate || '—' }}</td>
+            <td><app-row-menu [items]="menuFor(c)" (actionSelected)="onAction($event, c)"></app-row-menu></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="t-sub" style="text-align:center;padding:24px">No content matches these filters.</td></tr>
+        }
+      </tbody>
+    </table>
+    <div class="pagination"><span>Showing <b>1–{{ rows().length }}</b> of <b>{{ all().length }}</b></span></div>
+  }
+</div>

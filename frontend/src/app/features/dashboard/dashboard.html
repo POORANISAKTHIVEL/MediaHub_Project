@@ -1,0 +1,70 @@
+<div class="crumbs">Home / <b>Dashboard</b></div>
+<div class="page-head">
+  <div><h1>Dashboard</h1><p>Welcome back, {{ auth.currentUser()?.name }}. Here's what's happening across MediaHub.</p></div>
+  <div class="page-head__actions">
+    <button class="btn btn--ghost" (click)="export()">⤓ Export</button>
+    @if (auth.hasPermission('content:write')) {
+      <a class="btn btn--primary tip" data-tip="New Content" routerLink="/content/create">+ Content</a>
+    }
+  </div>
+</div>
+
+<div class="stat-grid">
+  @if (auth.hasPermission('content:read')) {
+    <app-stat-card label="Total Content" value="2,847" icon="🎞" bg="var(--brand-50)" color="var(--brand-600)" delta="▲ 12.5% vs last month" [deltaUp]="true"></app-stat-card>
+  }
+  @if (auth.hasPermission('subscription:manage')) {
+    <app-stat-card label="Active Subscriptions" value="18,204" icon="◈" bg="var(--green-50)" color="var(--green-600)" delta="▲ 4.2% vs last month" [deltaUp]="true"></app-stat-card>
+  }
+  @if (auth.hasPermission('content:read')) {
+    <app-stat-card label="Pending Reviews" value="37" icon="✎" bg="var(--amber-50)" color="var(--amber-600)" delta="▼ 8 awaiting action" [deltaUp]="false"></app-stat-card>
+  }
+  @if (auth.hasPermission('royalty:view')) {
+    <app-stat-card label="Royalty Payable" value="$94.2k" icon="$" bg="var(--violet-50)" color="var(--violet-600)" delta="▲ 6.1% this quarter" [deltaUp]="true"></app-stat-card>
+  }
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:22px">
+  @if (auth.hasPermission('content:read')) {
+    <div class="card">
+      <div class="card__head">
+        <h3>Content Publishing Trend</h3>
+        <span class="chip" (click)="toggleMenu($event)" style="position:relative">
+          {{ duration() }} ▾
+          @if (menuOpen()) {
+            <div class="menu" style="position:absolute;top:calc(100% + 6px);right:0" (click)="$event.stopPropagation()">
+              @for (d of durationOptions; track d) {
+                <button (click)="selectDuration(d)">{{ d }}</button>
+              }
+            </div>
+          }
+        </span>
+      </div>
+      <div class="card__body">
+        <svg viewBox="0 0 640 240" style="width:100%;height:240px">
+          <line x1="40" y1="10" x2="40" y2="200" stroke="#e2e8f0"/><line x1="40" y1="200" x2="620" y2="200" stroke="#e2e8f0"/>
+          <polygon fill="#4f46e5" opacity=".08" [attr.points]="areaPoints()"/>
+          <polyline fill="none" stroke="#4f46e5" stroke-width="3" [attr.points]="linePoints()"/>
+          <g fill="#94a3b8" font-size="12">
+            @for (p of labelPositions(); track p.label) {
+              <text [attr.x]="p.x" y="220">{{ p.label }}</text>
+            }
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>Content by Status</h3></div>
+      <div class="card__body" style="display:flex;flex-direction:column;gap:14px">
+        <div class="row-between"><span class="badge b-green">Published</span><b>1,940</b></div>
+        <div class="row-between"><span class="badge b-amber">In Review</span><b>312</b></div>
+        <div class="row-between"><span class="badge b-blue">Scheduled</span><b>168</b></div>
+        <div class="row-between"><span class="badge b-gray">Draft</span><b>427</b></div>
+        @if (auth.hasPermission('license:manage')) {
+          <div style="height:1px;background:var(--line-2)"></div>
+          <div class="row-between"><span style="color:var(--ink-500);font-size:13px">Licenses expiring &lt; 30d</span><span class="badge b-red">14</span></div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,69 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else if (sub(); as s) {
+  <div class="crumbs">Home / Commerce / Subscriptions / <b>{{ userName(s.userId) }}</b></div>
+  <div class="page-head">
+    <div><h1>Subscription Details <app-status-badge [status]="s.status" style="vertical-align:middle;margin-left:8px"></app-status-badge></h1><p>Manage subscription for {{ userName(s.userId) }} · SUB-{{ s.subscriptionId }}</p></div>
+    <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/subscription/subscriptions">← Back to list</a></div>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="card__head"><h3>Current Subscription</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Subscription ID</dt><dd class="mono">SUB-{{ s.subscriptionId }}</dd>
+          <dt>Plan</dt><dd><span class="badge b-violet">{{ planName(s.planId) }}</span></dd>
+          <dt>Status</dt><dd><app-status-badge [status]="s.status"></app-status-badge></dd>
+          <dt>Start Date</dt><dd>{{ s.startDate }}</dd>
+          <dt>Next Renewal</dt><dd>{{ s.endDate }}</dd>
+          <dt>Renewal Type</dt><dd>{{ s.renewalType }}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>Subscriber Information</h3></div>
+      <div class="card__body">
+        <div class="avatar-cell" style="margin-bottom:14px">
+          <div class="avatar">{{ userName(s.userId).slice(0,2).toUpperCase() }}</div>
+          <div><div class="t-primary">{{ userName(s.userId) }}</div><div class="t-sub">{{ userEmail(s.userId) }}</div></div>
+        </div>
+        <dl class="kv">
+          <dt>User ID</dt><dd>USR-{{ s.userId }}</dd>
+          <dt>Role</dt><dd><span class="badge b-blue">{{ userRole(s.userId) }}</span></dd>
+          <dt>Total Subscriptions</dt><dd>{{ totalSubscriptions() }}</dd>
+        </dl>
+        <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
+        <h3 style="font-size:14px;margin-bottom:10px">Admin Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          @if (s.status !== 'Suspended') {
+            <button class="btn btn--danger" (click)="suspend()">⊘ Suspend</button>
+          }
+          @if (s.status === 'Suspended' || s.status === 'Expired') {
+            <button class="btn btn--primary" (click)="reactivate()">↺ Reactivate</button>
+          }
+          <p class="hint">Reactivate is available only for suspended or expired subscriptions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:22px">
+    <div class="card__head"><h3>Subscription Timeline</h3></div>
+    <table>
+      <thead><tr><th>Date</th><th>Event</th><th>Details</th></tr></thead>
+      <tbody>
+        @for (h of timeline(); track h.historyId) {
+          <tr>
+            <td class="t-sub">{{ h.changeDate.slice(0, 10) }}</td>
+            <td><span class="badge b-blue">{{ h.changeType }}</span></td>
+            <td>{{ h.remarks }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="3" class="t-sub" style="text-align:center;padding:24px">No timeline events yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="empty"><div class="empty__ico">◈</div><h3>Subscription not found</h3></div>
+}

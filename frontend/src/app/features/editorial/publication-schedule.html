@@ -1,0 +1,71 @@
+<div class="crumbs">Home / Editorial / <b>Publication Calendar</b></div>
+<div class="page-head">
+  <div><h1>Publication Calendar</h1><p>Schedule content publication by territory.</p></div>
+  <div class="page-head__actions">
+    @if (auth.hasPermission('content:write')) {
+      <button class="btn btn--primary" (click)="openCreate()">+ Schedule</button>
+    }
+  </div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Content</th><th>Publish</th><th>Expiry</th><th>Territory</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (s of schedules(); track s.scheduleID) {
+          <tr>
+            <td class="t-primary" style="font-weight:500">{{ titleFor(s.contentID) }}</td>
+            <td class="t-sub">{{ s.publishDateTime }}</td>
+            <td class="t-sub">{{ s.expiryDateTime }}</td>
+            <td>{{ s.territory }}</td>
+            <td><app-status-badge [status]="s.status"></app-status-badge></td>
+            <td>
+              @if (menuFor(s).length > 0) {
+                <app-row-menu [items]="menuFor(s)" (actionSelected)="onAction($event, s)"></app-row-menu>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="t-sub" style="text-align:center;padding:24px">No schedules yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Publication Schedule</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentID"></div>
+        <div class="grid-2">
+          <div class="field"><label>Publish Date/Time <span class="req">*</span></label><input class="input" type="datetime-local" [(ngModel)]="form.publishDateTime"></div>
+          <div class="field"><label>Expiry Date/Time <span class="req">*</span></label><input class="input" type="datetime-local" [(ngModel)]="form.expiryDateTime"></div>
+        </div>
+        <div class="field"><label>Territory <span class="req">*</span></label><input class="input" [(ngModel)]="form.territory" placeholder="e.g. US, CA or Global"></div>
+        <div class="note">This content must already have an active License and Territory Restriction (set up under Licensing) before it can be scheduled.</div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" [disabled]="checkingPrereqs()" (click)="create()">{{ checkingPrereqs() ? 'Checking…' : 'Create' }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (cancelling(); as s) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Cancel Schedule</h3></div>
+      <div class="modal__body">
+        <p style="color:var(--ink-700);font-size:14px">Cancel publication of "{{ titleFor(s.contentID) }}"?</p>
+        <div class="field"><label>Reason <span class="req">*</span></label><textarea class="textarea" rows="3" [(ngModel)]="cancelReason"></textarea></div>
+      </div>
+      <div class="modal__foot"><button class="btn btn--red" (click)="confirmCancel()">Cancel Schedule</button></div>
+    </div>
+  </div>
+}

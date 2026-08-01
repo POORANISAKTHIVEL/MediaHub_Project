@@ -1,0 +1,26 @@
+<div class="crumbs">Home / Commerce / <b>Royalty</b></div>
+<div class="page-head"><div><h1>Revenue Dashboard</h1><p>Overview of creator royalties and revenue sharing.</p></div></div>
+
+<div class="stat-grid">
+  <app-stat-card label="Total Revenue" [value]="'$' + totalRevenue().toLocaleString()" icon="$" bg="var(--green-50)" color="var(--green-600)"></app-stat-card>
+  <app-stat-card label="Royalty Payable" [value]="'$' + totalRoyalty().toLocaleString()" icon="$" bg="var(--violet-50)" color="var(--violet-600)"></app-stat-card>
+  <app-stat-card label="Draft Statements" [value]="draftCount()" icon="✎" bg="var(--amber-50)" color="var(--amber-600)"></app-stat-card>
+  <app-stat-card label="Pending Payouts" [value]="pendingPayouts()" icon="◔" bg="var(--blue-50)" color="var(--blue-600)"></app-stat-card>
+</div>
+
+<div class="grid-2">
+  <a class="card" style="text-decoration:none;color:inherit" routerLink="/royalty/rules">
+    <div class="card__head"><h3>Royalty Rules</h3></div>
+    <div class="card__body"><p class="t-sub">Configure revenue-share percentages by creator tier.</p></div>
+  </a>
+  <a class="card" style="text-decoration:none;color:inherit" routerLink="/royalty/statements">
+    <div class="card__head"><h3>Royalty Statements</h3></div>
+    <div class="card__body"><p class="t-sub">Generate, finalise and mark statements as paid.</p></div>
+  </a>
+</div>
+<div style="margin-top:16px">
+  <a class="card" style="text-decoration:none;color:inherit;display:block" routerLink="/royalty/payouts">
+    <div class="card__head"><h3>Royalty Payouts</h3></div>
+    <div class="card__body"><p class="t-sub">Process, retry and track creator payouts.</p></div>
+  </a>
+</div>

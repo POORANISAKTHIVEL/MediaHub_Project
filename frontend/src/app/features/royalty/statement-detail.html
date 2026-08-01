@@ -1,0 +1,41 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else if (statement(); as s) {
+  <div class="crumbs">Home / Royalty / <b>STMT-{{ s.statementID }}</b></div>
+  <div class="page-head">
+    <div><h1>Statement STMT-{{ s.statementID }} <app-status-badge [status]="s.status" style="vertical-align:middle;margin-left:8px"></app-status-badge></h1><p>Creator #{{ s.creatorID }} · {{ s.period }}</p></div>
+    <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/royalty/statements">← Back</a></div>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="card__head"><h3>Statement Details</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Statement ID</dt><dd class="mono">STMT-{{ s.statementID }}</dd>
+          <dt>Creator ID</dt><dd class="mono">{{ s.creatorID }}</dd>
+          <dt>Period</dt><dd>{{ s.period }}</dd>
+          <dt>Total Views</dt><dd>{{ s.totalViews.toLocaleString() }}</dd>
+          <dt>Total Revenue</dt><dd>${{ s.totalRevenue.toLocaleString() }}</dd>
+          <dt>Royalty Amount</dt><dd>${{ s.royaltyAmount.toLocaleString() }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="s.status"></app-status-badge></dd>
+        </dl>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>Actions</h3></div>
+      <div class="card__body">
+        @if (s.status === 'Draft') {
+          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="finalise()">Finalise</button>
+        }
+        @if (s.status === 'Finalised') {
+          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="processPayout()">+ Process Payout</button>
+        }
+        @if (s.status === 'Paid') {
+          <p class="hint">This statement has been finalised, paid out and is now read-only.</p>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="empty"><div class="empty__ico">$</div><h3>Statement not found</h3></div>
+}

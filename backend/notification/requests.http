@@ -1,0 +1,37 @@
+### Notification API – endpoint smoke tests
+### Open in VS Code (REST Client extension) or IntelliJ HTTP Client and click "Send Request".
+### Server runs on port 8084 (see application.properties).
+
+@host = http://localhost:8084
+@base = {{host}}/api/notifications
+
+### 1. createNotification -> 201 Created
+# @name create
+POST {{base}}
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "message": "Your account has been created.",
+  "category": "CONTENT"
+}
+
+### 2. getAllNotifications -> 200 OK
+GET {{base}}
+
+### 3. getUnreadNotifications -> 200 OK (returns only status = UNREAD)
+GET {{base}}/unread
+
+### 4. updateNotification -> 200 OK (here we mark it as READ)
+PUT {{base}}/{{create.response.body.notificationId}}
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "message": "Your account has been created.",
+  "category": "CONTENT",
+  "status": "READ"
+}
+
+### 5. Confirm it no longer appears in unread -> 200 OK, empty list
+GET {{base}}/unread

@@ -1,0 +1,39 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else {
+  <div class="crumbs">Home / Content / <b>{{ isEdit ? 'Edit Content' : 'Create Content Asset' }}</b></div>
+  <div class="page-head">
+    <div><h1>{{ isEdit ? 'Edit Content' : 'Create Content Asset' }}</h1><p>{{ isEdit ? 'Update this content asset.' : 'Add a new content asset to the catalog.' }}</p></div>
+    <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/content">← Back to catalog</a></div>
+  </div>
+
+  <div class="card" style="max-width:720px">
+    <div class="card__body" style="display:flex;flex-direction:column;gap:18px">
+      <div class="field"><label>Title <span class="req">*</span></label><input class="input" [(ngModel)]="form.title" placeholder="e.g. The Silent Frontier"></div>
+      <div class="grid-2">
+        <div class="field"><label>Content Type <span class="req">*</span></label>
+          <select class="select" [(ngModel)]="form.type">
+            <option>Video</option><option>Audio</option><option>Article</option><option>Podcast</option><option>Ebook</option>
+          </select>
+        </div>
+        <div class="field"><label>Creator <span class="req">*</span></label>
+          <select class="select" [(ngModel)]="form.creatorId">
+            @for (c of creators(); track c.creatorId) {
+              <option [ngValue]="c.creatorId">{{ c.displayName }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Genre</label><input class="input" [(ngModel)]="form.genre"></div>
+        <div class="field"><label>Language</label><input class="input" [(ngModel)]="form.language"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea class="textarea" rows="4" [(ngModel)]="form.synopsis" placeholder="Describe this content…"></textarea></div>
+      <div class="field"><label>File Path</label><input class="input" [(ngModel)]="form.filePath" placeholder="/media/asset.mp4"></div>
+    </div>
+    <div class="modal__foot" style="border-top:1px solid var(--line-2);display:flex;justify-content:flex-end;gap:10px">
+      <a class="btn btn--ghost" routerLink="/content">Cancel</a>
+      <button class="btn btn--primary" [disabled]="saving()" (click)="save()">{{ isEdit ? 'Save' : 'Create' }}</button>
+    </div>
+  </div>
+}

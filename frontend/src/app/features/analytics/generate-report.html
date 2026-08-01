@@ -1,0 +1,54 @@
+<div class="crumbs">Home / Platform / Analytics &amp; Reports / <b>Generate Report</b></div>
+<div class="page-head">
+  <div><h1>Generate Report</h1><p>Create a downloadable snapshot of platform analytics.</p></div>
+  <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/analytics/reports">⤓ My Reports</a></div>
+</div>
+
+<div class="split">
+  <div class="card">
+    <div class="card__head"><h3>Report Options</h3></div>
+    <div class="card__body" style="display:flex;flex-direction:column;gap:16px">
+      <div class="field"><label>Report Type <span class="req">*</span></label>
+        <select class="select" [(ngModel)]="form.reportType">
+          <option>Full Platform Summary</option>
+          <option>Content Performance</option>
+          <option>Revenue Summary</option>
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>From <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.fromDate"></div>
+        <div class="field"><label>To <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.toDate"></div>
+      </div>
+      <div class="field"><label>Format <span class="req">*</span></label>
+        <select class="select" [(ngModel)]="form.format">
+          <option>XLSX</option><option>CSV</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" style="width:100%;justify-content:center" [disabled]="generating()" (click)="generate()">{{ generating() ? 'Generating…' : '+ Generate' }}</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h3>Result</h3></div>
+    <div class="card__body">
+      @if (result(); as r) {
+        <dl class="kv">
+          <dt>Report ID</dt><dd class="mono">RPT-{{ r.reportId }}</dd>
+          <dt>Report Name</dt><dd>{{ r.reportName }}</dd>
+          <dt>Generated Date</dt><dd>{{ r.generatedDate }}</dd>
+          <dt>Total Contents</dt><dd>{{ r.totalContents }}</dd>
+          <dt>Format</dt><dd>{{ r.format }}</dd>
+        </dl>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="btn btn--primary" (click)="download()">⤓ Download</button>
+          <a class="btn btn--ghost" [routerLink]="['/analytics/reports', r.reportId]">View Report</a>
+        </div>
+      } @else {
+        <div class="empty">
+          <div class="empty__ico">📊</div>
+          <h3>No report generated yet</h3>
+          <p>Fill in the options and generate a report to preview it here.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

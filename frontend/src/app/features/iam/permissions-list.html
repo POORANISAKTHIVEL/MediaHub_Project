@@ -1,0 +1,73 @@
+<div class="crumbs">Home / Platform / <b>IAM &amp; Users</b></div>
+<div class="tabs">
+  <a class="tab" routerLink="/iam/users">Users</a>
+  <a class="tab" routerLink="/iam/roles">Roles</a>
+  <a class="tab active" routerLink="/iam/permissions">Permissions</a>
+</div>
+<div class="page-head">
+  <div><h1>Permissions</h1><p>All authorities defined in the system.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Permission" (click)="creating.set(true)">Permission +</button></div>
+</div>
+
+<div class="toolbar">
+  <div class="search">⌕ &nbsp;Search permissions…</div>
+  <app-filter-chip label="Module" [value]="moduleFilter()" [options]="moduleOptions" (valueChange)="setModuleFilter($event)"></app-filter-chip>
+</div>
+
+<div class="card card--compact">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Permission</th><th>Module</th><th>Held by roles</th><th style="width:110px">Actions</th></tr></thead>
+      <tbody>
+        @for (p of pagedRows(); track p.permissionId) {
+          <tr>
+            <td><span class="mono t-primary">{{ p.permissionType }}</span></td>
+            <td>{{ moduleOf(p) }}</td>
+            <td class="t-sub">{{ rolesHolding(p) }}</td>
+            <td>
+              <div class="row-actions">
+                <span class="icon-btn tip" data-tip="Edit" (click)="openEdit(p)">✎</span>
+                <span class="icon-btn tip" data-tip="Delete" (click)="deletePermission(p)">🗑</span>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="t-sub" style="text-align:center;padding:24px">No permissions match this module.</td></tr>
+        }
+      </tbody>
+    </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Permission</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Permission type <span class="req">*</span></label><input class="input" [(ngModel)]="newType" placeholder="e.g. content:archive"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="createPermission()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (editing(); as p) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Edit Permission</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Permission type <span class="req">*</span></label><input class="input" [(ngModel)]="editType"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="editing.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="saveEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+}

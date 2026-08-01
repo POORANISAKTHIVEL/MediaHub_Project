@@ -1,0 +1,26 @@
+<div class="crumbs">Home / <b>Plan Catalog</b></div>
+<div class="page-head"><div><h1>Choose Your Plan</h1><p>Pick a plan that fits how you watch, read and listen.</p></div></div>
+
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else {
+  <div class="plan-catalog">
+    @for (p of plans(); track p.planId; let i = $index) {
+      <div class="plan-card" [class.featured]="i === 2">
+        @if (i === 2) {
+          <div class="plan-card__ribbon">Most Popular</div>
+        }
+        <div class="plan-card__body">
+          <div class="plan-card__name">{{ p.name }}</div>
+          <div class="plan-card__price">${{ p.price }}<span>/{{ p.billingCycle.toLowerCase() }}</span></div>
+          <div class="plan-card__desc">{{ p.contentAccessLevel }}</div>
+          <ul class="plan-card__features">
+            <li><span class="ico ico--yes">✓</span> Up to {{ p.maxDevices }} device{{ p.maxDevices === 1 ? '' : 's' }}</li>
+            <li><span class="ico" [class.ico--yes]="p.downloadAllowed" [class.ico--no]="!p.downloadAllowed">{{ p.downloadAllowed ? '✓' : '✕' }}</span> Downloads {{ p.downloadAllowed ? 'allowed' : 'not available' }}</li>
+          </ul>
+          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="subscribe(p)">Subscribe</button>
+        </div>
+      </div>
+    }
+  </div>
+}

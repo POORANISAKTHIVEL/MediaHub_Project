@@ -1,0 +1,54 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else if (review(); as r) {
+  <div class="crumbs">Home / Editorial / <b>Review REV-{{ r.reviewID }}</b></div>
+  <div class="page-head">
+    <div><h1>{{ contentTitle() }}</h1><p>Review REV-{{ r.reviewID }} · submitted by {{ creatorName() }}</p></div>
+    <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/editorial/reviews">← Back to Reviews</a></div>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="card__head"><h3>Content Preview</h3><app-status-badge [status]="r.decision || r.status"></app-status-badge></div>
+      <div class="card__body">
+        <div style="height:220px;border-radius:10px;background:linear-gradient(135deg,#fbcfe8,#f9a8d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px">▶</div>
+        <h3 style="margin:18px 0 8px;font-size:16px">Description</h3>
+        <p style="color:var(--ink-500);font-size:14px">A studio session featuring content submitted for editorial review.</p>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          @for (t of tags(); track t.tagId) {
+            <span class="badge b-gray">{{ t.tagName }}</span>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>Review Details</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Content ID</dt><dd class="mono">CNT-{{ r.contentID }}</dd>
+          <dt>Type</dt><dd>{{ contentType() }}</dd>
+          <dt>Creator</dt><dd>{{ creatorName() }}</dd>
+          <dt>Submitted</dt><dd>{{ r.submissionDate }}</dd>
+          <dt>Reviewer</dt><dd>#{{ r.reviewerID }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="r.decision || r.status"></app-status-badge></dd>
+        </dl>
+        <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
+        <div class="field"><label>Review comment</label><textarea class="textarea" rows="4" placeholder="Add notes for the creator…" [(ngModel)]="remarks" [disabled]="r.status !== 'Pending'"></textarea></div>
+      </div>
+    </div>
+  </div>
+  @if (r.status === 'Pending') {
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+      @if (auth.hasPermission('content:publish')) {
+        <button class="btn btn--danger" [disabled]="submitting()" (click)="reject()">✕ Reject</button>
+      }
+      @if (auth.hasPermission('content:write')) {
+        <button class="btn btn--ghost" [disabled]="submitting()" (click)="requestRevision()">↺ Request revision</button>
+      }
+      @if (auth.hasPermission('content:publish')) {
+        <button class="btn btn--primary" [disabled]="submitting()" (click)="approve()">✓ Accept</button>
+      }
+    </div>
+  }
+} @else {
+  <div class="empty"><div class="empty__ico">✎</div><h3>Review not found</h3></div>
+}

@@ -1,0 +1,31 @@
+<div class="crumbs">Home / Commerce / <b>Subscriptions</b></div>
+<div class="tabs">
+  <a class="tab" routerLink="/subscription/plans">Plans</a>
+  <a class="tab" routerLink="/subscription/subscriptions">User Subscriptions</a>
+  <a class="tab active" routerLink="/subscription/history">History</a>
+</div>
+<div class="page-head"><div><h1>Subscription History</h1><p>Plan changes, upgrades and downgrades across all users.</p></div></div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>User</th><th>From Plan</th><th>To Plan</th><th>Change Type</th><th>Date</th><th>Remarks</th></tr></thead>
+      <tbody>
+        @for (h of rows(); track h.historyId) {
+          <tr>
+            <td class="t-primary" style="font-weight:500">{{ userName(h.userId) }}</td>
+            <td>{{ planName(h.fromPlanId) }}</td>
+            <td>{{ planName(h.toPlanId) }}</td>
+            <td><span class="badge b-blue">{{ h.changeType }}</span></td>
+            <td class="t-sub">{{ h.changeDate }}</td>
+            <td class="t-sub">{{ h.remarks }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="t-sub" style="text-align:center;padding:24px">No history yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

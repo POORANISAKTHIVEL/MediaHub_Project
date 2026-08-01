@@ -1,0 +1,57 @@
+<div class="crumbs">Home / Content / <b>Licensing</b></div>
+<div class="tabs">
+  <a class="tab" routerLink="/licensing">Licenses</a>
+  <a class="tab" routerLink="/licensing/expiring">Expiring Soon</a>
+  <a class="tab active" routerLink="/licensing/territory">Territory Restrictions</a>
+</div>
+<div class="page-head">
+  <div><h1>Territory Restrictions</h1><p>Active country-level access rules per content item. Restricted always wins over allowed on conflict.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Restriction" (click)="openCreate()">+ Restriction</button></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Restriction ID</th><th>Content</th><th>Restricted</th><th>Allowed</th><th>Effective Date</th><th>Status</th><th style="width:120px">Actions</th></tr></thead>
+      <tbody>
+        @for (t of rows(); track t.restrictionId) {
+          <tr>
+            <td class="mono t-primary">RST-{{ t.restrictionId }}</td>
+            <td>CNT-{{ t.contentId }}</td>
+            <td>{{ t.restrictedCountries }}</td>
+            <td>{{ t.allowedCountries }}</td>
+            <td>{{ t.effectiveDate }}</td>
+            <td><span class="badge" [class]="t.status === 'Active' ? 'b-green' : 'b-gray'">{{ t.status }}</span></td>
+            <td>
+              <div class="row-actions">
+                <app-row-menu [items]="menuFor(t)" (actionSelected)="onAction($event, t)"></app-row-menu>
+                <span class="toggle" [class.off]="t.status !== 'Active'" (click)="toggle(t)"></span>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="t-sub" style="text-align:center;padding:24px">No territory restrictions yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating() || editing()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>{{ editing() ? 'Edit Territory Restriction' : 'New Territory Restriction' }}</h3><span class="icon-btn" (click)="creating.set(false); editing.set(null)">✕</span></div>
+      <div class="modal__body">
+        @if (!editing()) {
+          <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentId"></div>
+        }
+        <div class="field"><label>Restricted Countries</label><input class="input" [(ngModel)]="form.restrictedCountries" placeholder="e.g. CN, RU"></div>
+        <div class="field"><label>Allowed Countries</label><input class="input" [(ngModel)]="form.allowedCountries" placeholder="e.g. US, CA, EU"></div>
+        <div class="field"><label>Effective Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.effectiveDate"></div>
+      </div>
+      <div class="modal__foot"><button class="btn btn--primary" style="width:100%;justify-content:center" (click)="save()">{{ editing() ? 'Save' : 'Create' }}</button></div>
+    </div>
+  </div>
+}

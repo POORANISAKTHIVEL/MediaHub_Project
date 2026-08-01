@@ -1,0 +1,34 @@
+# Leftover extraction folder used only to diff an updated backend zip — not part of the project
+/backend_new_extract/
+
+# Frontend (Angular)
+frontend/node_modules/
+frontend/dist/
+frontend/tmp/
+frontend/out-tsc/
+frontend/.angular/
+
+# Backend (Maven, per-module)
+backend/**/target/
+backend/**/bin/
+
+# Local backend service logs generated during manual testing
+backend/*.log
+
+# IDEs / editors
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+.c9/
+*.launch
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+*.env.local

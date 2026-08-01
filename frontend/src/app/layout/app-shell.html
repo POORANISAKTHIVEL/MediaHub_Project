@@ -1,0 +1,52 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo">M</div>
+      <div class="brand__name">MediaHub<small>Content Platform</small></div>
+    </div>
+
+    @for (item of navItems; track item.label ?? item.group) {
+      @if (item.group) {
+        <div class="nav__group">{{ item.group }}</div>
+      } @else {
+        <a class="nav__item" [routerLink]="item.route" routerLinkActive="active" [innerHTML]="item.icon + '&nbsp;&nbsp;' + item.label + (item.badge ? ' <span class=\'nav__badge\'>' + item.badge + '</span>' : '')"></a>
+      }
+    }
+
+    <div class="sidebar__foot">
+      <div class="nav__item" (click)="logout()">⏻ &nbsp;Logout</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search">⌕ &nbsp;Search content, users, licenses…</div>
+      <div class="topbar__spacer"></div>
+      <a class="topbar__icon" routerLink="/notifications">◇<span class="dot"></span></a>
+      <div class="user-chip" (click)="toggleAccount($event)" style="position:relative">
+        <div class="avatar">{{ initials }}</div>
+        <div class="user-chip__meta"><b>{{ auth.currentUser()?.name }}</b><span>{{ auth.currentUser()?.roleType }}</span></div>
+
+        @if (acctOpen) {
+          <div class="acct-pop" style="top:56px;right:28px;position:fixed" (click)="$event.stopPropagation()">
+            <h4>Account</h4>
+            <dl class="kv">
+              <dt>Email</dt><dd>{{ auth.currentUser()?.email }}</dd>
+              <dt>Role</dt><dd><span class="mono">{{ auth.currentUser()?.roleType }}</span></dd>
+            </dl>
+            <div class="acct-pop__div"></div>
+            <a class="nav__item" routerLink="/profile" style="color:var(--ink-700);margin-bottom:4px">◔ &nbsp;View profile</a>
+            <button class="acct-pop__logout" (click)="logout()">⏻ &nbsp;Logout</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+<app-toast-container></app-toast-container>
+<app-confirm-dialog></app-confirm-dialog>

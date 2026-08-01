@@ -1,0 +1,56 @@
+<div class="crumbs">Home / Content / <b>Tag Management</b></div>
+<div class="page-head">
+  <div><h1>Tag Management</h1><p>Organize content using tags across genre, mood, theme and age rating.</p></div>
+  <div class="page-head__actions">
+    @if (auth.hasPermission('content:write')) {
+      <button class="btn btn--primary tip" data-tip="New Tag" (click)="creating.set(true)">+ Tag</button>
+    }
+  </div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Tag Name</th><th>Category</th><th>Content ID</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (t of tags(); track t.tagId) {
+          <tr>
+            <td class="t-primary" style="font-weight:600">{{ t.tagName }}</td>
+            <td><span class="badge b-gray">{{ t.tagCategory }}</span></td>
+            <td class="mono t-sub">CNT-{{ t.contentId }}</td>
+            <td>
+              @if (auth.hasPermission('content:delete')) {
+                <div class="row-actions"><span class="icon-btn tip" data-tip="Delete" style="color:var(--red-600);border-color:#fecaca" (click)="remove(t)">🗑</span></div>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="t-sub" style="text-align:center;padding:24px">No tags yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Tag</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Tag Name <span class="req">*</span></label><input class="input" [(ngModel)]="newTagName"></div>
+        <div class="field"><label>Category</label>
+          <select class="select" [(ngModel)]="newTagCategory">
+            <option>Genre</option><option>Mood</option><option>Theme</option><option>AgeRating</option>
+          </select>
+        </div>
+        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="newTagContentId"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}

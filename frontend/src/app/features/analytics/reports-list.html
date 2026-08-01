@@ -1,0 +1,27 @@
+<div class="crumbs">Home / Analytics / <b>Reports</b></div>
+<div class="page-head">
+  <div><h1>My Reports</h1><p>Generated analytics reports available for download.</p></div>
+  <div class="page-head__actions"><a class="btn btn--primary" routerLink="/analytics/generate">+ Generate</a></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else if (reports().length === 0) {
+    <app-empty-state icon="📄" title="No reports yet" message="Generate your first analytics report."></app-empty-state>
+  } @else {
+    <table>
+      <thead><tr><th>Report</th><th>Generated</th><th>Total Contents</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (r of reports(); track r.reportId) {
+          <tr>
+            <td class="t-primary" style="font-weight:500">{{ r.reportName }} #{{ r.reportId }}</td>
+            <td class="t-sub">{{ r.generatedDate }}</td>
+            <td>{{ r.totalContents }}</td>
+            <td><app-row-menu [items]="menuFor(r)" (actionSelected)="onAction($event, r)"></app-row-menu></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

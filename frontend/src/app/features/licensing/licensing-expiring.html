@@ -1,0 +1,29 @@
+<div class="crumbs">Home / Content / <b>Licensing</b></div>
+<div class="tabs">
+  <a class="tab" routerLink="/licensing">Licenses</a>
+  <a class="tab active" routerLink="/licensing/expiring">Expiring Soon</a>
+  <a class="tab" routerLink="/licensing/territory">Territory Restrictions</a>
+</div>
+<div class="page-head"><div><h1>Expiring Licenses</h1><p>Licenses whose end date falls within the next 7 days — proactive renewal queue.</p></div></div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>License ID</th><th>Territory</th><th>End Date</th><th>Days Remaining</th></tr></thead>
+      <tbody>
+        @for (x of rows(); track x.licenseId) {
+          <tr>
+            <td class="mono t-primary">LIC-{{ x.licenseId }}</td>
+            <td>{{ x.territory }}</td>
+            <td>{{ x.endDate }}</td>
+            <td><span class="badge b-red">{{ x.daysRemaining }} day{{ x.daysRemaining === 1 ? '' : 's' }}</span></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="t-sub" style="text-align:center;padding:24px">No licenses expiring within 7 days.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,0 +1,77 @@
+<div class="crumbs">Home / Platform / <b>IAM &amp; Users</b></div>
+<div class="tabs">
+  <a class="tab" routerLink="/iam/users">Users</a>
+  <a class="tab active" routerLink="/iam/roles">Roles</a>
+  <a class="tab" routerLink="/iam/permissions">Permissions</a>
+</div>
+<div class="page-head">
+  <div><h1>Roles</h1><p>Manage roles and the permissions assigned to each.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Role" (click)="creatingRole.set(true)">Role +</button></div>
+</div>
+
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else {
+  <div class="split" style="grid-template-columns:340px 1fr">
+    <div class="card"><div class="card__body" style="display:flex;flex-direction:column;gap:8px">
+      @for (r of roles(); track r.roleId) {
+        <div class="row-between" style="padding:12px 14px;border-radius:8px;cursor:pointer"
+             [style.border]="r.roleId === activeRoleId() ? '1px solid var(--brand-500)' : '1px solid var(--line)'"
+             [style.background]="r.roleId === activeRoleId() ? 'var(--brand-50)' : 'transparent'">
+          <div style="flex:1" (click)="select(r)">
+            <div class="mono t-primary">{{ r.roleType }}</div>
+          </div>
+          <div class="row-actions">
+            <span class="icon-btn tip" data-tip="Rename" (click)="openRename(r)">✎</span>
+            <span class="icon-btn tip" data-tip="Delete" (click)="deleteRole(r)">🗑</span>
+          </div>
+        </div>
+      }
+    </div></div>
+    <div class="card">
+      <div class="card__head"><h3>Permissions · {{ activeRole()?.roleType }}</h3></div>
+      <div class="card__body" style="padding:14px 20px">
+        @for (p of pagedPermissions(); track p.permissionId) {
+          <div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--line-2)">
+            <div>
+              <div class="t-sub" style="text-transform:uppercase;font-size:10px;letter-spacing:.04em">{{ p.permissionType.split(':')[0] }}</div>
+              <span class="mono" style="font-size:12.5px;color:var(--ink-900)">{{ p.permissionType }}</span>
+            </div>
+            <span class="toggle" [class.off]="!hasPermission(p)" (click)="togglePermission(p)" style="cursor:pointer"></span>
+          </div>
+        }
+      </div>
+      <app-pagination [currentPage]="permPage()" [totalPages]="totalPermPages()" [totalElements]="permissions().length" [pageSize]="pageSize" (pageChange)="permPage.set($event)"></app-pagination>
+    </div>
+  </div>
+}
+
+@if (creatingRole()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Role</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Role type <span class="req">*</span></label><input class="input" [(ngModel)]="newRoleType" placeholder="e.g. contentModerator"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creatingRole.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="createRole()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (renaming(); as r) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Rename Role</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Role type <span class="req">*</span></label><input class="input" [(ngModel)]="renameValue"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="renaming.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="saveRename()">Save</button>
+      </div>
+    </div>
+  </div>
+}

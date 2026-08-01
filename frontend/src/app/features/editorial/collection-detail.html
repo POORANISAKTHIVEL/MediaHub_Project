@@ -1,0 +1,47 @@
+@if (loading()) {
+  <app-loading-spinner></app-loading-spinner>
+} @else if (collection(); as c) {
+  <div class="crumbs">Home / Editorial / Collections / <b>{{ c.name }}</b></div>
+  <div class="page-head">
+    <div><h1>{{ c.name }}</h1><p>Add or remove content from this collection.</p></div>
+    <div class="page-head__actions"><button class="btn btn--ghost" (click)="back()">← Back to Collections</button></div>
+  </div>
+  <div class="grid-2" style="gap:20px">
+    <div class="card">
+      <div class="card__head"><h3>Available Content</h3><span class="t-sub">{{ available().length }} items</span></div>
+      <div class="card__body">
+        <div class="tray-drop">
+          @for (item of available(); track item.contentId) {
+            <div class="tray-item">
+              <span>{{ item.title }}</span>
+              @if (auth.hasPermission('content:write')) {
+                <button class="btn btn--ghost btn--sm" (click)="add(item)">+ Add</button>
+              }
+            </div>
+          } @empty {
+            <div class="tray-empty">All content is already in this collection.</div>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h3>In Collection</h3><span class="t-sub">{{ inCollection().length }} items</span></div>
+      <div class="card__body">
+        <div class="tray-drop">
+          @for (item of inCollection(); track item.contentId) {
+            <div class="tray-item">
+              <span>{{ item.title }}</span>
+              @if (auth.hasPermission('content:write')) {
+                <button class="btn btn--danger btn--sm" (click)="remove(item)">Remove</button>
+              }
+            </div>
+          } @empty {
+            <div class="tray-empty">No items in this collection yet.</div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="empty"><div class="empty__ico">▦</div><h3>Collection not found</h3></div>
+}

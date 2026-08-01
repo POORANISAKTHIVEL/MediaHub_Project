@@ -1,0 +1,50 @@
+<div class="crumbs">Home / Royalty / <b>Statements</b></div>
+<div class="page-head">
+  <div><h1>Royalty Statements</h1><p>Generate, finalise and mark statements as paid.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary" (click)="openGenerate()">+ Generate</button></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Statement</th><th>Creator</th><th>Period</th><th>Revenue</th><th>Royalty</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (s of statements(); track s.statementID) {
+          <tr>
+            <td class="mono t-primary" style="cursor:pointer" (click)="view(s)">STMT-{{ s.statementID }}</td>
+            <td>Creator #{{ s.creatorID }}</td>
+            <td>{{ s.period }}</td>
+            <td>${{ s.totalRevenue.toLocaleString() }}</td>
+            <td>${{ s.royaltyAmount.toLocaleString() }}</td>
+            <td><app-status-badge [status]="s.status"></app-status-badge></td>
+            <td>
+              <app-row-menu [items]="menuFor(s)" (actionSelected)="onAction($event, s)"></app-row-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (generating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Generate Royalty Statement</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Creator ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.creatorID"></div>
+        <div class="field"><label>Period <span class="req">*</span></label><input class="input" [(ngModel)]="form.period" placeholder="e.g. 2026-Q3"></div>
+        <div class="grid-2">
+          <div class="field"><label>Total Views</label><input class="input" type="number" [(ngModel)]="form.totalViews"></div>
+          <div class="field"><label>Total Revenue (USD)</label><input class="input" type="number" [(ngModel)]="form.totalRevenue"></div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="generating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="generate()">Generate</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,68 @@
+<div class="crumbs">Home / Content / <b>Licensing</b></div>
+<div class="tabs">
+  <a class="tab active" routerLink="/licensing">Licenses</a>
+  <a class="tab" routerLink="/licensing/expiring">Expiring Soon</a>
+  <a class="tab" routerLink="/licensing/territory">Territory Restrictions</a>
+</div>
+<div class="page-head">
+  <div><h1>License Agreements</h1><p>Manage content licenses and territory restrictions.</p></div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" routerLink="/licensing/expiring">⚠ Expiring soon ({{ expiringSoon().length }})</a>
+    <button class="btn btn--primary tip" data-tip="New License" (click)="openCreate()">+ License</button>
+  </div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>License ID</th><th>Content ID</th><th>Licensee</th><th>Territory</th><th>Valid Until</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (l of licenses(); track l.licenseId) {
+          <tr>
+            <td class="mono t-primary">LIC-{{ l.licenseId }}</td>
+            <td>CNT-{{ l.contentId }}</td>
+            <td>{{ l.licenseeRef }}</td>
+            <td>{{ l.territory }}</td>
+            <td>{{ l.endDate }}</td>
+            <td><app-status-badge [status]="l.status"></app-status-badge></td>
+            <td><app-row-menu [items]="menuFor(l)" (actionSelected)="onAction($event, l)"></app-row-menu></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="t-sub" style="text-align:center;padding:24px">No licenses yet.</td></tr>
+        }
+      </tbody>
+    </table>
+    <div class="pagination"><span>Showing <b>1–{{ licenses().length }}</b> of <b>{{ licenses().length }}</b></span></div>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New License Agreement</h3><span class="icon-btn" (click)="creating.set(false)">✕</span></div>
+      <div class="modal__body">
+        <div class="grid-2">
+          <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentId"></div>
+          <div class="field"><label>Licensor ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.licensorId"></div>
+        </div>
+        <div class="field"><label>Licensee Ref <span class="req">*</span></label><input class="input" [(ngModel)]="form.licenseeRef" placeholder="e.g. StreamCo Global"></div>
+        <div class="grid-2">
+          <div class="field"><label>Territory <span class="req">*</span></label><input class="input" [(ngModel)]="form.territory"></div>
+          <div class="field"><label>Rights Type</label>
+            <select class="select" [(ngModel)]="form.rightsType">
+              <option>Exclusive</option><option>Non-Exclusive</option><option>Limited</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Start Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.startDate"></div>
+          <div class="field"><label>End Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.endDate"></div>
+        </div>
+        <div class="field"><label>License Fee (USD)</label><input class="input" type="number" [(ngModel)]="form.licenseFee"></div>
+      </div>
+      <div class="modal__foot"><button class="btn btn--primary" style="width:100%;justify-content:center" (click)="create()">Create</button></div>
+    </div>
+  </div>
+}

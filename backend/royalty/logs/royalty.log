@@ -1,0 +1,769 @@
+2026-08-01 10:45:13.756 [main] INFO  c.m.royalty.RoyaltyApplication - Starting RoyaltyApplication v0.0.1-SNAPSHOT using Java 21.0.2 with PID 29812 (C:\Users\2506595\Desktop\MediaHub\backend\royalty\target\royalty-0.0.1-SNAPSHOT.jar started by 2506595 in C:\Users\2506595\Desktop\MediaHub\backend\royalty)
+2026-08-01 10:45:13.761 [main] DEBUG c.m.royalty.RoyaltyApplication - Running with Spring Boot v3.3.4, Spring v6.1.13
+2026-08-01 10:45:13.762 [main] INFO  c.m.royalty.RoyaltyApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-01 10:45:20.324 [main] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$DeferringLoadBalancerInterceptorConfig' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$DeferringLoadBalancerInterceptorConfig] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [lbRestClientPostProcessor] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2026-08-01 10:45:20.347 [main] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'deferringLoadBalancerInterceptor' of type [org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-08-01 10:45:20.376 [main] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerBeanPostProcessorAutoConfiguration' of type [org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerBeanPostProcessorAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [loadBalancerWebClientBuilderBeanPostProcessor] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2026-08-01 10:45:20.386 [main] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerBeanPostProcessorAutoConfiguration$ReactorDeferringLoadBalancerFilterConfig' of type [org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerBeanPostProcessorAutoConfiguration$ReactorDeferringLoadBalancerFilterConfig] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [loadBalancerWebClientBuilderBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-08-01 10:45:20.395 [main] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'reactorDeferringLoadBalancerExchangeFilterFunction' of type [org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [loadBalancerWebClientBuilderBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-08-01 10:45:21.839 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-01 10:45:21.840 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-08-01 10:45:21.941 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-01 10:45:23.213 [main] DEBUG c.mediahub.royalty.config.JwtFilter - Filter 'jwtFilter' configured for use
+2026-08-01 10:45:25.140 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-08-01 10:45:26.287 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@106b476a
+2026-08-01 10:45:26.292 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-08-01 10:45:28.567 [main] DEBUG org.hibernate.SQL - 
+    create table royalty_payout (
+        payoutid integer not null auto_increment,
+        amount float(53) not null,
+        creatorid integer not null,
+        method varchar(255),
+        payout_date datetime(6),
+        statementid integer not null,
+        status varchar(255),
+        primary key (payoutid)
+    ) engine=InnoDB
+2026-08-01 10:45:28.768 [main] DEBUG org.hibernate.SQL - 
+    create table royalty_rule (
+        ruleid integer not null auto_increment,
+        creator_tier varchar(255) not null,
+        effective_date datetime(6),
+        minimum_payout_threshold float(53),
+        payout_frequency varchar(255),
+        revenue_share_percent float(53) not null,
+        status varchar(255),
+        primary key (ruleid)
+    ) engine=InnoDB
+2026-08-01 10:45:28.830 [main] DEBUG org.hibernate.SQL - 
+    create table royalty_statement (
+        statementid integer not null auto_increment,
+        creatorid integer not null,
+        period varchar(255),
+        royalty_amount float(53),
+        status varchar(255),
+        total_revenue float(53),
+        total_views bigint,
+        primary key (statementid)
+    ) engine=InnoDB
+2026-08-01 10:45:29.959 [main] INFO  c.m.r.c.Resilience4jCircuitBreakerConfig - Circuit Breaker added: externalServiceBreaker
+2026-08-01 10:45:30.181 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-08-01 10:45:30.329 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 4d045b20-e787-4c55-969a-ba9abfc64df7
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-01 10:45:34.970 [main] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-08-01 10:45:35.196 [main] INFO  c.netflix.discovery.DiscoveryClient - Initializing Eureka in region us-east-1
+2026-08-01 10:45:35.207 [main] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 10:45:35.225 [main] INFO  c.netflix.discovery.DiscoveryClient - Disable delta property : false
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Single vip registry refresh property : null
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Force full registry fetch : false
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Application is null : false
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Registered Applications size is zero : true
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Application version is -1: true
+2026-08-01 10:45:35.226 [main] INFO  c.netflix.discovery.DiscoveryClient - Getting all instance registry info from the eureka server
+2026-08-01 10:45:36.113 [main] INFO  c.netflix.discovery.DiscoveryClient - The response status is 200
+2026-08-01 10:45:36.117 [main] INFO  c.netflix.discovery.DiscoveryClient - Starting heartbeat executor: renew interval is: 10
+2026-08-01 10:45:36.121 [main] INFO  c.n.discovery.InstanceInfoReplicator - InstanceInfoReplicator onDemand update allowed rate per min is 4
+2026-08-01 10:45:36.126 [main] INFO  c.netflix.discovery.DiscoveryClient - Discovery Client initialized at timestamp 1785561336123 with initial instances count: 6
+2026-08-01 10:45:36.144 [main] INFO  c.netflix.discovery.DiscoveryClient - Saw local status change event StatusChangeEvent [timestamp=1785561336144, current=UP, previous=STARTING]
+2026-08-01 10:45:36.147 [DiscoveryClient-InstanceInfoReplicator-%d] INFO  c.netflix.discovery.DiscoveryClient - DiscoveryClient_MEDIAHUB-ROYALTY/LTIN709840.cts.com:mediahub-royalty:8045: registering service...
+2026-08-01 10:45:36.285 [DiscoveryClient-InstanceInfoReplicator-%d] INFO  c.netflix.discovery.DiscoveryClient - DiscoveryClient_MEDIAHUB-ROYALTY/LTIN709840.cts.com:mediahub-royalty:8045 - registration status: 204
+2026-08-01 10:45:36.295 [main] INFO  c.m.royalty.RoyaltyApplication - Started RoyaltyApplication in 24.307 seconds (process running for 25.676)
+2026-08-01 10:45:36.555 [main] INFO  c.m.royalty.RoyaltyApplication - =====================================
+2026-08-01 10:45:36.556 [main] INFO  c.m.royalty.RoyaltyApplication - Royalty and Revenue Management Module
+2026-08-01 10:45:36.556 [main] INFO  c.m.royalty.RoyaltyApplication - =====================================
+2026-08-01 10:45:36.557 [main] INFO  c.m.royalty.RoyaltyApplication - Application 'mediahub-royalty' is running!
+2026-08-01 10:45:36.557 [main] INFO  c.m.royalty.RoyaltyApplication - Active profiles: []
+2026-08-01 10:45:36.558 [main] INFO  c.m.royalty.RoyaltyApplication - Database URL: jdbc:mysql://localhost:3306/mediahub_royalty?createDatabaseIfNotExist=true
+2026-08-01 10:45:36.558 [main] INFO  c.m.royalty.RoyaltyApplication - Server port: 8045
+2026-08-01 10:45:36.558 [main] INFO  c.m.royalty.RoyaltyApplication - =====================================
+2026-08-01 10:49:40.409 [http-nio-8045-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-01 10:49:40.554 [http-nio-8045-exec-1] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:49:40.669 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyRuleController - GET /api/royalty-rules - Fetch all rules
+2026-08-01 10:49:40.669 [http-nio-8045-exec-1] DEBUG c.m.r.service.RoyaltyRuleService - Fetching all royalty rules
+2026-08-01 10:49:41.234 [http-nio-8045-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rr1_0.ruleid,
+        rr1_0.creator_tier,
+        rr1_0.effective_date,
+        rr1_0.minimum_payout_threshold,
+        rr1_0.payout_frequency,
+        rr1_0.revenue_share_percent,
+        rr1_0.status 
+    from
+        royalty_rule rr1_0
+2026-08-01 10:49:41.252 [http-nio-8045-exec-1] INFO  c.m.r.service.RoyaltyRuleService - Retrieved 0 royalty rules
+2026-08-01 10:49:41.253 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyRuleController - Retrieved 0 rules
+2026-08-01 10:50:35.233 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 10:52:01.950 [http-nio-8045-exec-3] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:52:02.033 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyRuleController - POST /api/royalty-rules - Create rule for CreatorTier: Platinum
+2026-08-01 10:52:02.034 [http-nio-8045-exec-3] DEBUG c.m.r.service.RoyaltyRuleService - Creating new royalty rule for CreatorTier: Platinum
+2026-08-01 10:52:02.128 [http-nio-8045-exec-3] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        royalty_rule
+        (creator_tier, effective_date, minimum_payout_threshold, payout_frequency, revenue_share_percent, status) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2026-08-01 10:52:02.182 [http-nio-8045-exec-3] INFO  c.m.r.service.RoyaltyRuleService - Royalty rule created successfully with ID: 1
+2026-08-01 10:52:02.182 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyRuleController - Rule created successfully with ID: 1
+2026-08-01 10:52:02.216 [http-nio-8045-exec-4] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:52:02.221 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyRuleController - GET /api/royalty-rules - Fetch all rules
+2026-08-01 10:52:02.221 [http-nio-8045-exec-4] DEBUG c.m.r.service.RoyaltyRuleService - Fetching all royalty rules
+2026-08-01 10:52:02.223 [http-nio-8045-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        rr1_0.ruleid,
+        rr1_0.creator_tier,
+        rr1_0.effective_date,
+        rr1_0.minimum_payout_threshold,
+        rr1_0.payout_frequency,
+        rr1_0.revenue_share_percent,
+        rr1_0.status 
+    from
+        royalty_rule rr1_0
+2026-08-01 10:52:02.238 [http-nio-8045-exec-4] INFO  c.m.r.service.RoyaltyRuleService - Retrieved 1 royalty rules
+2026-08-01 10:52:02.239 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyRuleController - Retrieved 1 rules
+2026-08-01 10:53:52.085 [http-nio-8045-exec-6] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:53:52.086 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyRuleController - GET /api/royalty-rules - Fetch all rules
+2026-08-01 10:53:52.086 [http-nio-8045-exec-6] DEBUG c.m.r.service.RoyaltyRuleService - Fetching all royalty rules
+2026-08-01 10:53:52.087 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rr1_0.ruleid,
+        rr1_0.creator_tier,
+        rr1_0.effective_date,
+        rr1_0.minimum_payout_threshold,
+        rr1_0.payout_frequency,
+        rr1_0.revenue_share_percent,
+        rr1_0.status 
+    from
+        royalty_rule rr1_0
+2026-08-01 10:53:52.091 [http-nio-8045-exec-6] INFO  c.m.r.service.RoyaltyRuleService - Retrieved 1 royalty rules
+2026-08-01 10:53:52.091 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyRuleController - Retrieved 1 rules
+2026-08-01 10:54:25.726 [http-nio-8045-exec-7] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:54:25.728 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyRuleController - GET /api/royalty-rules - Fetch all rules
+2026-08-01 10:54:25.728 [http-nio-8045-exec-7] DEBUG c.m.r.service.RoyaltyRuleService - Fetching all royalty rules
+2026-08-01 10:54:25.728 [http-nio-8045-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        rr1_0.ruleid,
+        rr1_0.creator_tier,
+        rr1_0.effective_date,
+        rr1_0.minimum_payout_threshold,
+        rr1_0.payout_frequency,
+        rr1_0.revenue_share_percent,
+        rr1_0.status 
+    from
+        royalty_rule rr1_0
+2026-08-01 10:54:25.733 [http-nio-8045-exec-7] INFO  c.m.r.service.RoyaltyRuleService - Retrieved 1 royalty rules
+2026-08-01 10:54:25.733 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyRuleController - Retrieved 1 rules
+2026-08-01 10:55:19.531 [http-nio-8045-exec-8] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:55:19.536 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyRuleController - GET /api/royalty-rules - Fetch all rules
+2026-08-01 10:55:19.536 [http-nio-8045-exec-8] DEBUG c.m.r.service.RoyaltyRuleService - Fetching all royalty rules
+2026-08-01 10:55:19.538 [http-nio-8045-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        rr1_0.ruleid,
+        rr1_0.creator_tier,
+        rr1_0.effective_date,
+        rr1_0.minimum_payout_threshold,
+        rr1_0.payout_frequency,
+        rr1_0.revenue_share_percent,
+        rr1_0.status 
+    from
+        royalty_rule rr1_0
+2026-08-01 10:55:19.547 [http-nio-8045-exec-8] INFO  c.m.r.service.RoyaltyRuleService - Retrieved 1 royalty rules
+2026-08-01 10:55:19.548 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyRuleController - Retrieved 1 rules
+2026-08-01 10:55:35.234 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 10:56:32.541 [http-nio-8045-exec-10] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:56:32.546 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 10:56:32.546 [http-nio-8045-exec-10] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 10:56:32.551 [http-nio-8045-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 10:56:32.567 [http-nio-8045-exec-10] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 0 royalty statements
+2026-08-01 10:56:32.567 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 0 statements
+2026-08-01 10:56:50.442 [http-nio-8045-exec-1] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:56:50.451 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyStatementController - POST /api/royalty-statements - Generate statement for CreatorID: 1
+2026-08-01 10:56:50.451 [http-nio-8045-exec-1] DEBUG c.m.r.s.RoyaltyStatementService - Generating new royalty statement for CreatorID: 1
+2026-08-01 10:56:51.662 [http-nio-8045-exec-1] INFO  c.m.royalty.client.LicensingClient - Calling Licensing service to validate licensor ID: 1
+2026-08-01 10:56:52.259 [http-nio-8045-exec-1] INFO  c.m.royalty.client.LicensingClient - Licensor 1 validation result: true
+2026-08-01 10:56:52.260 [http-nio-8045-exec-1] INFO  c.m.r.client.ContentCatalogClient - Calling Content Catalog service to fetch content for creatorId: 1
+2026-08-01 10:56:52.330 [http-nio-8045-exec-1] INFO  c.m.r.client.ContentCatalogClient - Found 1 content assets for creatorId: 1
+2026-08-01 10:56:52.331 [http-nio-8045-exec-1] INFO  c.m.royalty.client.EditorialClient - Calling Editorial service to validate approval for contentId: 1
+2026-08-01 10:56:53.838 [http-nio-8045-exec-1] INFO  c.m.royalty.client.EditorialClient - Content 1 approval validation result: true
+2026-08-01 10:56:53.844 [http-nio-8045-exec-1] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        royalty_statement
+        (creatorid, period, royalty_amount, status, total_revenue, total_views) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2026-08-01 10:56:53.854 [http-nio-8045-exec-1] INFO  c.m.r.client.NotificationClient - Sending ROYALTY notification to userId: 1, message: Your royalty statement for period '2026-Q3' has been successfully generated. Statement ID: 1
+2026-08-01 10:56:53.857 [http-nio-8045-exec-1] INFO  c.m.r.s.RoyaltyStatementService - Royalty statement generated successfully with ID: 1
+2026-08-01 10:56:53.858 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyStatementController - Statement generated successfully with ID: 1
+2026-08-01 10:56:53.886 [reactor-http-nio-6] ERROR c.m.r.client.NotificationClient - Failed to send notification for userId: 1 — Connection refused: getsockopt: localhost/127.0.0.1:8085
+2026-08-01 10:56:53.887 [http-nio-8045-exec-2] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:56:53.889 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 10:56:53.890 [http-nio-8045-exec-2] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 10:56:53.890 [http-nio-8045-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 10:56:53.895 [http-nio-8045-exec-2] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 1 royalty statements
+2026-08-01 10:56:53.896 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 1 statements
+2026-08-01 10:58:14.221 [http-nio-8045-exec-4] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:58:14.223 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 10:58:14.223 [http-nio-8045-exec-4] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 10:58:14.223 [http-nio-8045-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 10:58:14.223 [http-nio-8045-exec-4] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 1 royalty statements
+2026-08-01 10:58:14.223 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 1 statements
+2026-08-01 10:59:19.211 [http-nio-8045-exec-6] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:59:19.213 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 10:59:19.213 [http-nio-8045-exec-6] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 10:59:19.214 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 10:59:19.217 [http-nio-8045-exec-6] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 1 royalty statements
+2026-08-01 10:59:19.217 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 1 statements
+2026-08-01 10:59:50.123 [http-nio-8045-exec-7] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:59:50.130 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - POST /api/royalty-statements - Generate statement for CreatorID: 1
+2026-08-01 10:59:50.130 [http-nio-8045-exec-7] DEBUG c.m.r.s.RoyaltyStatementService - Generating new royalty statement for CreatorID: 1
+2026-08-01 10:59:50.296 [http-nio-8045-exec-7] INFO  c.m.royalty.client.LicensingClient - Calling Licensing service to validate licensor ID: 1
+2026-08-01 10:59:50.354 [http-nio-8045-exec-7] INFO  c.m.royalty.client.LicensingClient - Licensor 1 validation result: true
+2026-08-01 10:59:50.355 [http-nio-8045-exec-7] INFO  c.m.r.client.ContentCatalogClient - Calling Content Catalog service to fetch content for creatorId: 1
+2026-08-01 10:59:50.387 [http-nio-8045-exec-7] INFO  c.m.r.client.ContentCatalogClient - Found 1 content assets for creatorId: 1
+2026-08-01 10:59:50.388 [http-nio-8045-exec-7] INFO  c.m.royalty.client.EditorialClient - Calling Editorial service to validate approval for contentId: 1
+2026-08-01 10:59:50.405 [http-nio-8045-exec-7] INFO  c.m.royalty.client.EditorialClient - Content 1 approval validation result: true
+2026-08-01 10:59:50.419 [http-nio-8045-exec-7] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        royalty_statement
+        (creatorid, period, royalty_amount, status, total_revenue, total_views) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2026-08-01 10:59:50.425 [http-nio-8045-exec-7] INFO  c.m.r.client.NotificationClient - Sending ROYALTY notification to userId: 1, message: Your royalty statement for period '2026-Q4' has been successfully generated. Statement ID: 2
+2026-08-01 10:59:50.425 [http-nio-8045-exec-7] INFO  c.m.r.s.RoyaltyStatementService - Royalty statement generated successfully with ID: 2
+2026-08-01 10:59:50.425 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - Statement generated successfully with ID: 2
+2026-08-01 10:59:50.438 [reactor-http-nio-11] ERROR c.m.r.client.NotificationClient - Failed to send notification for userId: 1 — Connection refused: getsockopt: localhost/127.0.0.1:8085
+2026-08-01 10:59:50.476 [http-nio-8045-exec-8] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 10:59:50.476 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 10:59:50.476 [http-nio-8045-exec-8] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 10:59:50.476 [http-nio-8045-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 10:59:50.490 [http-nio-8045-exec-8] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 10:59:50.490 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:00:11.265 [http-nio-8045-exec-9] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:11.272 [http-nio-8045-exec-9] INFO  c.m.r.c.RoyaltyStatementController - PUT /api/royalty-statements/2/finalise - Finalise statement
+2026-08-01 11:00:11.279 [http-nio-8045-exec-9] DEBUG c.m.r.s.RoyaltyStatementService - Finalising royalty statement with ID: 2
+2026-08-01 11:00:11.483 [http-nio-8045-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.status 
+    from
+        royalty_statement rs1_0 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:00:11.557 [http-nio-8045-exec-9] DEBUG org.hibernate.SQL - 
+    update
+        royalty_statement rs1_0 
+    set
+        status=? 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:00:11.590 [http-nio-8045-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:00:11.590 [http-nio-8045-exec-9] INFO  c.m.r.client.NotificationClient - Sending ROYALTY notification to userId: 1, message: Your royalty statement (ID: 2) has been finalised and is ready for payout processing.
+2026-08-01 11:00:11.595 [http-nio-8045-exec-9] INFO  c.m.r.s.RoyaltyStatementService - Royalty statement with ID: 2 finalised successfully
+2026-08-01 11:00:11.595 [http-nio-8045-exec-9] INFO  c.m.r.c.RoyaltyStatementController - Statement with ID: 2 finalised
+2026-08-01 11:00:11.599 [reactor-http-nio-12] ERROR c.m.r.client.NotificationClient - Failed to send notification for userId: 1 — Connection refused: getsockopt: localhost/127.0.0.1:8085
+2026-08-01 11:00:11.635 [http-nio-8045-exec-10] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:11.642 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:00:11.642 [http-nio-8045-exec-10] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:00:11.642 [http-nio-8045-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:00:11.642 [http-nio-8045-exec-10] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:00:11.642 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:00:29.518 [http-nio-8045-exec-1] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:29.523 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyPayoutController - GET /api/royalty-payouts - Fetch all payouts
+2026-08-01 11:00:29.523 [http-nio-8045-exec-1] DEBUG c.m.r.service.RoyaltyPayoutService - Fetching all payouts
+2026-08-01 11:00:29.529 [http-nio-8045-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rp1_0.payoutid,
+        rp1_0.amount,
+        rp1_0.creatorid,
+        rp1_0.method,
+        rp1_0.payout_date,
+        rp1_0.statementid,
+        rp1_0.status 
+    from
+        royalty_payout rp1_0
+2026-08-01 11:00:29.552 [http-nio-8045-exec-1] INFO  c.m.r.service.RoyaltyPayoutService - Retrieved 0 payouts
+2026-08-01 11:00:29.552 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyPayoutController - Retrieved 0 payouts
+2026-08-01 11:00:35.242 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:00:40.363 [http-nio-8045-exec-2] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:40.376 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyPayoutController - POST /api/royalty-payouts - Create payout request for StatementID: 2
+2026-08-01 11:00:40.377 [http-nio-8045-exec-2] DEBUG c.m.r.service.RoyaltyPayoutService - Creating new payout with StatementID: 2 and CreatorID: 1
+2026-08-01 11:00:40.387 [http-nio-8045-exec-2] DEBUG org.hibernate.SQL - 
+    insert 
+    into
+        royalty_payout
+        (amount, creatorid, method, payout_date, statementid, status) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2026-08-01 11:00:40.414 [http-nio-8045-exec-2] INFO  c.m.r.service.RoyaltyPayoutService - Payout created successfully with ID: 1
+2026-08-01 11:00:40.414 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyPayoutController - Payout created successfully with ID: 1
+2026-08-01 11:00:40.467 [http-nio-8045-exec-3] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:40.473 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyPayoutController - GET /api/royalty-payouts - Fetch all payouts
+2026-08-01 11:00:40.473 [http-nio-8045-exec-3] DEBUG c.m.r.service.RoyaltyPayoutService - Fetching all payouts
+2026-08-01 11:00:40.475 [http-nio-8045-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        rp1_0.payoutid,
+        rp1_0.amount,
+        rp1_0.creatorid,
+        rp1_0.method,
+        rp1_0.payout_date,
+        rp1_0.statementid,
+        rp1_0.status 
+    from
+        royalty_payout rp1_0
+2026-08-01 11:00:40.479 [http-nio-8045-exec-3] INFO  c.m.r.service.RoyaltyPayoutService - Retrieved 1 payouts
+2026-08-01 11:00:40.479 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyPayoutController - Retrieved 1 payouts
+2026-08-01 11:00:58.433 [http-nio-8045-exec-4] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:58.435 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyPayoutController - PUT /api/royalty-payouts/1/process - Process payout
+2026-08-01 11:00:58.436 [http-nio-8045-exec-4] DEBUG c.m.r.service.RoyaltyPayoutService - Processing payout with ID: 1
+2026-08-01 11:00:58.445 [http-nio-8045-exec-4] DEBUG org.hibernate.SQL - 
+    update
+        royalty_payout rp1_0 
+    set
+        status=? 
+    where
+        rp1_0.payoutid=?
+2026-08-01 11:00:58.455 [http-nio-8045-exec-4] INFO  c.m.r.service.RoyaltyPayoutService - Payout with ID: 1 processed successfully
+2026-08-01 11:00:58.458 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyPayoutController - Payout with ID: 1 processed
+2026-08-01 11:00:58.517 [http-nio-8045-exec-5] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:00:58.518 [http-nio-8045-exec-5] INFO  c.m.r.c.RoyaltyPayoutController - GET /api/royalty-payouts - Fetch all payouts
+2026-08-01 11:00:58.518 [http-nio-8045-exec-5] DEBUG c.m.r.service.RoyaltyPayoutService - Fetching all payouts
+2026-08-01 11:00:58.523 [http-nio-8045-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        rp1_0.payoutid,
+        rp1_0.amount,
+        rp1_0.creatorid,
+        rp1_0.method,
+        rp1_0.payout_date,
+        rp1_0.statementid,
+        rp1_0.status 
+    from
+        royalty_payout rp1_0
+2026-08-01 11:00:58.528 [http-nio-8045-exec-5] INFO  c.m.r.service.RoyaltyPayoutService - Retrieved 1 payouts
+2026-08-01 11:00:58.528 [http-nio-8045-exec-5] INFO  c.m.r.c.RoyaltyPayoutController - Retrieved 1 payouts
+2026-08-01 11:01:15.316 [http-nio-8045-exec-6] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:01:15.318 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:01:15.320 [http-nio-8045-exec-6] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:01:15.320 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:01:15.328 [http-nio-8045-exec-6] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:01:15.328 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:01:27.627 [http-nio-8045-exec-7] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:01:27.631 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - PUT /api/royalty-statements/2/mark-paid - Mark statement as paid
+2026-08-01 11:01:27.633 [http-nio-8045-exec-7] DEBUG c.m.r.s.RoyaltyStatementService - Marking royalty statement with ID: 2 as Paid
+2026-08-01 11:01:27.633 [http-nio-8045-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.status 
+    from
+        royalty_statement rs1_0 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:01:27.642 [http-nio-8045-exec-7] DEBUG org.hibernate.SQL - 
+    update
+        royalty_statement rs1_0 
+    set
+        status=? 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:01:27.659 [http-nio-8045-exec-7] INFO  c.m.r.s.RoyaltyStatementService - Royalty statement with ID: 2 marked as Paid successfully
+2026-08-01 11:01:27.659 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - Statement with ID: 2 marked as paid
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:01:27.729 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:05:15.949 [http-nio-8045-exec-10] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:05:15.950 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:05:15.950 [http-nio-8045-exec-10] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:05:15.951 [http-nio-8045-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:05:15.955 [http-nio-8045-exec-10] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:05:15.955 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:05:35.246 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:09:28.285 [http-nio-8045-exec-2] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:09:28.285 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:09:28.285 [http-nio-8045-exec-2] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:09:28.285 [http-nio-8045-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:09:28.291 [http-nio-8045-exec-2] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:09:28.291 [http-nio-8045-exec-2] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:10:25.193 [http-nio-8045-exec-3] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:10:25.196 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:10:25.196 [http-nio-8045-exec-3] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:10:25.196 [http-nio-8045-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:10:25.201 [http-nio-8045-exec-3] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:10:25.201 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:10:35.255 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:11:31.223 [http-nio-8045-exec-5] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:11:31.225 [http-nio-8045-exec-5] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:11:31.225 [http-nio-8045-exec-5] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:11:31.225 [http-nio-8045-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:11:31.232 [http-nio-8045-exec-5] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:11:31.232 [http-nio-8045-exec-5] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:11:49.565 [http-nio-8045-exec-6] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:11:49.567 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - PUT /api/royalty-statements/1/finalise - Finalise statement
+2026-08-01 11:11:49.567 [http-nio-8045-exec-6] DEBUG c.m.r.s.RoyaltyStatementService - Finalising royalty statement with ID: 1
+2026-08-01 11:11:49.570 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.status 
+    from
+        royalty_statement rs1_0 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:11:49.580 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    update
+        royalty_statement rs1_0 
+    set
+        status=? 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:11:49.597 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0 
+    where
+        rs1_0.statementid=?
+2026-08-01 11:11:49.599 [http-nio-8045-exec-6] INFO  c.m.r.client.NotificationClient - Sending ROYALTY notification to userId: 1, message: Your royalty statement (ID: 1) has been finalised and is ready for payout processing.
+2026-08-01 11:11:49.606 [http-nio-8045-exec-6] INFO  c.m.r.s.RoyaltyStatementService - Royalty statement with ID: 1 finalised successfully
+2026-08-01 11:11:49.606 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - Statement with ID: 1 finalised
+2026-08-01 11:11:49.683 [http-nio-8045-exec-7] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:11:49.689 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 11:11:49.689 [http-nio-8045-exec-7] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 11:11:49.691 [http-nio-8045-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:11:49.698 [http-nio-8045-exec-7] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 11:11:49.698 [http-nio-8045-exec-7] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 11:11:50.012 [reactor-http-nio-1] INFO  c.m.r.client.NotificationClient - Notification sent successfully for userId: 1
+2026-08-01 11:15:35.268 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:20:35.274 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:24:00.564 [http-nio-8045-exec-9] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:24:00.577 [http-nio-8045-exec-9] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 11:24:00.577 [http-nio-8045-exec-9] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 11:24:00.582 [http-nio-8045-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:24:42.943 [http-nio-8045-exec-10] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:24:42.981 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 11:24:42.983 [http-nio-8045-exec-10] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 11:24:42.983 [http-nio-8045-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:25:35.288 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:25:41.676 [http-nio-8045-exec-1] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:25:41.682 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 11:25:41.684 [http-nio-8045-exec-1] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 11:25:41.684 [http-nio-8045-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:29:03.481 [http-nio-8045-exec-3] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:29:03.484 [http-nio-8045-exec-3] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 11:29:03.485 [http-nio-8045-exec-3] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 11:29:03.486 [http-nio-8045-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:29:45.853 [http-nio-8045-exec-4] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 1
+2026-08-01 11:29:45.853 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 11:29:45.853 [http-nio-8045-exec-4] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 11:29:45.853 [http-nio-8045-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 11:30:35.299 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:35:35.311 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:40:35.314 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:45:35.321 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:50:35.326 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 11:53:52.805 [HikariPool-1 housekeeper] WARN  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1m25s328ms368µs).
+2026-08-01 11:56:30.649 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:01:30.697 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:06:08.744 [HikariPool-1 housekeeper] WARN  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=45s747ms227µs900ns).
+2026-08-01 12:06:46.444 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:11:46.456 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:16:46.465 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:20:26.518 [HikariPool-1 housekeeper] WARN  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3m47s584ms789µs900ns).
+2026-08-01 12:21:12.143 [http-nio-8045-exec-6] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 3
+2026-08-01 12:21:12.180 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 12:21:12.181 [http-nio-8045-exec-6] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 12:21:12.200 [http-nio-8045-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 12:21:12.216 [http-nio-8045-exec-6] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 12:21:12.216 [http-nio-8045-exec-6] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 12:25:04.043 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:30:04.054 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:34:01.497 [http-nio-8045-exec-8] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 6
+2026-08-01 12:34:01.497 [http-nio-8045-exec-8] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 12:34:01.497 [http-nio-8045-exec-8] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 12:34:01.497 [http-nio-8045-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 12:35:05.482 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:38:25.287 [http-nio-8045-exec-10] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 6
+2026-08-01 12:38:25.287 [http-nio-8045-exec-10] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements/analytics
+2026-08-01 12:38:25.287 [http-nio-8045-exec-10] INFO  c.m.r.s.RoyaltyStatementService - Fetching royalty analytics
+2026-08-01 12:38:25.287 [http-nio-8045-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 6
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 12:39:09.861 [http-nio-8045-exec-1] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 12:40:05.499 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:45:05.510 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] DEBUG c.mediahub.royalty.config.JwtFilter - JWT valid for user 6
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyStatementController - GET /api/royalty-statements - Fetch all statements
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] DEBUG c.m.r.s.RoyaltyStatementService - Fetching all royalty statements
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        rs1_0.statementid,
+        rs1_0.creatorid,
+        rs1_0.period,
+        rs1_0.royalty_amount,
+        rs1_0.status,
+        rs1_0.total_revenue,
+        rs1_0.total_views 
+    from
+        royalty_statement rs1_0
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] INFO  c.m.r.s.RoyaltyStatementService - Retrieved 2 royalty statements
+2026-08-01 12:50:37.500 [http-nio-8045-exec-4] INFO  c.m.r.c.RoyaltyStatementController - Retrieved 2 statements
+2026-08-01 12:50:58.854 [HikariPool-1 housekeeper] WARN  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=5m467ms623µs800ns).
+2026-08-01 12:54:35.996 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 12:59:36.004 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 13:04:36.017 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 13:09:36.037 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 13:14:36.040 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 13:19:36.042 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:15:25.118 [HikariPool-1 housekeeper] WARN  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h53m55s746ms819µs100ns).
+2026-08-01 15:18:01.790 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:23:01.798 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:28:01.808 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:33:01.817 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:38:01.832 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:43:01.837 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration
+2026-08-01 15:48:01.861 [AsyncResolver-bootstrap-executor-%d] INFO  c.n.d.s.r.aws.ConfigClusterResolver - Resolving eureka endpoints via configuration

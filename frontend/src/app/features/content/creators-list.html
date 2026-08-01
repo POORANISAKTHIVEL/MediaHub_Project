@@ -1,0 +1,69 @@
+<div class="crumbs">Home / Content / <b>Creators</b></div>
+<div class="page-head">
+  <div><h1>Creators</h1><p>Manage creator profiles, onboarding status and royalty tiers.</p></div>
+  <div class="page-head__actions">
+    <button class="btn btn--ghost">⤓ Export</button>
+    @if (auth.hasPermission('content:write')) {
+      <button class="btn btn--primary tip" data-tip="New Creator" (click)="openCreate()">+ Creator</button>
+    }
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="search">⌕ &nbsp;Search by name or ID…</div>
+  <div class="toolbar__spacer"></div>
+  <span style="font-size:13px;color:var(--ink-400)">{{ creators().length }} creators</span>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Creator</th><th>Genre</th><th>Country</th><th>Royalty Tier</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (c of creators(); track c.creatorId) {
+          <tr>
+            <td><div class="avatar-cell"><span class="avatar" style="border-radius:50%">{{ c.displayName.slice(0,2).toUpperCase() }}</span><div><div class="t-primary">{{ c.displayName }}</div><div class="t-sub">CRT-{{ c.creatorId }}</div></div></div></td>
+            <td>{{ c.genre }}</td>
+            <td>{{ c.country }}</td>
+            <td><span class="badge b-violet">{{ c.royaltyTier }}</span></td>
+            <td><app-status-badge [status]="c.status"></app-status-badge></td>
+            <td><app-row-menu [items]="menuFor(c)" (actionSelected)="onAction($event, c)"></app-row-menu></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <div class="pagination"><span>Showing <b>1–{{ creators().length }}</b> of <b>{{ creators().length }}</b></span></div>
+  }
+</div>
+
+@if (creating() || editing()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>{{ editing() ? 'Edit Creator' : 'New Creator' }}</h3></div>
+      <div class="modal__body">
+        <div class="grid-2">
+          <div class="field"><label>Display Name <span class="req">*</span></label><input class="input" [(ngModel)]="form.displayName"></div>
+          <div class="field"><label>Genre</label><input class="input" [(ngModel)]="form.genre"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Country</label><input class="input" [(ngModel)]="form.country"></div>
+          <div class="field"><label>Royalty Tier</label>
+            <select class="select" [(ngModel)]="form.royaltyTier">
+              <option>Standard</option><option>Silver</option><option>Gold</option><option>Platinum</option>
+            </select>
+          </div>
+        </div>
+        @if (!editing()) {
+          <div class="field"><label>Linked User ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.userId"></div>
+        }
+        <div class="field"><label>Bank Account Reference</label><input class="input" [(ngModel)]="form.bankAccountRef"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false); editing.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="save()">{{ editing() ? 'Save' : 'Create' }}</button>
+      </div>
+    </div>
+  </div>
+}

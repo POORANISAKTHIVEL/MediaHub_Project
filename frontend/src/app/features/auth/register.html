@@ -1,0 +1,73 @@
+<div class="auth">
+  <div class="auth__aside">
+    <div class="brand"><div class="brand__logo">M</div><div class="brand__name" style="color:#fff">MediaHub</div></div>
+    <div style="margin-top:auto;margin-bottom:34px;display:flex;flex-direction:column;align-items:center;gap:18px">
+      <div style="width:112px;height:112px;border-radius:28px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+        <span style="font-size:54px;font-weight:800;color:#fff;letter-spacing:-2px">M</span>
+      </div>
+      <div style="font-size:26px;font-weight:700;letter-spacing:.4px">MediaHub</div>
+    </div>
+    <h2 style="margin-top:0">Join MediaHub.</h2>
+    <p>Create an account to start managing and consuming digital content.</p>
+    <div class="auth__points">
+      <div>✓ &nbsp;Free subscriber account</div>
+      <div>✓ &nbsp;Upgrade any time</div>
+      <div>✓ &nbsp;Cancel whenever you like</div>
+    </div>
+  </div>
+  <div class="auth__form">
+    <div class="auth__card">
+      <h1>Create your account</h1>
+      <p>It only takes a minute</p>
+      <form class="form-col" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field">
+          <label>Full name <span class="req">*</span></label>
+          <input class="input" [class.input--err]="nameError" formControlName="name" name="name" autocomplete="name" placeholder="Jordan Diaz">
+          <span class="err">{{ nameError }}</span>
+        </div>
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input class="input" [class.input--err]="emailError" formControlName="email" name="email" autocomplete="username" placeholder="you@company.com">
+          <span class="err">{{ emailError }}</span>
+        </div>
+        <div class="field">
+          <label>Phone number <span class="req">*</span></label>
+          <input class="input" [class.input--err]="phoneError" formControlName="phone" placeholder="e.g. 9876543210">
+          <span class="err">{{ phoneError }}</span>
+        </div>
+        <div class="field">
+          <label>Country <span class="req">*</span></label>
+          <input class="input" [class.input--err]="countryError" formControlName="country" placeholder="e.g. IN">
+          <span class="err">{{ countryError }}</span>
+        </div>
+        <div class="field">
+          <label>Password <span class="req">*</span></label>
+          <input class="input" [class.input--err]="passwordError" type="password" formControlName="password" name="new-password" autocomplete="new-password">
+          <span class="hint">Min 8 chars, 1 number, 1 uppercase.</span>
+          <span class="err">{{ passwordError }}</span>
+        </div>
+        <div class="field">
+          <label>Confirm password <span class="req">*</span></label>
+          <input class="input" [class.input--err]="confirmError" type="password" formControlName="confirmPassword" name="confirm-password" autocomplete="new-password">
+          <span class="err">{{ confirmError }}</span>
+        </div>
+        <div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-700);cursor:pointer">
+            <span class="check" [class.on]="form.getRawValue().agree" (click)="toggleAgree()"></span>
+            I agree to the Terms &amp; Privacy Policy
+          </label>
+          <span class="err">{{ agreeError }}</span>
+        </div>
+        @if (serverError()) {
+          <div class="abanner">{{ serverError() }}</div>
+        }
+        <button class="btn btn--primary" type="submit" style="width:100%;justify-content:center;height:44px" [disabled]="submitting()">
+          {{ submitting() ? 'Creating account…' : 'Create account' }}
+        </button>
+        <p style="text-align:center;font-size:14px;color:var(--ink-500)">
+          Already have an account? <a class="btn--link" routerLink="/login">Sign in</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

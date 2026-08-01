@@ -1,0 +1,70 @@
+<div class="crumbs">Home / Royalty / <b>Payouts</b></div>
+<div class="page-head">
+  <div><h1>Royalty Payouts</h1><p>Process, retry and track creator payouts.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary" (click)="openCreate()">+ Process</button></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Payout</th><th>Statement</th><th>Creator</th><th>Amount</th><th>Method</th><th>Status</th><th style="width:220px">Actions</th></tr></thead>
+      <tbody>
+        @for (p of payouts(); track p.payoutID) {
+          <tr>
+            <td class="mono t-primary">PAY-{{ p.payoutID }}</td>
+            <td class="mono">STMT-{{ p.statementID }}</td>
+            <td>Creator #{{ p.creatorID }}</td>
+            <td>${{ p.amount.toLocaleString() }}</td>
+            <td>{{ p.method }}</td>
+            <td><app-status-badge [status]="p.status"></app-status-badge></td>
+            <td>
+              @if (menuFor(p).length > 0) {
+                <app-row-menu [items]="menuFor(p)" (actionSelected)="onAction($event, p)"></app-row-menu>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="t-sub" style="text-align:center;padding:24px">No payouts yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Process Payout</h3></div>
+      <div class="modal__body">
+        <div class="grid-2">
+          <div class="field"><label>Statement ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.statementID"></div>
+          <div class="field"><label>Creator ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.creatorID"></div>
+        </div>
+        <div class="field"><label>Amount (USD) <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.amount"></div>
+        <div class="field"><label>Method</label>
+          <select class="select" [(ngModel)]="form.method">
+            <option>BankTransfer</option><option>WalletCredit</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (failing(); as p) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Mark Payout Failed</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Reason <span class="req">*</span></label><textarea class="textarea" rows="3" [(ngModel)]="failReason"></textarea></div>
+      </div>
+      <div class="modal__foot"><button class="btn btn--red" (click)="confirmFail()">Mark Failed</button></div>
+    </div>
+  </div>
+}

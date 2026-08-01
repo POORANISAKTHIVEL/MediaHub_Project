@@ -1,0 +1,66 @@
+<div class="crumbs">Home / Commerce / <b>Subscriptions</b></div>
+<div class="tabs">
+  <a class="tab active" routerLink="/subscription/plans">Plans</a>
+  <a class="tab" routerLink="/subscription/subscriptions">User Subscriptions</a>
+  <a class="tab" routerLink="/subscription/history">History</a>
+</div>
+<div class="page-head">
+  <div><h1>Plan Management</h1><p>Create and manage subscription tiers, pricing and access levels.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary" (click)="openCreate()">+ Plan</button></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Plan</th><th>Price</th><th>Billing Cycle</th><th>Access Level</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (p of plans(); track p.planId) {
+          <tr>
+            <td class="t-primary" style="font-weight:600">{{ p.name }}</td>
+            <td>${{ p.price }}</td>
+            <td>{{ p.billingCycle }}</td>
+            <td>{{ p.contentAccessLevel }}</td>
+            <td><app-status-badge [status]="p.status"></app-status-badge></td>
+            <td>
+              <app-row-menu [items]="menuFor(p)" (actionSelected)="onAction($event, p)"></app-row-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating() || editing()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>{{ editing() ? 'Edit Plan' : 'New Plan' }}</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Name <span class="req">*</span></label><input class="input" [(ngModel)]="form.name" [disabled]="!!editing()"></div>
+        <div class="grid-2">
+          <div class="field"><label>Price (USD)</label><input class="input" type="number" [(ngModel)]="form.price"></div>
+          <div class="field"><label>Billing Cycle</label>
+            <select class="select" [(ngModel)]="form.billingCycle">
+              <option>Monthly</option><option>Quarterly</option><option>Annual</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Content Access Level</label><input class="input" [(ngModel)]="form.contentAccessLevel"></div>
+        <div class="grid-2">
+          <div class="field"><label>Max Devices</label><input class="input" type="number" [(ngModel)]="form.maxDevices"></div>
+          <div class="field"><label>Downloads Allowed</label>
+            <select class="select" [(ngModel)]="form.downloadAllowed">
+              <option [ngValue]="0">No</option><option [ngValue]="1">Yes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false); editing.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="save()">{{ editing() ? 'Save' : 'Create' }}</button>
+      </div>
+    </div>
+  </div>
+}

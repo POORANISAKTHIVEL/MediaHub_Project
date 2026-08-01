@@ -1,0 +1,30 @@
+<div class="crumbs">Home / <b>Editorial</b></div>
+<div class="tabs">
+  <div class="tab" [class.active]="tab() === 'Pending'" (click)="tab.set('Pending')">Pending</div>
+  <div class="tab" [class.active]="tab() === 'Approved'" (click)="tab.set('Approved')">Approved</div>
+  <div class="tab" [class.active]="tab() === 'Rejected'" (click)="tab.set('Rejected')">Rejected</div>
+</div>
+<div class="page-head"><div><h1>Editorial Reviews</h1><p>Review submitted content before it is published.</p></div></div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Review ID</th><th>Content</th><th>Submitted</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (r of rows(); track r.reviewID) {
+          <tr>
+            <td class="mono t-primary">REV-{{ r.reviewID }}</td>
+            <td class="t-primary" style="font-weight:500">{{ titleFor(r.contentID) }}</td>
+            <td>{{ r.submissionDate }}</td>
+            <td><app-status-badge [status]="r.decision || r.status"></app-status-badge></td>
+            <td><app-row-menu [items]="menuFor(r)" (actionSelected)="onRowAction($event, r)"></app-row-menu></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="t-sub" style="text-align:center;padding:24px">No reviews in this tab.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

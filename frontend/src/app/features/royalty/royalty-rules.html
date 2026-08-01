@@ -1,0 +1,87 @@
+<div class="crumbs">Home / Royalty / <b>Rules</b></div>
+<div class="page-head">
+  <div><h1>Royalty Rules</h1><p>Configure revenue-share percentages by creator tier.</p></div>
+  <div class="page-head__actions"><button class="btn btn--primary" (click)="openCreate()">+ Rule</button></div>
+</div>
+
+<div class="card">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
+    <table>
+      <thead><tr><th>Creator Tier</th><th>Revenue Share</th><th>Min Payout</th><th>Frequency</th><th>Effective Date</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+      <tbody>
+        @for (r of rules(); track r.ruleID) {
+          <tr>
+            <td class="t-primary" style="font-weight:600">{{ r.creatorTier }}</td>
+            <td>{{ r.revenueSharePercent }}%</td>
+            <td>${{ r.minimumPayoutThreshold }}</td>
+            <td>{{ r.payoutFrequency }}</td>
+            <td class="t-sub">{{ r.effectiveDate }}</td>
+            <td><app-status-badge [status]="r.status"></app-status-badge></td>
+            <td><app-row-menu [items]="menuFor(r)" (actionSelected)="onAction($event, r)"></app-row-menu></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (creating()) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>New Royalty Rule</h3></div>
+      <div class="modal__body">
+        <div class="field"><label>Creator Tier <span class="req">*</span></label><input class="input" [(ngModel)]="form.creatorTier" placeholder="e.g. Silver"></div>
+        <div class="grid-2">
+          <div class="field"><label>Revenue Share %</label><input class="input" type="number" [(ngModel)]="form.revenueSharePercent"></div>
+          <div class="field"><label>Min Payout Threshold</label><input class="input" type="number" [(ngModel)]="form.minimumPayoutThreshold"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Payout Frequency</label>
+            <select class="select" [(ngModel)]="form.payoutFrequency">
+              <option>Monthly</option><option>Quarterly</option>
+            </select>
+          </div>
+          <div class="field"><label>Effective Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.effectiveDate"></div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (editing(); as r) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Edit Royalty Rule · RUL-{{ r.ruleID }}</h3><span class="icon-btn" (click)="editing.set(null)">✕</span></div>
+      <div class="modal__body">
+        <div class="grid-2">
+          <div class="field"><label>Creator Tier <span class="req">*</span></label>
+            <select class="select" [(ngModel)]="form.creatorTier">
+              <option>Platinum</option><option>Gold</option><option>Silver</option><option>Standard</option>
+            </select>
+          </div>
+          <div class="field"><label>Revenue Share % <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.revenueSharePercent"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Min Payout Threshold (USD)</label><input class="input" type="number" [(ngModel)]="form.minimumPayoutThreshold"></div>
+          <div class="field"><label>Payout Frequency</label>
+            <select class="select" [(ngModel)]="form.payoutFrequency">
+              <option>Monthly</option><option>Quarterly</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Effective Date</label><input class="input" type="date" [(ngModel)]="form.effectiveDate"></div>
+        <p class="hint">Changing this rule does not retroactively affect already-finalised statements.</p>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="editing.set(null)">Cancel</button>
+        <button class="btn btn--primary" (click)="save()">Save</button>
+      </div>
+    </div>
+  </div>
+}

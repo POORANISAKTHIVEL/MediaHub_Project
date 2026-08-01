@@ -1,0 +1,133 @@
+{
+  "info": {
+    "_postman_id": "circuit-breaker-testing",
+    "name": "MediaHub Circuit Breaker Testing",
+    "description": "Testing Circuit Breaker endpoints with JWT Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login - Get Admin Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"accessToken\", jsonData.accessToken);",
+              "console.log('✓ Token saved: ' + jsonData.accessToken.substring(0, 20) + '...');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\\n  \\\"email\\\": \\\"admin@mediahub.com\\\",\\n  \\\"password\\\": \\\"your_admin_password\\\"\\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8091/mediaHub/iam/auth/login/v1.0",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8091",
+          "path": ["mediaHub", "iam", "auth", "login", "v1.0"]
+        }
+      }
+    },
+    {
+      "name": "2. MediaHub - Circuit Breaker Call",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8091/api/circuit-breaker/call?request=test-data",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8091",
+          "path": ["api", "circuit-breaker", "call"],
+          "query": [
+            {
+              "key": "request",
+              "value": "test-data"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. MediaHub - Circuit Breaker Fetch",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8091/api/circuit-breaker/fetch?id=user123",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8091",
+          "path": ["api", "circuit-breaker", "fetch"],
+          "query": [
+            {
+              "key": "id",
+              "value": "user123"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. MediaHub - Health Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8091/actuator/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8091",
+          "path": ["actuator", "health"]
+        }
+      }
+    },
+    {
+      "name": "5. MediaHub - Circuit Breaker Metrics",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8091/actuator/metrics/resilience4j.circuitbreaker.calls",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8091",
+          "path": ["actuator", "metrics", "resilience4j.circuitbreaker.calls"]
+        }
+      }
+    }
+  ]
+}
