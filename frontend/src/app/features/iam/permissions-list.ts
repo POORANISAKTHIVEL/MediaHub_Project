@@ -9,7 +9,7 @@ import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
-const MODULE_OPTIONS = ['All', 'Content', 'Subscription', 'Licensing', 'Notification', 'Analytics', 'IAM', 'Royalty'];
+const MODULE_OPTIONS = ['All', 'Content', 'Subscription', 'Licensing', 'Editorial', 'Notification', 'Analytics', 'IAM', 'Royalty'];
 const PAGE_SIZE = 8;
 
 @Component({
@@ -25,12 +25,18 @@ export class PermissionsList implements OnInit {
   loading = signal(true);
   allPermissions = signal<Permission[]>([]);
   rolesHoldingMap = signal<Record<string, string[]>>({});
+  searchTerm = signal('');
   moduleFilter = signal('');
   moduleOptions = MODULE_OPTIONS;
   page = signal(0);
   pageSize = PAGE_SIZE;
 
-  rows = computed(() => this.allPermissions().filter(p => !this.moduleFilter() || this.iam.moduleOf(p.permissionType) === this.moduleFilter()));
+  rows = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    return this.allPermissions()
+      .filter(p => !this.moduleFilter() || this.iam.moduleOf(p.permissionType) === this.moduleFilter())
+      .filter(p => !term || p.permissionType.toLowerCase().includes(term));
+  });
   totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
   pagedRows = computed(() => {
     const start = this.page() * this.pageSize;
@@ -60,6 +66,11 @@ export class PermissionsList implements OnInit {
 
   setModuleFilter(v: string) {
     this.moduleFilter.set(v);
+    this.page.set(0);
+  }
+
+  onSearchChange(v: string) {
+    this.searchTerm.set(v);
     this.page.set(0);
   }
 

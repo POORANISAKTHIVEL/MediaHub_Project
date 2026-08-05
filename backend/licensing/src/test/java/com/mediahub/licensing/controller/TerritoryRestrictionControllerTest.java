@@ -1,5 +1,6 @@
 package com.mediahub.licensing.controller;
 
+import com.mediahub.licensing.client.AuditClient;
 import com.mediahub.licensing.dto.request.TerritoryRestrictionRequestDTO;
 import com.mediahub.licensing.dto.response.TerritoryRestrictionResponseDTO;
 import com.mediahub.licensing.service.TerritoryRestrictionService;
@@ -13,6 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -30,14 +34,21 @@ class TerritoryRestrictionControllerTest {
     @Mock
     private TerritoryRestrictionService service;
 
+    @Mock
+    private AuditClient auditClient;
+
     @InjectMocks
     private TerritoryRestrictionController controller;
 
     private TerritoryRestrictionRequestDTO requestDTO;
     private TerritoryRestrictionResponseDTO responseDTO;
+    private Authentication authentication;
 
     @BeforeEach
     void setUp() {
+        authentication = new UsernamePasswordAuthenticationToken(
+                "1", null, List.of(new SimpleGrantedAuthority("ROLE_admin")));
+
         requestDTO = new TerritoryRestrictionRequestDTO();
         requestDTO.setContentId(100);
         requestDTO.setRestrictedCountries("CN,RU");
@@ -63,9 +74,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC83 - should return 201 when restriction created successfully")
         void create_returns201() {
-            when(service.createRestriction(any())).thenReturn(responseDTO);
+            when(service.createRestriction(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         }
@@ -73,9 +84,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC84 - should return success message in body on create")
         void create_returnsSuccessMessage() {
-            when(service.createRestriction(any())).thenReturn(responseDTO);
+            when(service.createRestriction(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getBody().toString()).contains("Territory rule created successfully");
         }
@@ -83,19 +94,19 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC85 - should call service.createRestriction once")
         void create_callsServiceOnce() {
-            when(service.createRestriction(any())).thenReturn(responseDTO);
+            when(service.createRestriction(any(), any())).thenReturn(responseDTO);
 
-            controller.create(requestDTO);
+            controller.create(requestDTO, authentication);
 
-            verify(service, times(1)).createRestriction(any());
+            verify(service, times(1)).createRestriction(any(), any());
         }
 
         @Test
         @DisplayName("TC86 - should propagate exception when service throws on create")
         void create_serviceThrows_propagatesException() {
-            when(service.createRestriction(any())).thenThrow(new RuntimeException("DB error"));
+            when(service.createRestriction(any(), any())).thenThrow(new RuntimeException("DB error"));
 
-            assertThatThrownBy(() -> controller.create(requestDTO))
+            assertThatThrownBy(() -> controller.create(requestDTO, authentication))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("DB error");
         }
@@ -103,19 +114,19 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC87 - should pass request DTO directly to service")
         void create_passesRequestDtoToService() {
-            when(service.createRestriction(any())).thenReturn(responseDTO);
+            when(service.createRestriction(any(), any())).thenReturn(responseDTO);
 
-            controller.create(requestDTO);
+            controller.create(requestDTO, authentication);
 
-            verify(service).createRestriction(requestDTO);
+            verify(service).createRestriction(requestDTO, 1L);
         }
 
         @Test
         @DisplayName("TC88 - should return non-null body on create")
         void create_responseBodyNotNull() {
-            when(service.createRestriction(any())).thenReturn(responseDTO);
+            when(service.createRestriction(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getBody()).isNotNull();
         }
@@ -131,9 +142,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC89 - should return 200 with restrictions for contentId")
         void getByContent_returns200WithList() {
-            when(service.getByContentId(100)).thenReturn(List.of(responseDTO));
+            when(service.getByContentId(100, true)).thenReturn(List.of(responseDTO));
 
-            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100);
+            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100, true);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).hasSize(1);
@@ -142,9 +153,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC90 - should return 200 with empty list when no restrictions")
         void getByContent_emptyList_returns200() {
-            when(service.getByContentId(999)).thenReturn(Collections.emptyList());
+            when(service.getByContentId(999, true)).thenReturn(Collections.emptyList());
 
-            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(999);
+            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(999, true);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isEmpty();
@@ -153,9 +164,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC91 - should return correct restrictedCountries in body")
         void getByContent_returnsRestrictedCountries() {
-            when(service.getByContentId(100)).thenReturn(List.of(responseDTO));
+            when(service.getByContentId(100, true)).thenReturn(List.of(responseDTO));
 
-            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100);
+            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100, true);
 
             assertThat(response.getBody().get(0).getRestrictedCountries()).isEqualTo("CN,RU");
         }
@@ -163,9 +174,9 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC92 - should return correct allowedCountries in body")
         void getByContent_returnsAllowedCountries() {
-            when(service.getByContentId(100)).thenReturn(List.of(responseDTO));
+            when(service.getByContentId(100, true)).thenReturn(List.of(responseDTO));
 
-            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100);
+            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100, true);
 
             assertThat(response.getBody().get(0).getAllowedCountries()).isEqualTo("US,CA");
         }
@@ -173,11 +184,11 @@ class TerritoryRestrictionControllerTest {
         @Test
         @DisplayName("TC93 - should call service with correct contentId")
         void getByContent_callsServiceWithCorrectId() {
-            when(service.getByContentId(55)).thenReturn(Collections.emptyList());
+            when(service.getByContentId(55, true)).thenReturn(Collections.emptyList());
 
-            controller.getByContent(55);
+            controller.getByContent(55, true);
 
-            verify(service).getByContentId(55);
+            verify(service).getByContentId(55, true);
         }
 
         @Test
@@ -189,9 +200,9 @@ class TerritoryRestrictionControllerTest {
             second.setStatus("Active");
             second.setEffectiveDate(LocalDate.now());
 
-            when(service.getByContentId(100)).thenReturn(Arrays.asList(responseDTO, second));
+            when(service.getByContentId(100, true)).thenReturn(Arrays.asList(responseDTO, second));
 
-            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100);
+            ResponseEntity<List<TerritoryRestrictionResponseDTO>> response = controller.getByContent(100, true);
 
             assertThat(response.getBody()).hasSize(2);
         }
@@ -209,7 +220,7 @@ class TerritoryRestrictionControllerTest {
         void update_returns200() {
             when(service.updateRestriction(eq(1), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.update(1, requestDTO);
+            ResponseEntity<?> response = controller.update(1, requestDTO, authentication);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         }
@@ -219,7 +230,7 @@ class TerritoryRestrictionControllerTest {
         void update_returnsSuccessMessage() {
             when(service.updateRestriction(eq(1), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.update(1, requestDTO);
+            ResponseEntity<?> response = controller.update(1, requestDTO, authentication);
 
             assertThat(response.getBody().toString()).contains("Territory rule updated successfully");
         }
@@ -230,7 +241,7 @@ class TerritoryRestrictionControllerTest {
             when(service.updateRestriction(eq(999), any()))
                     .thenThrow(new RuntimeException("Restriction not found"));
 
-            assertThatThrownBy(() -> controller.update(999, requestDTO))
+            assertThatThrownBy(() -> controller.update(999, requestDTO, authentication))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Restriction not found");
         }
@@ -240,7 +251,7 @@ class TerritoryRestrictionControllerTest {
         void update_callsServiceWithCorrectId() {
             when(service.updateRestriction(eq(3), any())).thenReturn(responseDTO);
 
-            controller.update(3, requestDTO);
+            controller.update(3, requestDTO, authentication);
 
             verify(service).updateRestriction(eq(3), any());
         }
@@ -250,7 +261,7 @@ class TerritoryRestrictionControllerTest {
         void update_responseBodyNotNull() {
             when(service.updateRestriction(eq(1), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.update(1, requestDTO);
+            ResponseEntity<?> response = controller.update(1, requestDTO, authentication);
 
             assertThat(response.getBody()).isNotNull();
         }
@@ -260,7 +271,7 @@ class TerritoryRestrictionControllerTest {
         void update_callsServiceOnce() {
             when(service.updateRestriction(eq(1), any())).thenReturn(responseDTO);
 
-            controller.update(1, requestDTO);
+            controller.update(1, requestDTO, authentication);
 
             verify(service, times(1)).updateRestriction(eq(1), any());
         }

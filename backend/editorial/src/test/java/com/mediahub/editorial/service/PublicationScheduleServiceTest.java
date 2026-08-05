@@ -42,7 +42,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_success() {
         when(repository.save(any(PublicationSchedule.class))).thenReturn(schedule);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(201, result.get("statusCode"));
         assertEquals("Scheduled", result.get("status"));
@@ -55,7 +55,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_zeroContentID() {
         schedule.setContentID(0);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("ContentID is required", result.get("error"));
@@ -67,7 +67,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_nullPublishDateTime() {
         schedule.setPublishDateTime(null);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("PublishDateTime is required", result.get("error"));
@@ -78,7 +78,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_nullExpiryDateTime() {
         schedule.setExpiryDateTime(null);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("ExpiryDateTime is required", result.get("error"));
@@ -89,7 +89,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_nullTerritory() {
         schedule.setTerritory(null);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("Territory is required", result.get("error"));
@@ -100,7 +100,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_emptyTerritory() {
         schedule.setTerritory("");
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("Territory is required", result.get("error"));
@@ -112,7 +112,7 @@ public class PublicationScheduleServiceTest {
         schedule.setStatus(null);
         when(repository.save(any())).thenReturn(schedule);
 
-        service.createSchedule(schedule);
+        service.createSchedule(schedule, 1L);
 
         verify(repository).save(argThat(s -> "Scheduled".equals(s.getStatus())));
     }
@@ -122,7 +122,7 @@ public class PublicationScheduleServiceTest {
     void createSchedule_responseContainsScheduleID() {
         when(repository.save(any())).thenReturn(schedule);
 
-        Map<String, Object> result = service.createSchedule(schedule);
+        Map<String, Object> result = service.createSchedule(schedule, 1L);
 
         assertEquals(1, result.get("scheduleID"));
         assertEquals(101, result.get("contentID"));
@@ -179,7 +179,7 @@ public class PublicationScheduleServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(schedule));
         when(repository.save(any())).thenReturn(schedule);
 
-        Map<String, Object> result = service.publishSchedule(1);
+        Map<String, Object> result = service.publishSchedule(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Published", result.get("status"));
@@ -192,7 +192,7 @@ public class PublicationScheduleServiceTest {
     void publishSchedule_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.publishSchedule(99);
+        Map<String, Object> result = service.publishSchedule(99, 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Schedule not found", result.get("error"));
@@ -205,7 +205,7 @@ public class PublicationScheduleServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(schedule));
         when(repository.save(any())).thenReturn(schedule);
 
-        Map<String, Object> result = service.cancelSchedule(1, "Budget cut");
+        Map<String, Object> result = service.cancelSchedule(1, "Budget cut", 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Cancelled", result.get("status"));
@@ -219,7 +219,7 @@ public class PublicationScheduleServiceTest {
     void cancelSchedule_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.cancelSchedule(99, "reason");
+        Map<String, Object> result = service.cancelSchedule(99, "reason", 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Schedule not found", result.get("error"));
@@ -231,7 +231,7 @@ public class PublicationScheduleServiceTest {
         schedule.setStatus("Published");
         when(repository.findById(1)).thenReturn(Optional.of(schedule));
 
-        Map<String, Object> result = service.deleteSchedule(1);
+        Map<String, Object> result = service.deleteSchedule(1, 1L);
 
         assertEquals(400, result.get("statusCode"));
         assertEquals("Cannot delete Published schedule.", result.get("error"));
@@ -245,7 +245,7 @@ public class PublicationScheduleServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(schedule));
         doNothing().when(repository).deleteById(1);
 
-        Map<String, Object> result = service.deleteSchedule(1);
+        Map<String, Object> result = service.deleteSchedule(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Schedule deleted successfully.", result.get("message"));
@@ -259,7 +259,7 @@ public class PublicationScheduleServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(schedule));
         doNothing().when(repository).deleteById(1);
 
-        Map<String, Object> result = service.deleteSchedule(1);
+        Map<String, Object> result = service.deleteSchedule(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         verify(repository).deleteById(1);
@@ -270,7 +270,7 @@ public class PublicationScheduleServiceTest {
     void deleteSchedule_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.deleteSchedule(99);
+        Map<String, Object> result = service.deleteSchedule(99, 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Schedule not found", result.get("error"));

@@ -5,6 +5,7 @@ import { ContentClient } from '../../core/api/content-client';
 import { ContentAsset, Creator } from '../../core/models/content.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-content-form',
@@ -16,6 +17,14 @@ export class ContentForm implements OnInit {
   private router = inject(Router);
   private content = inject(ContentClient);
   private toast = inject(ToastService);
+  auth = inject(AuthService);
+
+  // A creator must always be attributed as the owner of content they submit — otherwise
+  // editorial decisions on it (approve/reject) never notify the person who actually made it.
+  // Only admin manages content on other creators' behalf, so only admin gets the full picker.
+  get lockToOwnCreator(): boolean {
+    return this.auth.hasRole('creator');
+  }
 
   loading = signal(true);
   saving = signal(false);
@@ -32,7 +41,14 @@ export class ContentForm implements OnInit {
   ngOnInit() {
     this.content.fetchCreators().subscribe(rows => {
       this.creators.set(rows);
-      if (!this.form.creatorId && rows.length) this.form.creatorId = rows[0].creatorId;
+      if (this.form.creatorId) return;
+      if (this.lockToOwnCreator) {
+        const own = rows.find(c => c.userId === this.auth.currentUser()?.userId);
+        if (own) this.form.creatorId = own.creatorId;
+        else this.toast.warn('No creator profile is linked to your account yet — ask an admin to link one before publishing content.');
+      } else if (rows.length) {
+        this.form.creatorId = rows[0].creatorId;
+      }
     });
 
     const idParam = this.route.snapshot.paramMap.get('id');

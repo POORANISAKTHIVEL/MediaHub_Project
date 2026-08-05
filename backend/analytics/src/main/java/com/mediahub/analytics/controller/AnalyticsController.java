@@ -23,8 +23,12 @@ public class AnalyticsController {
     private AnalyticsService service;
 
     // ── GET /mediaHub/analytics/dashboard ────────────────────────────────────
-    // Aggregated dashboard from all 7 modules
-    @PreAuthorize("hasAuthority('report:view')")
+    // Aggregated dashboard from all 7 modules. Used by the main per-role Dashboard, not just
+    // the report:view-gated Analytics & Reports page (that page's own route already enforces
+    // report:view separately) — every module below already degrades to an error object per
+    // section on a 403/failure, so any authenticated role can call this and just see the
+    // sections their own permissions actually unlock.
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/dashboard")
     public Mono<ResponseEntity<Map<String, Object>>> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authorization) {

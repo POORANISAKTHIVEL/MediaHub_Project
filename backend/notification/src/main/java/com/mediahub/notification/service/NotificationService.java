@@ -143,6 +143,13 @@ public class NotificationService {
                         .toList();
         }
         
+        // Used by NotificationController's @PreAuthorize to let a user act on their own notification
+        public boolean isOwner(Long notificationId, Object principal) {
+                return repository.findById(notificationId)
+                        .map(n -> n.getUserId().toString().equals(principal.toString()))
+                        .orElse(false);
+        }
+
         // UPDATE
         public NotificationResponseDTO updateNotification(
                 Long id,

@@ -1,12 +1,12 @@
 <div class="crumbs">Home / <b>Notifications</b></div>
 <div class="tabs">
-  <div class="tab" [class.active]="tab() === 'All'" (click)="tab.set('All')">All</div>
-  <div class="tab" [class.active]="tab() === 'Unread'" (click)="tab.set('Unread')">Unread</div>
+  <div class="tab" [class.active]="tab() === 'All'" (click)="selectTab('All')">All</div>
+  <div class="tab" [class.active]="tab() === 'Unread'" (click)="selectTab('Unread')">Unread</div>
 </div>
 <div class="page-head">
   <div><h1>Notifications</h1><p>Stay up to date with content, subscription, royalty, license and editorial events.</p></div>
   <div class="page-head__actions">
-    <app-filter-chip label="Category" [value]="categoryFilter()" [options]="categoryOptions" (valueChange)="categoryFilter.set($event)"></app-filter-chip>
+    <app-filter-chip label="Category" [value]="categoryFilter()" [options]="visibleCategoryOptions()" (valueChange)="onCategoryFilterChange($event)"></app-filter-chip>
   </div>
 </div>
 
@@ -17,7 +17,7 @@
     <app-empty-state icon="◇" title="No notifications" message="You're all caught up."></app-empty-state>
   } @else {
     <div class="card__body" style="padding:8px 20px">
-      @for (n of rows(); track n.notificationId) {
+      @for (n of pagedRows(); track n.notificationId) {
         <div class="notif" [class.unread]="n.status === 'UNREAD'" (click)="markRead(n)" style="cursor:pointer">
           <div class="notif__ico" style="background:var(--brand-50);color:var(--brand-600)">{{ icon(n) }}</div>
           <div class="notif__txt">
@@ -31,5 +31,6 @@
         </div>
       }
     </div>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

@@ -1,34 +1,34 @@
 <div class="crumbs">Home / Platform / <b>Audit Log</b></div>
 <div class="page-head">
   <div><h1>Audit Log</h1><p>Immutable record of platform changes.</p></div>
-  <div class="page-head__actions"><button class="btn btn--ghost">⤓ Export</button></div>
+  <div class="page-head__actions"><button class="btn btn--ghost" (click)="export()">⤓ Export</button></div>
 </div>
 
 <div class="toolbar">
-  <app-filter-chip label="User" [value]="userFilter()" [options]="userOptions()" (valueChange)="onUserChange($event)"></app-filter-chip>
+  <input class="input" style="max-width:220px" placeholder="Filter by Action…" [ngModel]="actionFilter()" (ngModelChange)="onActionChange($event)">
   <app-filter-chip label="Module" [value]="moduleFilter()" [options]="moduleOptions" (valueChange)="onModuleChange($event)"></app-filter-chip>
 </div>
 
 <div class="card">
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
-  } @else if (page(); as pg) {
+  } @else {
     <table>
-      <thead><tr><th>Action Taken</th><th>User Name</th><th>Service Module</th><th>Severity</th><th>Timestamp</th></tr></thead>
+      <thead><tr><th>Action Taken</th><th>User Name</th><th>Service Module</th><th>IP Address</th><th>Timestamp</th></tr></thead>
       <tbody>
-        @for (a of pg.data; track a.eventId) {
+        @for (a of pagedEvents(); track a.eventId) {
           <tr>
             <td><span class="mono">{{ a.eventType }}</span></td>
             <td class="t-primary">{{ performerName(a.performedBy) }}</td>
             <td class="mono t-sub">{{ a.moduleSource }}</td>
-            <td><app-status-badge [status]="a.severity"></app-status-badge></td>
-            <td class="t-sub">{{ a.createdAt }}</td>
+            <td class="mono t-sub">{{ a.ipAddress || '—' }}</td>
+            <td class="t-sub">{{ formatTimestamp(a.createdAt) }}</td>
           </tr>
         } @empty {
           <tr><td colspan="5" class="t-sub" style="text-align:center;padding:24px">No audit events match these filters.</td></tr>
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="pg.currentPage" [totalPages]="pg.totalPages" [totalElements]="pg.totalElements" [pageSize]="pageSize" (pageChange)="onPageChange($event)"></app-pagination>
+    <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" [totalElements]="totalElements()" [pageSize]="pageSize" (pageChange)="onPageChange($event)"></app-pagination>
   }
 </div>

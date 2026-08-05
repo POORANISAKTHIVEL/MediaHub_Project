@@ -1,5 +1,6 @@
 package com.mediahub.contentcatalog.controller;
 
+import com.mediahub.contentcatalog.client.AuditClient;
 import com.mediahub.contentcatalog.entity.ContentAsset;
 import com.mediahub.contentcatalog.service.ContentAssetService;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,13 +28,20 @@ public class ContentAssetControllerTest {
     @Mock
     private ContentAssetService contentAssetService;
 
+    @Mock
+    private AuditClient auditClient;
+
     @InjectMocks
     private ContentAssetController contentAssetController;
 
     private ContentAsset contentAsset;
+    private Authentication authentication;
 
     @BeforeEach
     void setUp() {
+        authentication = new UsernamePasswordAuthenticationToken(
+                "1", null, List.of(new SimpleGrantedAuthority("ROLE_admin")));
+
         contentAsset = new ContentAsset();
         contentAsset.setContentId(1);
         contentAsset.setCreatorId(1);
@@ -49,7 +60,7 @@ public class ContentAssetControllerTest {
     void testCreateContent_Positive() {
         when(contentAssetService.createContent(any(ContentAsset.class)))
                 .thenReturn("Content created successfully");
-        ResponseEntity<String> response = contentAssetController.createContent(contentAsset);
+        ResponseEntity<String> response = contentAssetController.createContent(contentAsset, authentication);
         assertEquals(201, response.getStatusCode().value());
         assertEquals("Content created successfully", response.getBody());
         verify(contentAssetService, times(1)).createContent(any(ContentAsset.class));
@@ -60,7 +71,7 @@ public class ContentAssetControllerTest {
         when(contentAssetService.createContent(any(ContentAsset.class)))
                 .thenReturn("Content created successfully");
         ContentAsset emptyContent = new ContentAsset();
-        ResponseEntity<String> response = contentAssetController.createContent(emptyContent);
+        ResponseEntity<String> response = contentAssetController.createContent(emptyContent, authentication);
         assertEquals(201, response.getStatusCode().value());
     }
 
@@ -126,7 +137,7 @@ public class ContentAssetControllerTest {
         body.put("status", "UnderReview");
         when(contentAssetService.updateContentStatus(1, "UnderReview"))
                 .thenReturn("Status updated successfully");
-        ResponseEntity<String> response = contentAssetController.updateContentStatus(1, body);
+        ResponseEntity<String> response = contentAssetController.updateContentStatus(1, body, authentication);
         assertEquals(200, response.getStatusCode().value());
         assertEquals("Status updated successfully", response.getBody());
     }
@@ -137,7 +148,7 @@ public class ContentAssetControllerTest {
         body.put("status", "UnderReview");
         when(contentAssetService.updateContentStatus(999, "UnderReview"))
                 .thenReturn("Content not found");
-        ResponseEntity<String> response = contentAssetController.updateContentStatus(999, body);
+        ResponseEntity<String> response = contentAssetController.updateContentStatus(999, body, authentication);
         assertEquals(200, response.getStatusCode().value());
         assertEquals("Content not found", response.getBody());
     }
@@ -146,7 +157,7 @@ public class ContentAssetControllerTest {
     void testDeleteContent_Positive() {
         when(contentAssetService.deleteContent(1))
                 .thenReturn("Content deleted successfully");
-        ResponseEntity<String> response = contentAssetController.deleteContent(1);
+        ResponseEntity<String> response = contentAssetController.deleteContent(1, authentication);
         assertEquals(200, response.getStatusCode().value());
         assertEquals("Content deleted successfully", response.getBody());
         verify(contentAssetService, times(1)).deleteContent(1);
@@ -156,7 +167,7 @@ public class ContentAssetControllerTest {
     void testDeleteContent_Negative_NotDraft() {
         when(contentAssetService.deleteContent(1))
                 .thenReturn("Content can only be deleted when status is Draft");
-        ResponseEntity<String> response = contentAssetController.deleteContent(1);
+        ResponseEntity<String> response = contentAssetController.deleteContent(1, authentication);
         assertEquals(200, response.getStatusCode().value());
         assertEquals("Content can only be deleted when status is Draft", response.getBody());
     }
@@ -165,7 +176,7 @@ public class ContentAssetControllerTest {
     void testDeleteContent_Negative_NotFound() {
         when(contentAssetService.deleteContent(999))
                 .thenReturn("Content not found");
-        ResponseEntity<String> response = contentAssetController.deleteContent(999);
+        ResponseEntity<String> response = contentAssetController.deleteContent(999, authentication);
         assertEquals(200, response.getStatusCode().value());
         assertEquals("Content not found", response.getBody());
     }

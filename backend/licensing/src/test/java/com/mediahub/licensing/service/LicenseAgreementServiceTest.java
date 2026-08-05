@@ -84,7 +84,7 @@ class LicenseAgreementServiceTest {
 
             when(repo.save(any(LicenseAgreement.class))).thenReturn(sampleEntity);
 
-            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest);
+            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest, 1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getLicenseId()).isEqualTo(1);
@@ -106,7 +106,7 @@ class LicenseAgreementServiceTest {
                 return saved;
             });
 
-            service.createLicense(sampleRequest);
+            service.createLicense(sampleRequest, 1L);
             verify(repo).save(any(LicenseAgreement.class));
         }
 
@@ -128,7 +128,7 @@ class LicenseAgreementServiceTest {
                 return sampleEntity;
             });
 
-            service.createLicense(sampleRequest);
+            service.createLicense(sampleRequest, 1L);
         }
 
         @Test
@@ -140,7 +140,7 @@ class LicenseAgreementServiceTest {
 
             when(repo.save(any())).thenThrow(new RuntimeException("DB error"));
 
-            assertThatThrownBy(() -> service.createLicense(sampleRequest))
+            assertThatThrownBy(() -> service.createLicense(sampleRequest, 1L))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("DB error");
         }
@@ -154,7 +154,7 @@ class LicenseAgreementServiceTest {
 
             when(repo.save(any())).thenReturn(sampleEntity);
 
-            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest);
+            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest, 1L);
 
             assertThat(result.getContentId()).isEqualTo(sampleRequest.getContentId());
             assertThat(result.getLicensorId()).isEqualTo(sampleRequest.getLicensorId());
@@ -169,7 +169,7 @@ class LicenseAgreementServiceTest {
 
             when(repo.save(any())).thenReturn(sampleEntity);
 
-            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest);
+            LicenseAgreementResponseDTO result = service.createLicense(sampleRequest, 1L);
 
             assertThat(result.getLicenseFee()).isEqualByComparingTo("5000.00");
         }
@@ -182,7 +182,7 @@ class LicenseAgreementServiceTest {
                     .thenReturn(false);
 
             assertThatThrownBy(() ->
-                    service.createLicense(sampleRequest))
+                    service.createLicense(sampleRequest, 1L))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining(
                             "Content not found in Content Catalog");

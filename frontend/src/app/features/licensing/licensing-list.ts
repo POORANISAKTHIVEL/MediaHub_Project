@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LicensingClient } from '../../core/api/licensing-client';
@@ -6,11 +6,12 @@ import { LicenseAgreement, LicenseExpiringSoon, RightsType } from '../../core/mo
 import { StatusBadge } from '../../shared/components/status-badge';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-licensing-list',
-  imports: [FormsModule, RouterLink, StatusBadge, RowMenu, LoadingSpinner],
+  imports: [FormsModule, RouterLink, StatusBadge, RowMenu, LoadingSpinner, Pagination],
   templateUrl: './licensing-list.html'
 })
 export class LicensingList implements OnInit {
@@ -21,6 +22,11 @@ export class LicensingList implements OnInit {
   loading = signal(true);
   licenses = signal<LicenseAgreement[]>([]);
   expiringSoon = signal<LicenseExpiringSoon[]>([]);
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.licenses().length / this.pageSize)));
+  pagedLicenses = computed(() => this.licenses().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
 
   creating = signal(false);
   form: { contentId: number; licensorId: number; licenseeRef: string; territory: string; rightsType: RightsType; startDate: string; endDate: string; licenseFee: number } =

@@ -2,7 +2,7 @@
 <div class="page-head">
   <div><h1>Publication Calendar</h1><p>Schedule content publication by territory.</p></div>
   <div class="page-head__actions">
-    @if (auth.hasPermission('content:write')) {
+    @if (auth.hasPermission('editorial:manage')) {
       <button class="btn btn--primary" (click)="openCreate()">+ Schedule</button>
     }
   </div>
@@ -15,17 +15,15 @@
     <table>
       <thead><tr><th>Content</th><th>Publish</th><th>Expiry</th><th>Territory</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
-        @for (s of schedules(); track s.scheduleID) {
+        @for (s of pagedSchedules(); track s.scheduleID) {
           <tr>
             <td class="t-primary" style="font-weight:500">{{ titleFor(s.contentID) }}</td>
-            <td class="t-sub">{{ s.publishDateTime }}</td>
-            <td class="t-sub">{{ s.expiryDateTime }}</td>
+            <td class="t-sub">{{ formatDateTime(s.publishDateTime) }}</td>
+            <td class="t-sub">{{ formatDateTime(s.expiryDateTime) }}</td>
             <td>{{ s.territory }}</td>
             <td><app-status-badge [status]="s.status"></app-status-badge></td>
             <td>
-              @if (menuFor(s).length > 0) {
-                <app-row-menu [items]="menuFor(s)" (actionSelected)="onAction($event, s)"></app-row-menu>
-              }
+              <app-row-menu [items]="menuFor(s)" (actionSelected)="onAction($event, s)"></app-row-menu>
             </td>
           </tr>
         } @empty {
@@ -33,6 +31,7 @@
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="schedules().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -52,6 +51,23 @@
       <div class="modal__foot">
         <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
         <button class="btn btn--primary" [disabled]="checkingPrereqs()" (click)="create()">{{ checkingPrereqs() ? 'Checking…' : 'Create' }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (viewing(); as s) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Schedule Details</h3><span class="icon-btn" (click)="viewing.set(null)">✕</span></div>
+      <div class="modal__body">
+        <dl class="kv">
+          <dt>Content</dt><dd>{{ titleFor(s.contentID) }}</dd>
+          <dt>Publish</dt><dd>{{ formatDateTime(s.publishDateTime) }}</dd>
+          <dt>Expiry</dt><dd>{{ formatDateTime(s.expiryDateTime) }}</dd>
+          <dt>Territory</dt><dd>{{ s.territory }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="s.status"></app-status-badge></dd>
+        </dl>
       </div>
     </div>
   </div>

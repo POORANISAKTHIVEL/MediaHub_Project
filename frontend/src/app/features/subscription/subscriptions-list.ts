@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { SubscriptionClient } from '../../core/api/subscription-client';
 import { UserSubscription } from '../../core/models/subscription.models';
@@ -8,10 +8,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
+import { Pagination } from '../../shared/components/pagination';
 
 @Component({
   selector: 'app-subscriptions-list',
-  imports: [RouterLink, StatusBadge, LoadingSpinner, RowMenu],
+  imports: [RouterLink, StatusBadge, LoadingSpinner, RowMenu, Pagination],
   templateUrl: './subscriptions-list.html'
 })
 export class SubscriptionsList implements OnInit {
@@ -23,6 +24,11 @@ export class SubscriptionsList implements OnInit {
   loading = signal(true);
   rows = signal<UserSubscription[]>([]);
   users = signal<IamUser[]>([]);
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
 
   ngOnInit() {
     this.load();

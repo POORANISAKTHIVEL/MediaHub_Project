@@ -186,4 +186,11 @@ export class SubscriptionClient {
     }
     return this.plans.find(p => p.planId === planId)?.name ?? ('Plan #' + planId);
   }
+
+  planPrice(planId: number): number {
+    if (!environment.useMockSubscription) {
+      return this.realPlanCache.get(planId)?.price ?? 0;
+    }
+    return this.plans.find(p => p.planId === planId)?.price ?? 0;
+  }
 }

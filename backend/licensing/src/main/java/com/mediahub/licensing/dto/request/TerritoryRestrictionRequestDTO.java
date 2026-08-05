@@ -8,6 +8,7 @@ public class TerritoryRestrictionRequestDTO {
     private String restrictedCountries;
     private String allowedCountries;
     private LocalDate effectiveDate;
+    private String status;
 
     public Integer getContentId() { return contentId; }
     public void setContentId(Integer contentId) { this.contentId = contentId; }
@@ -20,4 +21,7 @@ public class TerritoryRestrictionRequestDTO {
 
     public LocalDate getEffectiveDate() { return effectiveDate; }
     public void setEffectiveDate(LocalDate effectiveDate) { this.effectiveDate = effectiveDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

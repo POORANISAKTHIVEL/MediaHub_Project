@@ -5,6 +5,7 @@ import { RoyaltyStatement } from '../../core/models/royalty.models';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { ToastService } from '../../shared/services/toast.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-statement-detail',
@@ -12,6 +13,7 @@ import { ToastService } from '../../shared/services/toast.service';
   templateUrl: './statement-detail.html'
 })
 export class StatementDetail implements OnInit {
+  auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private royalty = inject(RoyaltyClient);

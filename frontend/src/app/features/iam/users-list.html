@@ -7,9 +7,9 @@
 <div class="page-head"><div><h1>User Management</h1><p>View and manage platform users. Roles are managed under Roles &amp; Permissions.</p></div></div>
 
 <div class="toolbar">
-  <div class="search">⌕ &nbsp;Search by name, email or ID…</div>
-  <app-filter-chip label="Role" [value]="roleFilter()" [options]="roleOptions" (valueChange)="roleFilter.set($event)"></app-filter-chip>
-  <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="statusFilter.set($event)"></app-filter-chip>
+  <div class="search"><span>⌕</span><input type="text" placeholder="Search by name, email or ID…" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"></div>
+  <app-filter-chip label="Role" [value]="roleFilter()" [options]="roleOptions" (valueChange)="onRoleFilterChange($event)"></app-filter-chip>
+  <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="onStatusFilterChange($event)"></app-filter-chip>
 </div>
 
 <div class="card">
@@ -19,7 +19,7 @@
     <table>
       <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Country</th><th>Status</th><th style="width:70px">Actions</th></tr></thead>
       <tbody>
-        @for (u of rows(); track u.userId) {
+        @for (u of pagedRows(); track u.userId) {
           <tr>
             <td><div class="avatar-cell"><div class="avatar" style="width:30px;height:30px;font-size:12px">{{ initials(u.name) }}</div><span class="t-primary">{{ u.name }}</span></div></td>
             <td>{{ u.email }}</td>
@@ -33,7 +33,7 @@
         }
       </tbody>
     </table>
-    <div class="pagination"><span>Showing <b>1–{{ rows().length }}</b> of <b>{{ allUsers().length }}</b></span></div>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 

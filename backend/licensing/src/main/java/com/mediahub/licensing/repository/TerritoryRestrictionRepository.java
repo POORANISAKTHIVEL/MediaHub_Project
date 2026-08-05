@@ -12,4 +12,6 @@ public interface TerritoryRestrictionRepository
 	// Changed from RestrictionStatus to String
     List<TerritoryRestriction> findByContentIdAndStatus(
         Integer contentId, String status);
+
+    List<TerritoryRestriction> findByContentId(Integer contentId);
 }

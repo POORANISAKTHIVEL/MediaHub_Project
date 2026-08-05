@@ -30,6 +30,11 @@ public class CreatorService {
             throw new IllegalArgumentException("userId is required");
         }
 
+        if (creatorRepository.existsByUserId(creator.getUserId())) {
+            logger.error("createCreator called with userId already linked to a creator: {}", creator.getUserId());
+            throw new IllegalStateException("This user is already linked to a creator profile");
+        }
+
         logger.info("Creating creator for userId: {}", creator.getUserId());
 
         if (creator.getStatus() == null) {

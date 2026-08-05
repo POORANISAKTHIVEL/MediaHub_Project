@@ -1,5 +1,6 @@
 package com.mediahub.royalty.controller;
 
+import com.mediahub.royalty.client.AuditClient;
 import com.mediahub.royalty.model.RoyaltyStatement;
 import com.mediahub.royalty.exception.BadRequestException;
 import com.mediahub.royalty.exception.GlobalExceptionHandler;
@@ -13,12 +14,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -32,13 +37,21 @@ public class RoyaltyStatementControllerTest {
     @Mock
     private RoyaltyStatementService service;
 
+    @Mock
+    private AuditClient auditClient;
+
     @InjectMocks
     private RoyaltyStatementController controller;
 
     private MockMvc mockMvc;
+    private final Authentication authentication =
+            new UsernamePasswordAuthenticationToken("1", null, List.of(new SimpleGrantedAuthority("ROLE_admin")));
 
     @BeforeEach
     void setUp() {
+        // RoyaltyStatementController has an explicit constructor for `service`, so Mockito's
+        // @InjectMocks only does constructor injection and skips field injection for auditClient.
+        org.springframework.test.util.ReflectionTestUtils.setField(controller, "auditClient", auditClient);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -57,9 +70,9 @@ public class RoyaltyStatementControllerTest {
         created.setTotalRevenue(2000.0);
         created.setRoyaltyAmount(600.0);
         created.setStatus("Draft");
-        when(service.generateStatement(any(RoyaltyStatement.class))).thenReturn(created);
+        when(service.generateStatement(any(RoyaltyStatement.class), any())).thenReturn(created);
 
-        mockMvc.perform(post("/api/royalty-statements")
+        mockMvc.perform(post("/api/royalty-statements").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"creatorID\":501,\"period\":\"2025-Q1\","
                 + "\"totalViews\":50000,\"totalRevenue\":2000.0,\"royaltyAmount\":600.0}"))
@@ -72,10 +85,10 @@ public class RoyaltyStatementControllerTest {
     @Test
     @DisplayName("CT-15: POST /api/royalty-statements returns 400 when CreatorID missing")
     void generateStatement_returns400_missingCreatorID() throws Exception {
-        when(service.generateStatement(any(RoyaltyStatement.class)))
+        when(service.generateStatement(any(RoyaltyStatement.class), any()))
             .thenThrow(new BadRequestException("CreatorID is required"));
 
-        mockMvc.perform(post("/api/royalty-statements")
+        mockMvc.perform(post("/api/royalty-statements").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"period\":\"2025-Q1\"}"))
             .andExpect(status().isBadRequest())
@@ -86,10 +99,10 @@ public class RoyaltyStatementControllerTest {
     @Test
     @DisplayName("CT-16: POST /api/royalty-statements returns 400 for negative revenue")
     void generateStatement_returns400_negativeRevenue() throws Exception {
-        when(service.generateStatement(any(RoyaltyStatement.class)))
+        when(service.generateStatement(any(RoyaltyStatement.class), any()))
             .thenThrow(new BadRequestException("TotalRevenue cannot be negative"));
 
-        mockMvc.perform(post("/api/royalty-statements")
+        mockMvc.perform(post("/api/royalty-statements").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"creatorID\":501,\"period\":\"2025-Q1\",\"totalRevenue\":-100}"))
             .andExpect(status().isBadRequest())
@@ -100,9 +113,9 @@ public class RoyaltyStatementControllerTest {
     @Test
     @DisplayName("CT-17: POST /api/royalty-statements returns 500 on repository failure")
     void generateStatement_returns500() throws Exception {
-        when(service.generateStatement(any(RoyaltyStatement.class))).thenThrow(new RuntimeException("DB error"));
+        when(service.generateStatement(any(RoyaltyStatement.class), any())).thenThrow(new RuntimeException("DB error"));
 
-        mockMvc.perform(post("/api/royalty-statements")
+        mockMvc.perform(post("/api/royalty-statements").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"creatorID\":501,\"period\":\"2025-Q1\",\"totalRevenue\":2000.0}"))
             .andExpect(status().isInternalServerError())
@@ -170,9 +183,9 @@ public class RoyaltyStatementControllerTest {
         response.put("statusCode", 200);
         response.put("status", "Finalised");
         response.put("message", "Statement finalised successfully.");
-        when(service.finaliseStatement(1)).thenReturn(response);
+        when(service.finaliseStatement(1, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-statements/1/finalise"))
+        mockMvc.perform(put("/api/royalty-statements/1/finalise").principal(authentication))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Finalised"))
                 .andExpect(jsonPath("$.message").value("Statement finalised successfully."));
@@ -185,9 +198,9 @@ public class RoyaltyStatementControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("statusCode", 400);
         response.put("error", "Only Draft statements can be finalised.");
-        when(service.finaliseStatement(1)).thenReturn(response);
+        when(service.finaliseStatement(1, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-statements/1/finalise"))
+        mockMvc.perform(put("/api/royalty-statements/1/finalise").principal(authentication))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Only Draft statements can be finalised."));
     }
@@ -202,9 +215,9 @@ public class RoyaltyStatementControllerTest {
         response.put("statusCode", 200);
         response.put("status", "Paid");
         response.put("message", "Statement marked as Paid successfully.");
-        when(service.markAsPaid(1)).thenReturn(response);
+        when(service.markAsPaid(1, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-statements/1/mark-paid"))
+        mockMvc.perform(put("/api/royalty-statements/1/mark-paid").principal(authentication))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Paid"))
                 .andExpect(jsonPath("$.message").value("Statement marked as Paid successfully."));
@@ -217,9 +230,9 @@ public class RoyaltyStatementControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("statusCode", 400);
         response.put("error", "Only Finalised statements can be marked as Paid.");
-        when(service.markAsPaid(1)).thenReturn(response);
+        when(service.markAsPaid(1, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-statements/1/mark-paid"))
+        mockMvc.perform(put("/api/royalty-statements/1/mark-paid").principal(authentication))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error")
                         .value("Only Finalised statements can be marked as Paid."));

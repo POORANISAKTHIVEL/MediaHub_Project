@@ -1,23 +1,31 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RoyaltyClient } from '../../core/api/royalty-client';
 import { RoyaltyPayout } from '../../core/models/royalty.models';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-royalty-payouts',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
   templateUrl: './royalty-payouts.html'
 })
 export class RoyaltyPayouts implements OnInit {
   private royalty = inject(RoyaltyClient);
   private toast = inject(ToastService);
+  auth = inject(AuthService);
 
   loading = signal(true);
   payouts = signal<RoyaltyPayout[]>([]);
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.payouts().length / this.pageSize)));
+  pagedPayouts = computed(() => this.payouts().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
 
   creating = signal(false);
   form: { statementID: number; creatorID: number; amount: number; method: RoyaltyPayout['method'] } =
@@ -25,6 +33,8 @@ export class RoyaltyPayouts implements OnInit {
 
   failing = signal<RoyaltyPayout | null>(null);
   failReason = '';
+
+  viewing = signal<RoyaltyPayout | null>(null);
 
   ngOnInit() {
     this.load();
@@ -79,12 +89,15 @@ export class RoyaltyPayouts implements OnInit {
   }
 
   menuFor(p: RoyaltyPayout): RowMenuItem[] {
-    if (p.status === 'Pending') return [{ label: 'Mark Processed', action: 'processed' }, { label: 'Mark Failed', action: 'failed' }];
-    if (p.status === 'Failed') return [{ label: 'Retry', action: 'retry' }];
-    return [];
+    const items: RowMenuItem[] = [{ label: 'View', action: 'view' }];
+    if (!this.auth.hasPermission('royalty:approve')) return items;
+    if (p.status === 'Pending') items.push({ label: 'Mark Processed', action: 'processed' }, { label: 'Mark Failed', action: 'failed' });
+    if (p.status === 'Failed') items.push({ label: 'Retry', action: 'retry' });
+    return items;
   }
 
   onAction(action: string, p: RoyaltyPayout) {
+    if (action === 'view') this.viewing.set(p);
     if (action === 'processed') this.markProcessed(p);
     if (action === 'failed') this.openFail(p);
     if (action === 'retry') this.retry(p);

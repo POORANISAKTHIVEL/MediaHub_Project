@@ -1,7 +1,11 @@
 <div class="crumbs">Home / Royalty / <b>Payouts</b></div>
 <div class="page-head">
   <div><h1>Royalty Payouts</h1><p>Process, retry and track creator payouts.</p></div>
-  <div class="page-head__actions"><button class="btn btn--primary" (click)="openCreate()">+ Process</button></div>
+  <div class="page-head__actions">
+    @if (auth.hasPermission('royalty:approve')) {
+      <button class="btn btn--primary" (click)="openCreate()">+ Process</button>
+    }
+  </div>
 </div>
 
 <div class="card">
@@ -11,7 +15,7 @@
     <table>
       <thead><tr><th>Payout</th><th>Statement</th><th>Creator</th><th>Amount</th><th>Method</th><th>Status</th><th style="width:220px">Actions</th></tr></thead>
       <tbody>
-        @for (p of payouts(); track p.payoutID) {
+        @for (p of pagedPayouts(); track p.payoutID) {
           <tr>
             <td class="mono t-primary">PAY-{{ p.payoutID }}</td>
             <td class="mono">STMT-{{ p.statementID }}</td>
@@ -20,9 +24,7 @@
             <td>{{ p.method }}</td>
             <td><app-status-badge [status]="p.status"></app-status-badge></td>
             <td>
-              @if (menuFor(p).length > 0) {
-                <app-row-menu [items]="menuFor(p)" (actionSelected)="onAction($event, p)"></app-row-menu>
-              }
+              <app-row-menu [items]="menuFor(p)" (actionSelected)="onAction($event, p)"></app-row-menu>
             </td>
           </tr>
         } @empty {
@@ -30,6 +32,7 @@
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="payouts().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -52,6 +55,24 @@
       <div class="modal__foot">
         <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
         <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (viewing(); as p) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Payout Details</h3><span class="icon-btn" (click)="viewing.set(null)">✕</span></div>
+      <div class="modal__body">
+        <dl class="kv">
+          <dt>Payout</dt><dd class="mono">PAY-{{ p.payoutID }}</dd>
+          <dt>Statement</dt><dd class="mono">STMT-{{ p.statementID }}</dd>
+          <dt>Creator</dt><dd>Creator #{{ p.creatorID }}</dd>
+          <dt>Amount</dt><dd>${{ p.amount.toLocaleString() }}</dd>
+          <dt>Method</dt><dd>{{ p.method }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="p.status"></app-status-badge></dd>
+        </dl>
       </div>
     </div>
   </div>

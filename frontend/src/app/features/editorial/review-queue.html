@@ -1,8 +1,8 @@
 <div class="crumbs">Home / <b>Editorial</b></div>
 <div class="tabs">
-  <div class="tab" [class.active]="tab() === 'Pending'" (click)="tab.set('Pending')">Pending</div>
-  <div class="tab" [class.active]="tab() === 'Approved'" (click)="tab.set('Approved')">Approved</div>
-  <div class="tab" [class.active]="tab() === 'Rejected'" (click)="tab.set('Rejected')">Rejected</div>
+  <div class="tab" [class.active]="tab() === 'Pending'" (click)="selectTab('Pending')">Pending</div>
+  <div class="tab" [class.active]="tab() === 'Approved'" (click)="selectTab('Approved')">Approved</div>
+  <div class="tab" [class.active]="tab() === 'Rejected'" (click)="selectTab('Rejected')">Rejected</div>
 </div>
 <div class="page-head"><div><h1>Editorial Reviews</h1><p>Review submitted content before it is published.</p></div></div>
 
@@ -13,7 +13,7 @@
     <table>
       <thead><tr><th>Review ID</th><th>Content</th><th>Submitted</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
-        @for (r of rows(); track r.reviewID) {
+        @for (r of pagedRows(); track r.reviewID) {
           <tr>
             <td class="mono t-primary">REV-{{ r.reviewID }}</td>
             <td class="t-primary" style="font-weight:500">{{ titleFor(r.contentID) }}</td>
@@ -26,5 +26,6 @@
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

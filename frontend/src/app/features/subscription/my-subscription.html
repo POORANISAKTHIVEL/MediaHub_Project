@@ -1,5 +1,5 @@
-<div class="crumbs">Home / <b>My Subscription</b></div>
-<div class="page-head"><div><h1>My Subscription</h1><p>Manage your current plan and billing.</p></div></div>
+<div class="crumbs">Home / <b>Current Subscription</b></div>
+<div class="page-head"><div><h1>Current Subscription</h1><p>Manage your current plan and billing.</p></div></div>
 
 @if (loading()) {
   <app-loading-spinner></app-loading-spinner>
@@ -14,7 +14,7 @@
       </dl>
       @if (s.status === 'Active') {
         <div style="display:flex;gap:10px;margin-top:20px">
-          <a class="btn btn--ghost" routerLink="/subscription/catalog">Change Plan</a>
+          <button class="btn btn--ghost" (click)="changePlan()">Change Plan</button>
           <button class="btn btn--danger" (click)="cancel()">Cancel Subscription</button>
         </div>
       }

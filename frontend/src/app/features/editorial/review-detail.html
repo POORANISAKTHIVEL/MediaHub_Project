@@ -6,7 +6,7 @@
     <div><h1>{{ contentTitle() }}</h1><p>Review REV-{{ r.reviewID }} · submitted by {{ creatorName() }}</p></div>
     <div class="page-head__actions"><a class="btn btn--ghost" routerLink="/editorial/reviews">← Back to Reviews</a></div>
   </div>
-  <div class="split">
+  <div [class.split]="!viewOnly()">
     <div class="card">
       <div class="card__head"><h3>Content Preview</h3><app-status-badge [status]="r.decision || r.status"></app-status-badge></div>
       <div class="card__body">
@@ -20,32 +20,37 @@
         </div>
       </div>
     </div>
-    <div class="card">
-      <div class="card__head"><h3>Review Details</h3></div>
-      <div class="card__body">
-        <dl class="kv">
-          <dt>Content ID</dt><dd class="mono">CNT-{{ r.contentID }}</dd>
-          <dt>Type</dt><dd>{{ contentType() }}</dd>
-          <dt>Creator</dt><dd>{{ creatorName() }}</dd>
-          <dt>Submitted</dt><dd>{{ r.submissionDate }}</dd>
-          <dt>Reviewer</dt><dd>#{{ r.reviewerID }}</dd>
-          <dt>Status</dt><dd><app-status-badge [status]="r.decision || r.status"></app-status-badge></dd>
-        </dl>
-        <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
-        <div class="field"><label>Review comment</label><textarea class="textarea" rows="4" placeholder="Add notes for the creator…" [(ngModel)]="remarks" [disabled]="r.status !== 'Pending'"></textarea></div>
+    @if (!viewOnly()) {
+      <div class="card">
+        <div class="card__head"><h3>Review Details</h3></div>
+        <div class="card__body">
+          <dl class="kv">
+            <dt>Content ID</dt><dd class="mono">CNT-{{ r.contentID }}</dd>
+            <dt>Type</dt><dd>{{ contentType() }}</dd>
+            <dt>Creator</dt><dd>{{ creatorName() }}</dd>
+            <dt>Submitted</dt><dd>{{ r.submissionDate }}</dd>
+            <dt>Reviewer</dt><dd>#{{ r.reviewerID }}</dd>
+            <dt>Status</dt><dd><app-status-badge [status]="r.decision || r.status"></app-status-badge></dd>
+          </dl>
+          <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
+          <div class="field"><label>Review comment</label><textarea class="textarea" rows="4" placeholder="Add notes for the creator…" [(ngModel)]="remarks"></textarea></div>
+        </div>
       </div>
-    </div>
+    }
   </div>
-  @if (r.status === 'Pending') {
+  @if (!viewOnly()) {
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
-      @if (auth.hasPermission('content:publish')) {
+      @if (auth.hasPermission('editorial:manage')) {
         <button class="btn btn--danger" [disabled]="submitting()" (click)="reject()">✕ Reject</button>
       }
-      @if (auth.hasPermission('content:write')) {
+      @if (auth.hasPermission('editorial:manage')) {
         <button class="btn btn--ghost" [disabled]="submitting()" (click)="requestRevision()">↺ Request revision</button>
       }
-      @if (auth.hasPermission('content:publish')) {
+      @if (auth.hasPermission('editorial:manage')) {
         <button class="btn btn--primary" [disabled]="submitting()" (click)="approve()">✓ Accept</button>
+      }
+      @if (!auth.hasPermission('editorial:manage')) {
+        <span class="badge b-gray">View only</span>
       }
     </div>
   }

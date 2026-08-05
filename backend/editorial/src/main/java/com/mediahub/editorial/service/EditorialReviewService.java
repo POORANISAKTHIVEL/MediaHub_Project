@@ -1,5 +1,6 @@
 package com.mediahub.editorial.service;
 
+import com.mediahub.editorial.client.ContentCatalogClient;
 import com.mediahub.editorial.client.NotificationClient;
 import com.mediahub.editorial.model.EditorialReview;
 import com.mediahub.editorial.repository.EditorialReviewRepository;
@@ -19,6 +20,9 @@ public class EditorialReviewService {
 
     @Autowired
     private NotificationClient notificationClient;
+
+    @Autowired
+    private ContentCatalogClient contentCatalogClient;
 
     // API 1 — Submit review
     public Map<String, Object> submitReview(EditorialReview review) {
@@ -80,31 +84,31 @@ public class EditorialReviewService {
 
     // API 4 — Approve review
     public Map<String, Object> approveReview(
-            int reviewID, String remarks) {
+            int reviewID, String remarks, Long actorUserId) {
         return applyDecision(reviewID, "Approved",
                 remarks, "Completed",
-                "Content approved successfully.");
+                "Content approved successfully.", actorUserId);
     }
 
     // API 5 — Reject review
     public Map<String, Object> rejectReview(
-            int reviewID, String remarks) {
+            int reviewID, String remarks, Long actorUserId) {
         return applyDecision(reviewID, "Rejected",
                 remarks, "Completed",
-                "Content rejected. Creator notified.");
+                "Content rejected. Creator notified.", actorUserId);
     }
 
     // API 6 — Request revision
     public Map<String, Object> requestRevision(
-            int reviewID, String remarks) {
+            int reviewID, String remarks, Long actorUserId) {
         return applyDecision(reviewID, "RevisionRequired",
                 remarks, "Pending",
-                "Revision requested. Creator notified.");
+                "Revision requested. Creator notified.", actorUserId);
     }
 
     private Map<String, Object> applyDecision(
             int reviewID, String decision,
-            String remarks, String status, String message) {
+            String remarks, String status, String message, Long actorUserId) {
         Map<String, Object> response = new HashMap<>();
         Optional<EditorialReview> opt = repository.findById(reviewID);
 
@@ -116,49 +120,24 @@ public class EditorialReviewService {
             review.setStatus(status);
             repository.save(review);
 
-            notificationClient.sendNotification(
-                    Long.valueOf(review.getReviewerID()),
-                    "Content " + review.getContentID()
-                            + " approved successfully",
-                    "EDITORIAL");
-
-            if ("Approved".equals(decision)) {
-
-                notificationClient.sendNotification(
-
-                        Long.valueOf(review.getReviewerID()),
-
-                        "Content "
-                                + review.getContentID()
-                                + " approved successfully",
-                        "EDITORIAL");
-
-            }
-            if ("Rejected".equals(decision)) {
-
-                notificationClient.sendNotification(
-
-                        Long.valueOf(review.getReviewerID()),
-
-                        "Content "
-                                + review.getContentID()
-                                + " rejected.",
-
-                        "EDITORIAL");
-
+            // Notify the creator who submitted the content...
+            Long creatorUserId = contentCatalogClient.getCreatorUserId(review.getContentID());
+            if (creatorUserId != null) {
+                String creatorMessage =
+                        "Approved".equals(decision) ? "Content " + review.getContentID() + " was approved" :
+                        "Rejected".equals(decision) ? "Content " + review.getContentID() + " was rejected" :
+                        "Revision requested for Content " + review.getContentID();
+                notificationClient.sendNotification(creatorUserId, creatorMessage, "EDITORIAL");
             }
 
-            if ("RevisionRequired".equals(decision)) {
-
-                notificationClient.sendNotification(
-
-                        Long.valueOf(review.getReviewerID()),
-
-                        "Revision requested for Content "
-                                + review.getContentID(),
-
-                        "EDITORIAL");
-
+            // ...and confirm the action back to the editorial reviewer who actually performed it,
+            // so their own notifications feed isn't empty after acting on a review.
+            if (actorUserId != null) {
+                String actorMessage =
+                        "Approved".equals(decision) ? "You approved Content " + review.getContentID() :
+                        "Rejected".equals(decision) ? "You rejected Content " + review.getContentID() :
+                        "You requested revision for Content " + review.getContentID();
+                notificationClient.sendNotification(actorUserId, actorMessage, "EDITORIAL");
             }
 
             response.put("reviewID", reviewID);

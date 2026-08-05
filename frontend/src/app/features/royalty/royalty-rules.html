@@ -1,7 +1,11 @@
 <div class="crumbs">Home / Royalty / <b>Rules</b></div>
 <div class="page-head">
   <div><h1>Royalty Rules</h1><p>Configure revenue-share percentages by creator tier.</p></div>
-  <div class="page-head__actions"><button class="btn btn--primary" (click)="openCreate()">+ Rule</button></div>
+  <div class="page-head__actions">
+    @if (auth.hasPermission('royalty:approve')) {
+      <button class="btn btn--primary" (click)="openCreate()">+ Rule</button>
+    }
+  </div>
 </div>
 
 <div class="card">
@@ -11,19 +15,22 @@
     <table>
       <thead><tr><th>Creator Tier</th><th>Revenue Share</th><th>Min Payout</th><th>Frequency</th><th>Effective Date</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
-        @for (r of rules(); track r.ruleID) {
+        @for (r of pagedRules(); track r.ruleID) {
           <tr>
             <td class="t-primary" style="font-weight:600">{{ r.creatorTier }}</td>
             <td>{{ r.revenueSharePercent }}%</td>
             <td>${{ r.minimumPayoutThreshold }}</td>
             <td>{{ r.payoutFrequency }}</td>
-            <td class="t-sub">{{ r.effectiveDate }}</td>
+            <td class="t-sub">{{ formatDate(r.effectiveDate) }}</td>
             <td><app-status-badge [status]="r.status"></app-status-badge></td>
-            <td><app-row-menu [items]="menuFor(r)" (actionSelected)="onAction($event, r)"></app-row-menu></td>
+            <td>
+              <app-row-menu [items]="menuFor(r)" (actionSelected)="onAction($event, r)"></app-row-menu>
+            </td>
           </tr>
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rules().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -49,6 +56,24 @@
       <div class="modal__foot">
         <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
         <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (viewing(); as r) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Rule Details · RUL-{{ r.ruleID }}</h3><span class="icon-btn" (click)="viewing.set(null)">✕</span></div>
+      <div class="modal__body">
+        <dl class="kv">
+          <dt>Creator Tier</dt><dd>{{ r.creatorTier }}</dd>
+          <dt>Revenue Share</dt><dd>{{ r.revenueSharePercent }}%</dd>
+          <dt>Min Payout</dt><dd>${{ r.minimumPayoutThreshold }}</dd>
+          <dt>Frequency</dt><dd>{{ r.payoutFrequency }}</dd>
+          <dt>Effective Date</dt><dd>{{ formatDate(r.effectiveDate) }}</dd>
+          <dt>Status</dt><dd><app-status-badge [status]="r.status"></app-status-badge></dd>
+        </dl>
       </div>
     </div>
   </div>

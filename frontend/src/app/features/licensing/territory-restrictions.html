@@ -16,7 +16,7 @@
     <table>
       <thead><tr><th>Restriction ID</th><th>Content</th><th>Restricted</th><th>Allowed</th><th>Effective Date</th><th>Status</th><th style="width:120px">Actions</th></tr></thead>
       <tbody>
-        @for (t of rows(); track t.restrictionId) {
+        @for (t of pagedRows(); track t.restrictionId) {
           <tr>
             <td class="mono t-primary">RST-{{ t.restrictionId }}</td>
             <td>CNT-{{ t.contentId }}</td>
@@ -36,6 +36,7 @@
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 

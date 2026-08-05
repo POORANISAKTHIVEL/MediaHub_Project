@@ -7,6 +7,7 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 
 const ROLE_OPTIONS = ['All', 'admin', 'subscriber', 'creator', 'rightsManager', 'editorial', 'revenueAnalyst'];
@@ -14,7 +15,7 @@ const STATUS_OPTIONS = ['All', 'active', 'suspended'];
 
 @Component({
   selector: 'app-users-list',
-  imports: [RouterLink, FormsModule, StatusBadge, FilterChip, RowMenu, LoadingSpinner],
+  imports: [RouterLink, FormsModule, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination],
   templateUrl: './users-list.html'
 })
 export class UsersList implements OnInit {
@@ -23,10 +24,31 @@ export class UsersList implements OnInit {
 
   loading = signal(true);
   allUsers = signal<IamUser[]>([]);
+  searchTerm = signal('');
   roleFilter = signal('');
   statusFilter = signal('');
   roleOptions = ROLE_OPTIONS;
   statusOptions = STATUS_OPTIONS;
+
+  onSearchChange(value: string) {
+    this.searchTerm.set(value);
+    this.page.set(0);
+  }
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+
+  onRoleFilterChange(value: string) {
+    this.roleFilter.set(value);
+    this.page.set(0);
+  }
+
+  onStatusFilterChange(value: string) {
+    this.statusFilter.set(value);
+    this.page.set(0);
+  }
 
   editing = signal<IamUser | null>(null);
   viewing = signal<IamUser | null>(null);
@@ -38,11 +60,14 @@ export class UsersList implements OnInit {
   suspendReason = '';
   deactivateReason = '';
 
-  rows = computed(() => this.allUsers()
-    .filter(u => u.status === 'active' || u.status === 'suspended')
-    .filter(u => !this.roleFilter() || u.roleType === this.roleFilter())
-    .filter(u => !this.statusFilter() || u.status === this.statusFilter())
-  );
+  rows = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    return this.allUsers()
+      .filter(u => u.status === 'active' || u.status === 'suspended')
+      .filter(u => !this.roleFilter() || u.roleType === this.roleFilter())
+      .filter(u => !this.statusFilter() || u.status === this.statusFilter())
+      .filter(u => !term || u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term) || String(u.userId).includes(term));
+  });
 
   ngOnInit() {
     this.load();

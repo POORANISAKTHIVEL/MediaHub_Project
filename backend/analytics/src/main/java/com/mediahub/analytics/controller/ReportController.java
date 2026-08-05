@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -33,6 +34,7 @@ public class ReportController {
     // "block()/blockFirst()/blockLast() are blocking, which is not supported" and silently falls
     // back to an empty analytics map for every sub-service — every generated report ends up with
     // totalContents stuck at 0 even though real data exists.
+    @PreAuthorize("hasAuthority('report:view')")
     @PostMapping("/generate")
     public Mono<ResponseEntity<ReportResponse>> generateReport(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
@@ -46,35 +48,47 @@ public class ReportController {
     }
 
     // ── GET /mediaHub/reports/{id} ────────────────────────────────────────────
+    // Reactive method security (@PreAuthorize in a WebFlux app) requires the handler to return
+    // a Mono/Flux so the security context has something to attach to — a plain ResponseEntity
+    // throws "must return an instance of Publisher... to support Reactor Context" on every call.
+    // Same fix as generateReport below, applied consistently to every @PreAuthorize'd method here.
+    @PreAuthorize("hasAuthority('report:view')")
     @GetMapping("/{id}")
-    public ResponseEntity<ReportResponse> getReportById(@PathVariable Long id) {
+    public Mono<ResponseEntity<ReportResponse>> getReportById(@PathVariable Long id) {
         logger.info("GET /mediaHub/reports/{} - Fetching report", id);
-        ReportResponse report = reportService.getReportById(id);
-        if (report == null) {
-            logger.warn("Report not found with ID: {}", id);
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(report);
+        return Mono.fromCallable(() -> reportService.getReportById(id))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(report -> {
+                    if (report == null) {
+                        logger.warn("Report not found with ID: {}", id);
+                        return ResponseEntity.notFound().<ReportResponse>build();
+                    }
+                    return ResponseEntity.ok(report);
+                });
     }
 
     // ── DELETE /mediaHub/reports/{id} ─────────────────────────────────────────
+    @PreAuthorize("hasAuthority('report:view')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteReport(@PathVariable Long id) {
+    public Mono<ResponseEntity<String>> deleteReport(@PathVariable Long id) {
         logger.info("DELETE /mediaHub/reports/{} - Deleting report", id);
-        return ResponseEntity.ok(reportService.deleteReport(id));
+        return Mono.fromCallable(() -> reportService.deleteReport(id))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     // ── GET /mediaHub/reports/download/{id} ───────────────────────────────────
+    @PreAuthorize("hasAuthority('report:view')")
     @GetMapping("/download/{id}")
-    public ResponseEntity<byte[]> downloadReport(@PathVariable Long id)
-            throws Exception {
+    public Mono<ResponseEntity<byte[]>> downloadReport(@PathVariable Long id) {
         logger.info("GET /mediaHub/reports/download/{} - Downloading report", id);
-        byte[] reportData = reportService.downloadReport(id);
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=MediaHub_Analytics_Report_" + id + ".xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(reportData);
+        return Mono.fromCallable(() -> reportService.downloadReport(id))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(reportData -> ResponseEntity.ok()
+                        .header(
+                                HttpHeaders.CONTENT_DISPOSITION,
+                                "attachment; filename=MediaHub_Analytics_Report_" + id + ".xlsx")
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(reportData));
     }
 }

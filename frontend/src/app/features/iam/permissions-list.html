@@ -10,7 +10,7 @@
 </div>
 
 <div class="toolbar">
-  <div class="search">⌕ &nbsp;Search permissions…</div>
+  <div class="search"><span>⌕</span><input type="text" placeholder="Search permissions…" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"></div>
   <app-filter-chip label="Module" [value]="moduleFilter()" [options]="moduleOptions" (valueChange)="setModuleFilter($event)"></app-filter-chip>
 </div>
 

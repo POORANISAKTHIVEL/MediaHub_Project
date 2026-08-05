@@ -131,7 +131,7 @@ public class EditorialReviewControllerTest {
         resp.put("decision", "Approved");
         resp.put("status", "Completed");
         resp.put("message", "Content approved successfully.");
-        when(service.approveReview(eq(1), anyString())).thenReturn(resp);
+        when(service.approveReview(eq(1), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Well written");
         mockMvc.perform(post("/MediaHub/editorial/reviews/1/approve")
@@ -149,7 +149,7 @@ public class EditorialReviewControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Review not found");
-        when(service.approveReview(eq(99), anyString())).thenReturn(resp);
+        when(service.approveReview(eq(99), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Remarks");
         mockMvc.perform(post("/MediaHub/editorial/reviews/99/approve")
@@ -167,7 +167,7 @@ public class EditorialReviewControllerTest {
         resp.put("decision", "Rejected");
         resp.put("status", "Completed");
         resp.put("message", "Content rejected. Creator notified.");
-        when(service.rejectReview(eq(1), anyString())).thenReturn(resp);
+        when(service.rejectReview(eq(1), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Not acceptable");
         mockMvc.perform(post("/MediaHub/editorial/reviews/1/reject")
@@ -184,7 +184,7 @@ public class EditorialReviewControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Review not found");
-        when(service.rejectReview(eq(99), anyString())).thenReturn(resp);
+        when(service.rejectReview(eq(99), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Remarks");
         mockMvc.perform(post("/MediaHub/editorial/reviews/99/reject")
@@ -201,7 +201,7 @@ public class EditorialReviewControllerTest {
         resp.put("decision", "RevisionRequired");
         resp.put("status", "Pending");
         resp.put("message", "Revision requested. Creator notified.");
-        when(service.requestRevision(eq(1), anyString())).thenReturn(resp);
+        when(service.requestRevision(eq(1), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Needs changes");
         mockMvc.perform(post("/MediaHub/editorial/reviews/1/revise")
@@ -220,7 +220,7 @@ public class EditorialReviewControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Review not found");
-        when(service.requestRevision(eq(99), anyString())).thenReturn(resp);
+        when(service.requestRevision(eq(99), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("remarks", "Remarks");
         mockMvc.perform(post("/MediaHub/editorial/reviews/99/revise")

@@ -1,5 +1,11 @@
 package com.mediahub.royalty.service;
 
+import com.mediahub.royalty.client.ContentCatalogClient;
+import com.mediahub.royalty.client.CreatorClient;
+import com.mediahub.royalty.client.EditorialClient;
+import com.mediahub.royalty.client.LicensingClient;
+import com.mediahub.royalty.client.NotificationClient;
+import com.mediahub.royalty.client.SubscriptionClient;
 import com.mediahub.royalty.model.RoyaltyStatement;
 import com.mediahub.royalty.repository.RoyaltyStatementRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,10 +31,29 @@ import com.mediahub.royalty.exception.BadRequestException;
 import com.mediahub.royalty.exception.ResourceNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RoyaltyStatementServiceTest {
 
     @Mock
     private RoyaltyStatementRepository repository;
+
+    @Mock
+    private CreatorClient creatorClient;
+
+    @Mock
+    private SubscriptionClient subscriptionClient;
+
+    @Mock
+    private LicensingClient licensingClient;
+
+    @Mock
+    private EditorialClient editorialClient;
+
+    @Mock
+    private ContentCatalogClient contentCatalogClient;
+
+    @Mock
+    private NotificationClient notificationClient;
 
     @InjectMocks
     private RoyaltyStatementService service;
@@ -34,12 +62,29 @@ public class RoyaltyStatementServiceTest {
 
     @BeforeEach
     void setUp() {
+        // RoyaltyStatementService has an explicit constructor for `repository`, so Mockito's
+        // @InjectMocks only does constructor injection and skips field injection for the other
+        // @Autowired clients — wire them manually or they stay null and NPE on first use.
+        ReflectionTestUtils.setField(service, "creatorClient", creatorClient);
+        ReflectionTestUtils.setField(service, "subscriptionClient", subscriptionClient);
+        ReflectionTestUtils.setField(service, "licensingClient", licensingClient);
+        ReflectionTestUtils.setField(service, "editorialClient", editorialClient);
+        ReflectionTestUtils.setField(service, "contentCatalogClient", contentCatalogClient);
+        ReflectionTestUtils.setField(service, "notificationClient", notificationClient);
+
         statement = new RoyaltyStatement();
         statement.setCreatorID(501);
         statement.setPeriod("2025-Q1");
         statement.setTotalViews(50000L);
         statement.setTotalRevenue(2000.0);
         statement.setRoyaltyAmount(600.0);
+
+        when(creatorClient.getUserId(anyInt())).thenReturn(501L);
+        when(subscriptionClient.validateSubscription(anyLong())).thenReturn(true);
+        when(creatorClient.validateCreator(anyInt())).thenReturn(true);
+        when(licensingClient.validateLicensor(anyInt())).thenReturn(true);
+        when(contentCatalogClient.fetchByCreator(anyInt())).thenReturn(List.of(Map.of("contentId", 1)));
+        when(editorialClient.validateApproval(anyInt())).thenReturn(true);
     }
 
     // ─── REGULAR TEST CASES ──────────────────────────────────────────────────
@@ -49,7 +94,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_success() {
         doNothing().when(repository).save(any(RoyaltyStatement.class));
 
-        RoyaltyStatement result = service.generateStatement(statement);
+        RoyaltyStatement result = service.generateStatement(statement, 1L);
 
         assertEquals("Draft", result.getStatus());
         verify(repository, times(1)).save(any(RoyaltyStatement.class));
@@ -60,7 +105,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_missingCreatorID() {
         statement.setCreatorID(0);
 
-        assertThrows(BadRequestException.class, () -> service.generateStatement(statement));
+        assertThrows(BadRequestException.class, () -> service.generateStatement(statement, 1L));
         verify(repository, never()).save(any());
     }
 
@@ -69,7 +114,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_nullPeriod() {
         statement.setPeriod(null);
 
-        assertThrows(BadRequestException.class, () -> service.generateStatement(statement));
+        assertThrows(BadRequestException.class, () -> service.generateStatement(statement, 1L));
     }
 
     // TC-22: Generate statement — empty period
@@ -77,7 +122,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_emptyPeriod() {
         statement.setPeriod("");
 
-        assertThrows(BadRequestException.class, () -> service.generateStatement(statement));
+        assertThrows(BadRequestException.class, () -> service.generateStatement(statement, 1L));
     }
 
     // TC-23: Generate statement — negative totalRevenue
@@ -85,7 +130,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_negativeTotalRevenue() {
         statement.setTotalRevenue(-50.0);
 
-        assertThrows(BadRequestException.class, () -> service.generateStatement(statement));
+        assertThrows(BadRequestException.class, () -> service.generateStatement(statement, 1L));
     }
 
     // TC-24: Generate statement — repository failure
@@ -93,7 +138,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_repositoryFailure() {
         doThrow(new RuntimeException("DB error")).when(repository).save(any(RoyaltyStatement.class));
 
-        assertThrows(RuntimeException.class, () -> service.generateStatement(statement));
+        assertThrows(RuntimeException.class, () -> service.generateStatement(statement, 1L));
     }
 
     // TC-25: Get all statements — returns list
@@ -141,7 +186,7 @@ public class RoyaltyStatementServiceTest {
         when(repository.findStatusById(1)).thenReturn("Draft");
         when(repository.updateStatus(1, "Finalised")).thenReturn(1);
 
-        Map<String, Object> result = service.finaliseStatement(1);
+        Map<String, Object> result = service.finaliseStatement(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Finalised", result.get("status"));
@@ -153,7 +198,7 @@ public class RoyaltyStatementServiceTest {
     void finaliseStatement_nonDraft_blocked() {
         when(repository.findStatusById(1)).thenReturn("Finalised");
 
-        assertThrows(BadRequestException.class, () -> service.finaliseStatement(1));
+        assertThrows(BadRequestException.class, () -> service.finaliseStatement(1, 1L));
         verify(repository, never()).updateStatus(anyInt(), anyString());
     }
 
@@ -163,7 +208,7 @@ public class RoyaltyStatementServiceTest {
         when(repository.findStatusById(1)).thenReturn("Finalised");
         when(repository.updateStatus(1, "Paid")).thenReturn(1);
 
-        Map<String, Object> result = service.markAsPaid(1);
+        Map<String, Object> result = service.markAsPaid(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Paid", result.get("status"));
@@ -175,7 +220,7 @@ public class RoyaltyStatementServiceTest {
     void markAsPaid_nonFinalised_blocked() {
         when(repository.findStatusById(1)).thenReturn("Draft");
 
-        assertThrows(BadRequestException.class, () -> service.markAsPaid(1));
+        assertThrows(BadRequestException.class, () -> service.markAsPaid(1, 1L));
         verify(repository, never()).updateStatus(anyInt(), anyString());
     }
 
@@ -188,7 +233,7 @@ public class RoyaltyStatementServiceTest {
         statement.setStatus("Finalised");
         doNothing().when(repository).save(any(RoyaltyStatement.class));
 
-        RoyaltyStatement returned = service.generateStatement(statement);
+        RoyaltyStatement returned = service.generateStatement(statement, 1L);
 
         assertEquals("Draft", returned.getStatus());
     }
@@ -200,7 +245,7 @@ public class RoyaltyStatementServiceTest {
         statement.setTotalRevenue(0.0);
         doNothing().when(repository).save(any(RoyaltyStatement.class));
 
-        RoyaltyStatement result = service.generateStatement(statement);
+        RoyaltyStatement result = service.generateStatement(statement, 1L);
 
         assertEquals("Draft", result.getStatus());
     }
@@ -211,7 +256,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_responseContainsAllFields() {
         doNothing().when(repository).save(any(RoyaltyStatement.class));
 
-        RoyaltyStatement result = service.generateStatement(statement);
+        RoyaltyStatement result = service.generateStatement(statement, 1L);
 
         assertEquals(501, result.getCreatorID());
         assertEquals("2025-Q1", result.getPeriod());
@@ -225,7 +270,7 @@ public class RoyaltyStatementServiceTest {
     void generateStatement_repositoryThrowsException() {
         doThrow(new RuntimeException("DB unavailable")).when(repository).save(any(RoyaltyStatement.class));
 
-        assertThrows(RuntimeException.class, () -> service.generateStatement(statement));
+        assertThrows(RuntimeException.class, () -> service.generateStatement(statement, 1L));
     }
 
     // EX-13: Finalise statement — findStatusById throws exception
@@ -236,7 +281,7 @@ public class RoyaltyStatementServiceTest {
             .thenThrow(new com.mediahub.royalty.exception.ResourceNotFoundException("Row not found"));
 
         assertThrows(com.mediahub.royalty.exception.ResourceNotFoundException.class,
-                () -> service.finaliseStatement(99));
+                () -> service.finaliseStatement(99, 1L));
         verify(repository, never()).updateStatus(anyInt(), anyString());
     }
 
@@ -248,7 +293,7 @@ public class RoyaltyStatementServiceTest {
             .thenThrow(new com.mediahub.royalty.exception.ResourceNotFoundException("Row not found"));
 
         assertThrows(com.mediahub.royalty.exception.ResourceNotFoundException.class,
-                () -> service.markAsPaid(99));
+                () -> service.markAsPaid(99, 1L));
         verify(repository, never()).updateStatus(anyInt(), anyString());
     }
 }

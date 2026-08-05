@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ContentClient } from '../../core/api/content-client';
 import { ContentTag } from '../../core/models/content.models';
@@ -6,10 +6,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
+import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 
 @Component({
   selector: 'app-tag-management',
-  imports: [FormsModule, LoadingSpinner],
+  imports: [FormsModule, LoadingSpinner, RowMenu, Pagination],
   templateUrl: './tag-management.html'
 })
 export class TagManagement implements OnInit {
@@ -20,7 +22,13 @@ export class TagManagement implements OnInit {
 
   loading = signal(true);
   tags = signal<ContentTag[]>([]);
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.tags().length / this.pageSize)));
+  pagedTags = computed(() => this.tags().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
   creating = signal(false);
+  viewing = signal<ContentTag | null>(null);
   newTagName = '';
   newTagCategory: ContentTag['tagCategory'] = 'Genre';
   newTagContentId = 0;
@@ -45,6 +53,17 @@ export class TagManagement implements OnInit {
       this.newTagName = '';
       this.load();
     });
+  }
+
+  menuFor(t: ContentTag): RowMenuItem[] {
+    const items: RowMenuItem[] = [{ label: 'View', action: 'view' }];
+    if (this.auth.hasPermission('content:delete')) items.push({ label: 'Delete', action: 'delete' });
+    return items;
+  }
+
+  onAction(action: string, t: ContentTag) {
+    if (action === 'view') this.viewing.set(t);
+    if (action === 'delete') this.remove(t);
   }
 
   async remove(t: ContentTag) {

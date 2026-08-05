@@ -48,6 +48,7 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("✅ Seed data already exists — verifying admin permissions.");
             migrateAdminPermissions();
             migrateNotificationPermissions();
+            migrateEditorialPermissions();
             return;
         }
 
@@ -85,6 +86,7 @@ public class DataLoader implements CommandLineRunner {
         Permission notificationView      = savePerm("notification:view");
         Permission notificationUpdate    = savePerm("notification:update");
         Permission notificationAnalytics = savePerm("notification:analytics");
+        Permission editorialManage       = savePerm("editorial:manage");
 
         // ── Role-Permission assignments ───────────────────────────────────────
         // Link each role to the permissions it should have, building the access-control matrix.
@@ -100,6 +102,7 @@ public class DataLoader implements CommandLineRunner {
         assign(editorial,     contentRead);
         assign(editorial,     contentPublish);
         assign(editorial,     contentDelete);
+        assign(editorial,     editorialManage);
         assign(editorial,     planView);
         assign(editorial,     subscriptionView);
         assign(rightsMgr,     contentRead);
@@ -132,6 +135,7 @@ public class DataLoader implements CommandLineRunner {
         assign(admin,         notificationSend);
         assign(admin,         notificationUpdate);
         assign(admin,         notificationAnalytics);
+        assign(admin,         editorialManage);
 
         // ── Admin user — reads from application.properties ────────────────────
         saveUser(adminName, admin, adminEmail, adminPhone, "IN", adminPassword);
@@ -193,7 +197,8 @@ public class DataLoader implements CommandLineRunner {
                 "subscription:view", "subscription:manage",
                 "role:manage", "permission:manage",
                 "user:suspend", "user:manage",
-                "report:view", "license:manage", "audit:read"
+                "report:view", "license:manage", "audit:read",
+                "editorial:manage"
         };
         for (String perm : adminPermissions) {
             assignIfMissing(admin, perm);
@@ -213,6 +218,18 @@ public class DataLoader implements CommandLineRunner {
         assignIfMissing(admin, "notification:update");
         assignIfMissing(admin, "notification:analytics");
         System.out.println("✅ Notification permissions verified for admin.");
+    }
+
+    // Backfills the editorial role with editorial:manage on every startup, for DBs seeded
+    // before this permission existed. Idempotent: only adds the row if it's missing.
+    private void migrateEditorialPermissions() {
+        Role editorial = roleRepository.findByRoleType("editorial").orElse(null);
+        if (editorial == null) {
+            System.out.println("⚠️ Editorial role not found during permission migration.");
+            return;
+        }
+        assignIfMissing(editorial, "editorial:manage");
+        System.out.println("✅ Editorial permissions verified/backfilled.");
     }
 
     // Helper that creates and saves a join-row linking one role to one

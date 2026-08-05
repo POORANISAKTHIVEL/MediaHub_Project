@@ -13,8 +13,41 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class ContentCatalogClient {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ContentCatalogClient.class);
+
     @Autowired
     private WebClient webClient;
+
+    // Resolves a content asset's creator to their actual account (User) id, so review
+    // outcome notifications can be sent to the person who submitted the content instead of
+    // the reviewer who acted on it. Returns null (rather than throwing) on any lookup failure
+    // so a notification-service hiccup never blocks the approve/reject/revise action itself.
+    @SuppressWarnings("unchecked")
+    public Long getCreatorUserId(int contentId) {
+        String authHeader = currentAuthHeader();
+        try {
+            Map<String, Object> content = webClient.get()
+                    .uri("http://localhost:8093/mediahub/contentCatalog/contentAsset/fetchContentById/" + contentId)
+                    .headers(h -> { if (authHeader != null) h.set(HttpHeaders.AUTHORIZATION, authHeader); })
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            Object creatorId = content != null ? content.get("creatorId") : null;
+            if (creatorId == null) return null;
+
+            Map<String, Object> creator = webClient.get()
+                    .uri("http://localhost:8093/mediahub/contentCatalog/creator/fetchCreatorById/" + creatorId)
+                    .headers(h -> { if (authHeader != null) h.set(HttpHeaders.AUTHORIZATION, authHeader); })
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            Object userId = creator != null ? creator.get("userId") : null;
+            return userId != null ? Long.valueOf(userId.toString()) : null;
+        } catch (Exception e) {
+            logger.warn("Unable to resolve creator user id for contentId={}: {}", contentId, e.getMessage());
+            return null;
+        }
+    }
 
     public void publishContent(int contentId) {
 

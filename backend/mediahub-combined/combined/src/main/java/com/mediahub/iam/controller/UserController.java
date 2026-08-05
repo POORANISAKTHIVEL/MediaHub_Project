@@ -1,11 +1,15 @@
 package com.mediahub.iam.controller;
 
+import com.mediahub.auditlog.entity.AuditEvent;
+import com.mediahub.iam.client.AuditClient;
 import com.mediahub.iam.dto.ActivateRequest;
 import com.mediahub.iam.dto.SuspendRequest;
 import com.mediahub.iam.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -23,6 +27,19 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AuditClient auditClient;
+
+    // Strips the "ROLE_" prefix off the caller's first granted authority, e.g. "ROLE_ADMIN" -> "ADMIN".
+    private static String actorRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(a -> a.startsWith("ROLE_"))
+            .map(a -> a.substring(5))
+            .findFirst()
+            .orElse("UNKNOWN");
+    }
 
     // GET all users
     // Handles GET "/getAllUsers/v1.0" and fetches every user record from the service.
@@ -97,9 +114,14 @@ public class UserController {
     @PostMapping("/suspendUser/v1/{userId}")
     public ResponseEntity<Map<String, String>> suspendUser(
             @PathVariable Long userId,
-            @RequestBody SuspendRequest request) {
+            @RequestBody SuspendRequest request,
+            Authentication authentication) {
+        Long actorId = Long.valueOf(authentication.getName());
         log.info("Suspending user id={} reason={}", userId, request.getReason());
-        userService.suspendUser(userId, request.getReason(), 1L);
+        userService.suspendUser(userId, request.getReason(), actorId);
+        auditClient.log("USER_SUSPENDED", actorId, actorRole(authentication),
+            "User", userId.toString(), "Suspended user: " + request.getReason(),
+            AuditEvent.Severity.MEDIUM);
         return ResponseEntity.ok(
             Map.of("message", "User suspended successfully"));
     }
@@ -111,9 +133,12 @@ public class UserController {
     @PostMapping("/activateUser/v1/{userId}")
     public ResponseEntity<Map<String, String>> activateUser(
             @PathVariable Long userId,
-            @RequestBody ActivateRequest request) {
+            @RequestBody ActivateRequest request,
+            Authentication authentication) {
         log.info("Activating user id={}", userId);
         userService.activateUser(userId);
+        auditClient.log("USER_ACTIVATED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "User", userId.toString(), "Activated user", AuditEvent.Severity.LOW);
         return ResponseEntity.ok(
             Map.of("message", "User activated successfully"));
     }

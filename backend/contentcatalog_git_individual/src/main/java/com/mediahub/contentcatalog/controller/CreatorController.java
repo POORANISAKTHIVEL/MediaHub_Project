@@ -44,6 +44,9 @@ public class CreatorController {
         } catch (IllegalArgumentException iae) {
             logger.error("Validation error creating creator", iae);
             return ResponseEntity.badRequest().body(iae.getMessage());
+        } catch (IllegalStateException ise) {
+            logger.error("Conflict creating creator", ise);
+            return ResponseEntity.status(409).body(ise.getMessage());
         } catch (Exception e) {
             logger.error("Unexpected error creating creator", e);
             return ResponseEntity.status(500).body("Internal Server Error: " + e.getMessage());
@@ -80,7 +83,9 @@ public class CreatorController {
     }
 
     // ✅ UPDATE STATUS
-    @PreAuthorize("hasAuthority('content:write')")
+    // Lifecycle transitions (PendingReview -> Active -> Suspended) are an admin-only decision,
+    // unlike profile edits above which the creator's own content:write also covers.
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/updateCreatorStatus/{creatorId}")
     public ResponseEntity<String> updateCreatorStatus(@PathVariable int creatorId,
                                                       @RequestBody Map<String, String> body) {

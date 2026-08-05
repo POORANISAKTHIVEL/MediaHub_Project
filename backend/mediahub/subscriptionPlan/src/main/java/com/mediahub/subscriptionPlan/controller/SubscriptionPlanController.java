@@ -1,5 +1,6 @@
 package com.mediahub.subscriptionPlan.controller;
 
+import com.mediahub.subscriptionPlan.client.AuditClient;
 import com.mediahub.subscriptionPlan.dto.CreatePlanRequest;
 import com.mediahub.subscriptionPlan.dto.UpdatePlanRequest;
 import com.mediahub.subscriptionPlan.model.SubscriptionPlan;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,16 +32,31 @@ public class SubscriptionPlanController {
     @Autowired
     private SubscriptionPlanService subscriptionPlanService;
 
+    @Autowired
+    private AuditClient auditClient;
+
+    private static String actorRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(a -> a.startsWith("ROLE_"))
+            .map(a -> a.substring(5))
+            .findFirst()
+            .orElse("UNKNOWN");
+    }
+
     @Operation(
             summary = "Create Subscription Plan",
             description = "Creates a new subscription plan"
     )
     @PreAuthorize("hasAuthority('plan:configure')")
     @PostMapping("/createPlan")
-    public ResponseEntity<?> createPlan(@RequestBody CreatePlanRequest request) {
+    public ResponseEntity<?> createPlan(@RequestBody CreatePlanRequest request, Authentication authentication) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(subscriptionPlanService.createPlan(request));
+            Map<String, String> result = subscriptionPlanService.createPlan(request);
+            auditClient.log("PLAN_CREATED", "SUBSCRIPTION", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "SubscriptionPlan", request.getName(),
+                "Created plan: " + request.getName(), "LOW");
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("message", ex.getMessage()));
@@ -87,11 +105,15 @@ public class SubscriptionPlanController {
     @PutMapping("/updatePlan/{planId}")
     public ResponseEntity<?> updatePlan(
             @PathVariable Long planId,
-            @RequestBody UpdatePlanRequest request) {
+            @RequestBody UpdatePlanRequest request,
+            Authentication authentication) {
 
         try {
-            return ResponseEntity.ok(
-                    subscriptionPlanService.updatePlan(planId, request));
+            Map<String, String> result = subscriptionPlanService.updatePlan(planId, request);
+            auditClient.log("PLAN_UPDATED", "SUBSCRIPTION", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "SubscriptionPlan", planId.toString(),
+                "Updated plan", "LOW");
+            return ResponseEntity.ok(result);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", ex.getMessage()));

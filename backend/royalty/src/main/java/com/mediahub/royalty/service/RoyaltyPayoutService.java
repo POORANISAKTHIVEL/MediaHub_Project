@@ -1,11 +1,14 @@
 package com.mediahub.royalty.service;
 
+import com.mediahub.royalty.client.CreatorClient;
+import com.mediahub.royalty.client.NotificationClient;
 import com.mediahub.royalty.exception.BadRequestException;
 import com.mediahub.royalty.exception.ResourceNotFoundException;
 import com.mediahub.royalty.model.RoyaltyPayout;
 import com.mediahub.royalty.repository.RoyaltyPayoutRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -19,11 +22,27 @@ public class RoyaltyPayoutService {
     private static final Logger logger = LoggerFactory.getLogger(RoyaltyPayoutService.class);
     private final RoyaltyPayoutRepository repository;
 
+    @Autowired
+    private CreatorClient creatorClient;
+    @Autowired
+    private NotificationClient notificationClient;
+
     public RoyaltyPayoutService(RoyaltyPayoutRepository repository) {
         this.repository = repository;
     }
 
-    public RoyaltyPayout createPayout(RoyaltyPayout payout) {
+    // Payouts had no notifications wired at all — every create/process/fail was silent.
+    private void notifyCreatorAndActor(int creatorID, Long actorUserId, String creatorMessage, String actorMessage) {
+        Long linkedUserId = creatorClient.getUserId(creatorID);
+        if (linkedUserId != null) {
+            notificationClient.sendRoyaltyNotification(linkedUserId, creatorMessage, null);
+        }
+        if (actorUserId != null && !actorUserId.equals(linkedUserId)) {
+            notificationClient.sendRoyaltyNotification(actorUserId, actorMessage, null);
+        }
+    }
+
+    public RoyaltyPayout createPayout(RoyaltyPayout payout, Long actorUserId) {
         logger.debug("Creating new payout with StatementID: {} and CreatorID: {}", payout.getStatementID(), payout.getCreatorID());
         try {
             if (payout.getStatementID() == 0) {
@@ -50,6 +69,11 @@ public class RoyaltyPayoutService {
             }
             payout.setStatus("Pending");
             repository.save(payout);
+
+            notifyCreatorAndActor(payout.getCreatorID(), actorUserId,
+                    "A payout of $" + payout.getAmount() + " has been created for you (Payout ID: " + payout.getPayoutID() + ").",
+                    "You created payout " + payout.getPayoutID() + " for $" + payout.getAmount() + ".");
+
             logger.info("Payout created successfully with ID: {}", payout.getPayoutID());
             return payout;
         } catch (Exception e) {
@@ -72,9 +96,10 @@ public class RoyaltyPayoutService {
         return payout;
     }
 
-    public Map<String, Object> processPayout(int payoutID) {
+    public Map<String, Object> processPayout(int payoutID, Long actorUserId) {
         logger.debug("Processing payout with ID: {}", payoutID);
         try {
+            RoyaltyPayout payout = repository.findById(payoutID);
             int result = repository.updateStatus(payoutID, "Processed");
             if (result == 0) {
                 logger.error("Payout not found with ID: {}", payoutID);
@@ -86,6 +111,13 @@ public class RoyaltyPayoutService {
             response.put("status", "Processed");
             response.put("statusCode", 200);
             response.put("message", "Payout processed successfully.");
+
+            if (payout != null) {
+                notifyCreatorAndActor(payout.getCreatorID(), actorUserId,
+                        "Your payout (ID: " + payoutID + ") has been processed.",
+                        "You processed payout " + payoutID + ".");
+            }
+
             logger.info("Payout with ID: {} processed successfully", payoutID);
             return response;
         } catch (Exception e) {
@@ -94,9 +126,10 @@ public class RoyaltyPayoutService {
         }
     }
 
-    public Map<String, Object> failPayout(int payoutID, String reason) {
+    public Map<String, Object> failPayout(int payoutID, String reason, Long actorUserId) {
         logger.debug("Failing payout with ID: {} for reason: {}", payoutID, reason);
         try {
+            RoyaltyPayout payout = repository.findById(payoutID);
             int result = repository.updateStatus(payoutID, "Failed");
             if (result == 0) {
                 logger.error("Payout not found with ID: {}", payoutID);
@@ -109,6 +142,13 @@ public class RoyaltyPayoutService {
             response.put("reason", reason);
             response.put("statusCode", 200);
             response.put("message", "Payout marked as failed.");
+
+            if (payout != null) {
+                notifyCreatorAndActor(payout.getCreatorID(), actorUserId,
+                        "Your payout (ID: " + payoutID + ") failed: " + reason,
+                        "You marked payout " + payoutID + " as failed: " + reason);
+            }
+
             logger.info("Payout with ID: {} marked as failed. Reason: {}", payoutID, reason);
             return response;
         } catch (Exception e) {

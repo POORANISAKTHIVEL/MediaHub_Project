@@ -67,7 +67,7 @@ class TerritoryRestrictionServiceTest {
         void createRestriction_success() {
             when(repo.save(any(TerritoryRestriction.class))).thenReturn(sampleEntity);
 
-            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest);
+            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest, 1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getRestrictionId()).isEqualTo(1);
@@ -84,7 +84,7 @@ class TerritoryRestrictionServiceTest {
                 return saved;
             });
 
-            service.createRestriction(sampleRequest);
+            service.createRestriction(sampleRequest, 1L);
             verify(repo).save(any());
         }
 
@@ -97,7 +97,7 @@ class TerritoryRestrictionServiceTest {
                 return sampleEntity;
             });
 
-            service.createRestriction(sampleRequest);
+            service.createRestriction(sampleRequest, 1L);
         }
 
         @Test
@@ -109,7 +109,7 @@ class TerritoryRestrictionServiceTest {
                 return sampleEntity;
             });
 
-            service.createRestriction(sampleRequest);
+            service.createRestriction(sampleRequest, 1L);
         }
 
         @Test
@@ -121,7 +121,7 @@ class TerritoryRestrictionServiceTest {
                 return sampleEntity;
             });
 
-            service.createRestriction(sampleRequest);
+            service.createRestriction(sampleRequest, 1L);
         }
 
         @Test
@@ -129,7 +129,7 @@ class TerritoryRestrictionServiceTest {
         void createRestriction_repoThrows_propagates() {
             when(repo.save(any())).thenThrow(new RuntimeException("DB error"));
 
-            assertThatThrownBy(() -> service.createRestriction(sampleRequest))
+            assertThatThrownBy(() -> service.createRestriction(sampleRequest, 1L))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("DB error");
         }
@@ -139,7 +139,7 @@ class TerritoryRestrictionServiceTest {
         void createRestriction_responseHasStatusActive() {
             when(repo.save(any())).thenReturn(sampleEntity);
 
-            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest);
+            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest, 1L);
 
             assertThat(result.getStatus()).isEqualTo("Active");
         }
@@ -151,7 +151,7 @@ class TerritoryRestrictionServiceTest {
             sampleEntity.setEffectiveDate(today);
             when(repo.save(any())).thenReturn(sampleEntity);
 
-            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest);
+            TerritoryRestrictionResponseDTO result = service.createRestriction(sampleRequest, 1L);
 
             assertThat(result.getEffectiveDate()).isEqualTo(today);
         }
@@ -169,7 +169,7 @@ class TerritoryRestrictionServiceTest {
         void getByContentId_returnsActiveRestrictions() {
             when(repo.findByContentIdAndStatus(100, "Active")).thenReturn(List.of(sampleEntity));
 
-            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100);
+            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100, true);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getContentId()).isEqualTo(100);
@@ -180,7 +180,7 @@ class TerritoryRestrictionServiceTest {
         void getByContentId_noRestrictions_returnsEmpty() {
             when(repo.findByContentIdAndStatus(999, "Active")).thenReturn(Collections.emptyList());
 
-            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(999);
+            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(999, true);
 
             assertThat(result).isEmpty();
         }
@@ -190,7 +190,7 @@ class TerritoryRestrictionServiceTest {
         void getByContentId_alwaysFiltersActiveStatus() {
             when(repo.findByContentIdAndStatus(100, "Active")).thenReturn(Collections.emptyList());
 
-            service.getByContentId(100);
+            service.getByContentId(100, true);
 
             verify(repo).findByContentIdAndStatus(100, "Active");
             verify(repo, never()).findByContentIdAndStatus(eq(100), eq("Inactive"));
@@ -208,7 +208,7 @@ class TerritoryRestrictionServiceTest {
             when(repo.findByContentIdAndStatus(100, "Active"))
                     .thenReturn(Arrays.asList(sampleEntity, second));
 
-            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100);
+            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100, true);
 
             assertThat(result).hasSize(2);
         }
@@ -218,7 +218,7 @@ class TerritoryRestrictionServiceTest {
         void getByContentId_mapsRestrictedCountries() {
             when(repo.findByContentIdAndStatus(100, "Active")).thenReturn(List.of(sampleEntity));
 
-            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100);
+            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100, true);
 
             assertThat(result.get(0).getRestrictedCountries()).isEqualTo("CN,RU");
         }
@@ -228,7 +228,7 @@ class TerritoryRestrictionServiceTest {
         void getByContentId_mapsAllowedCountries() {
             when(repo.findByContentIdAndStatus(100, "Active")).thenReturn(List.of(sampleEntity));
 
-            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100);
+            List<TerritoryRestrictionResponseDTO> result = service.getByContentId(100, true);
 
             assertThat(result.get(0).getAllowedCountries()).isEqualTo("US,CA,UK");
         }

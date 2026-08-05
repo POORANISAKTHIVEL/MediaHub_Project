@@ -19,7 +19,7 @@
     <table>
       <thead><tr><th>License ID</th><th>Content ID</th><th>Licensee</th><th>Territory</th><th>Valid Until</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
-        @for (l of licenses(); track l.licenseId) {
+        @for (l of pagedLicenses(); track l.licenseId) {
           <tr>
             <td class="mono t-primary">LIC-{{ l.licenseId }}</td>
             <td>CNT-{{ l.contentId }}</td>
@@ -34,7 +34,7 @@
         }
       </tbody>
     </table>
-    <div class="pagination"><span>Showing <b>1–{{ licenses().length }}</b> of <b>{{ licenses().length }}</b></span></div>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="licenses().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 

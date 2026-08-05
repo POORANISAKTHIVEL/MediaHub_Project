@@ -41,7 +41,7 @@ public class RoyaltyStatementService {
         this.repository = repository;
     }
 
-    public RoyaltyStatement generateStatement(RoyaltyStatement statement) {
+    public RoyaltyStatement generateStatement(RoyaltyStatement statement, Long actorUserId) {
         logger.debug("Generating new royalty statement for CreatorID: {}", statement.getCreatorID());
 
         try {
@@ -51,21 +51,25 @@ public class RoyaltyStatementService {
                 throw new BadRequestException("CreatorID is required");
             }
 
-            // ✅ SUBSCRIPTION VALIDATION
+            // ✅ SUBSCRIPTION VALIDATION — resolve the creator's actual linked user account first;
+            // the creatorId and userId are different records, so validating creatorId directly
+            // against user subscriptions was checking the wrong person's subscription entirely.
+            Long linkedUserId = creatorClient.getUserId(statement.getCreatorID());
 
-Boolean subscriptionActive =
-        subscriptionClient.validateSubscription(
-                (long) statement.getCreatorID());
+            Boolean subscriptionActive =
+                    linkedUserId != null
+                            ? subscriptionClient.validateSubscription(linkedUserId)
+                            : null;
 
-if (subscriptionActive == null || !subscriptionActive) {
+            if (subscriptionActive == null || !subscriptionActive) {
 
-    logger.warn(
-            "No active subscription found for CreatorID: {}",
-            statement.getCreatorID());
+                logger.warn(
+                        "No active subscription found for CreatorID: {}",
+                        statement.getCreatorID());
 
-    throw new BadRequestException(
-            "Active subscription not found");
-}
+                throw new BadRequestException(
+                        "Active subscription not found");
+            }
 
             // ✅ CONTENT CATALOG VALIDATION
             Boolean creatorExists =
@@ -147,13 +151,24 @@ if (subscriptionActive == null || !subscriptionActive) {
 
             repository.save(statement);
 
-            // ✅ NOTIFICATION — inform creator their statement has been generated
-            notificationClient.sendRoyaltyNotification(
-                    statement.getCreatorID(),
-                    "Your royalty statement for period '" + statement.getPeriod()
-                            + "' has been successfully generated. Statement ID: "
-                            + statement.getStatementID(),
-                    null);
+            // ✅ NOTIFICATION — inform the creator's actual linked user account (not the raw
+            // creatorID, which is a different record) that their statement has been generated,
+            // and confirm to the admin/analyst who generated it.
+            if (linkedUserId != null) {
+                notificationClient.sendRoyaltyNotification(
+                        linkedUserId,
+                        "Your royalty statement for period '" + statement.getPeriod()
+                                + "' has been generated. Statement ID: "
+                                + statement.getStatementID(),
+                        null);
+            }
+            if (actorUserId != null && !actorUserId.equals(linkedUserId)) {
+                notificationClient.sendRoyaltyNotification(
+                        actorUserId,
+                        "You generated royalty statement " + statement.getStatementID()
+                                + " for period '" + statement.getPeriod() + "'.",
+                        null);
+            }
 
             logger.info(
                     "Royalty statement generated successfully with ID: {}",
@@ -186,7 +201,7 @@ if (subscriptionActive == null || !subscriptionActive) {
         return statement;
     }
 
-    public Map<String, Object> finaliseStatement(int statementID) {
+    public Map<String, Object> finaliseStatement(int statementID, Long actorUserId) {
         logger.debug("Finalising royalty statement with ID: {}", statementID);
         try {
             String currentStatus = repository.findStatusById(statementID);
@@ -206,14 +221,24 @@ if (subscriptionActive == null || !subscriptionActive) {
             response.put("statusCode", 200);
             response.put("message", "Statement finalised successfully.");
 
-            // ✅ NOTIFICATION — inform creator their statement has been finalised
+            // ✅ NOTIFICATION — resolve the creator's real linked user account, and also
+            // confirm to whoever actually finalised it.
             RoyaltyStatement finalised = repository.findById(statementID);
             if (finalised != null) {
-                notificationClient.sendRoyaltyNotification(
-                        finalised.getCreatorID(),
-                        "Your royalty statement (ID: " + statementID
-                                + ") has been finalised and is ready for payout processing.",
-                        null);
+                Long linkedUserId = creatorClient.getUserId(finalised.getCreatorID());
+                if (linkedUserId != null) {
+                    notificationClient.sendRoyaltyNotification(
+                            linkedUserId,
+                            "Your royalty statement (ID: " + statementID
+                                    + ") has been finalised and is ready for payout.",
+                            null);
+                }
+                if (actorUserId != null && !actorUserId.equals(linkedUserId)) {
+                    notificationClient.sendRoyaltyNotification(
+                            actorUserId,
+                            "You finalised royalty statement " + statementID + ".",
+                            null);
+                }
             }
 
             logger.info("Royalty statement with ID: {} finalised successfully", statementID);
@@ -224,7 +249,7 @@ if (subscriptionActive == null || !subscriptionActive) {
         }
     }
 
-    public Map<String, Object> markAsPaid(int statementID) {
+    public Map<String, Object> markAsPaid(int statementID, Long actorUserId) {
         logger.debug("Marking royalty statement with ID: {} as Paid", statementID);
         try {
             String currentStatus = repository.findStatusById(statementID);
@@ -243,6 +268,25 @@ if (subscriptionActive == null || !subscriptionActive) {
             response.put("status", "Paid");
             response.put("statusCode", 200);
             response.put("message", "Statement marked as Paid successfully.");
+
+            // ✅ NOTIFICATION — this transition previously sent none at all.
+            RoyaltyStatement paid = repository.findById(statementID);
+            if (paid != null) {
+                Long linkedUserId = creatorClient.getUserId(paid.getCreatorID());
+                if (linkedUserId != null) {
+                    notificationClient.sendRoyaltyNotification(
+                            linkedUserId,
+                            "Your royalty statement (ID: " + statementID + ") has been marked as Paid.",
+                            null);
+                }
+                if (actorUserId != null && !actorUserId.equals(linkedUserId)) {
+                    notificationClient.sendRoyaltyNotification(
+                            actorUserId,
+                            "You marked royalty statement " + statementID + " as Paid.",
+                            null);
+                }
+            }
+
             logger.info("Royalty statement with ID: {} marked as Paid successfully", statementID);
             return response;
         } catch (Exception e) {

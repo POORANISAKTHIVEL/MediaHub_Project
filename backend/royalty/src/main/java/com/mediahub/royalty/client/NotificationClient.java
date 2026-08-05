@@ -4,8 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashMap;
@@ -51,10 +54,12 @@ public class NotificationClient {
                     "Sending ROYALTY notification to userId: {}, message: {}",
                     userId, message);
 
+            String authHeader = currentAuthHeader();
             webClient.post()
                     .uri(notificationServiceUrl
                             + "/mediaHub/notifications/createNotification/v1.0")
                     .contentType(MediaType.APPLICATION_JSON)
+                    .headers(h -> { if (authHeader != null) h.set(HttpHeaders.AUTHORIZATION, authHeader); })
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -73,5 +78,10 @@ public class NotificationClient {
                     "Error dispatching ROYALTY notification for userId {}: {}",
                     userId, e.getMessage());
         }
+    }
+
+    private String currentAuthHeader() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest().getHeader(HttpHeaders.AUTHORIZATION) : null;
     }
 }

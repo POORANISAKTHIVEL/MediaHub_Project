@@ -14,7 +14,7 @@
           @for (item of available(); track item.contentId) {
             <div class="tray-item">
               <span>{{ item.title }}</span>
-              @if (auth.hasPermission('content:write')) {
+              @if (auth.hasPermission('editorial:manage')) {
                 <button class="btn btn--ghost btn--sm" (click)="add(item)">+ Add</button>
               }
             </div>
@@ -31,7 +31,7 @@
           @for (item of inCollection(); track item.contentId) {
             <div class="tray-item">
               <span>{{ item.title }}</span>
-              @if (auth.hasPermission('content:write')) {
+              @if (auth.hasPermission('editorial:manage')) {
                 <button class="btn btn--danger btn--sm" (click)="remove(item)">Remove</button>
               }
             </div>

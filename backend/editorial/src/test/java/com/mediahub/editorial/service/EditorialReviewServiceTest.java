@@ -157,7 +157,7 @@ public class EditorialReviewServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(review));
         when(repository.save(any())).thenReturn(review);
 
-        Map<String, Object> result = service.approveReview(1, "Good work");
+        Map<String, Object> result = service.approveReview(1, "Good work", 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Approved", result.get("decision"));
@@ -172,7 +172,7 @@ public class EditorialReviewServiceTest {
     void approveReview_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.approveReview(99, "Remarks");
+        Map<String, Object> result = service.approveReview(99, "Remarks", 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Review not found", result.get("error"));
@@ -185,7 +185,7 @@ public class EditorialReviewServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(review));
         when(repository.save(any())).thenReturn(review);
 
-        Map<String, Object> result = service.rejectReview(1, "Not acceptable");
+        Map<String, Object> result = service.rejectReview(1, "Not acceptable", 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Rejected", result.get("decision"));
@@ -200,7 +200,7 @@ public class EditorialReviewServiceTest {
     void rejectReview_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.rejectReview(99, "Remarks");
+        Map<String, Object> result = service.rejectReview(99, "Remarks", 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Review not found", result.get("error"));
@@ -212,7 +212,7 @@ public class EditorialReviewServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(review));
         when(repository.save(any())).thenReturn(review);
 
-        Map<String, Object> result = service.requestRevision(1, "Needs changes");
+        Map<String, Object> result = service.requestRevision(1, "Needs changes", 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("RevisionRequired", result.get("decision"));
@@ -227,7 +227,7 @@ public class EditorialReviewServiceTest {
     void requestRevision_notFound() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.requestRevision(99, "Remarks");
+        Map<String, Object> result = service.requestRevision(99, "Remarks", 1L);
 
         assertEquals(404, result.get("statusCode"));
         assertEquals("Review not found", result.get("error"));
@@ -239,7 +239,7 @@ public class EditorialReviewServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(review));
         when(repository.save(any())).thenReturn(review);
 
-        service.approveReview(1, "OK");
+        service.approveReview(1, "OK", 1L);
 
         verify(repository).save(argThat(r -> r.getReviewDate() != null));
     }
@@ -250,7 +250,7 @@ public class EditorialReviewServiceTest {
         when(repository.findById(1)).thenReturn(Optional.of(review));
         when(repository.save(any())).thenReturn(review);
 
-        service.rejectReview(1, "Plagiarism detected");
+        service.rejectReview(1, "Plagiarism detected", 1L);
 
         verify(repository).save(argThat(r -> "Plagiarism detected".equals(r.getRemarks())));
     }

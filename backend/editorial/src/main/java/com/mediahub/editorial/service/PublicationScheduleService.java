@@ -36,7 +36,7 @@ public class PublicationScheduleService {
 
         // API 13 — Create schedule
         public Map<String, Object> createSchedule(
-                        PublicationSchedule schedule) {
+                        PublicationSchedule schedule, Long actorUserId) {
 
                 Map<String, Object> response = new HashMap<>();
 
@@ -70,14 +70,23 @@ public class PublicationScheduleService {
 
                 PublicationSchedule saved = repository.save(schedule);
 
-                // Notification Module Call
-
+                // Notification Module Call — internal record-keeping notice for admin. The
+                // subscriber-facing "new content available" notice fires later, when the content
+                // actually goes Published (see ContentAssetService.updateContentStatus), not here
+                // at mere scheduling time.
                 notificationClient.sendNotification(
                                 1L,
                                 "Content "
                                                 + saved.getContentID()
                                                 + " scheduled for publication",
                                 "EDITORIAL");
+
+                if (actorUserId != null) {
+                        notificationClient.sendNotification(
+                                        actorUserId,
+                                        "You scheduled Content " + saved.getContentID() + " for publication",
+                                        "EDITORIAL");
+                }
 
                 response.put("scheduleID",
                                 saved.getScheduleID());
@@ -148,7 +157,7 @@ public class PublicationScheduleService {
         // API 16 — Publish manually
         // API 16 — Publish manually
         public Map<String, Object> publishSchedule(
-                        int scheduleID) {
+                        int scheduleID, Long actorUserId) {
 
                 Map<String, Object> response = new HashMap<>();
 
@@ -174,6 +183,13 @@ public class PublicationScheduleService {
                                                         + schedule.getContentID()
                                                         + " published successfully",
                                         "EDITORIAL");
+
+                        if (actorUserId != null) {
+                                notificationClient.sendNotification(
+                                                actorUserId,
+                                                "You published Content " + schedule.getContentID(),
+                                                "EDITORIAL");
+                        }
 
                         response.put(
                                         "scheduleID",
@@ -208,7 +224,7 @@ public class PublicationScheduleService {
         // API 17 — Cancel schedule
         public Map<String, Object> cancelSchedule(
                         int scheduleID,
-                        String reason) {
+                        String reason, Long actorUserId) {
 
                 Map<String, Object> response = new HashMap<>();
 
@@ -226,6 +242,13 @@ public class PublicationScheduleService {
                                         "Publication schedule cancelled for content "
                                                         + schedule.getContentID(),
                                         "EDITORIAL");
+
+                        if (actorUserId != null) {
+                                notificationClient.sendNotification(
+                                                actorUserId,
+                                                "You cancelled the publication schedule for Content " + schedule.getContentID(),
+                                                "EDITORIAL");
+                        }
 
                         response.put(
                                         "scheduleID",
@@ -263,7 +286,7 @@ public class PublicationScheduleService {
 
         // API 18 — Delete schedule
         public Map<String, Object> deleteSchedule(
-                        int scheduleID) {
+                        int scheduleID, Long actorUserId) {
 
                 Map<String, Object> response = new HashMap<>();
 
@@ -271,8 +294,10 @@ public class PublicationScheduleService {
 
                 if (opt.isPresent()) {
 
+                        PublicationSchedule schedule = opt.get();
+
                         if ("Published".equals(
-                                        opt.get().getStatus())) {
+                                        schedule.getStatus())) {
 
                                 response.put(
                                                 "error",
@@ -286,6 +311,13 @@ public class PublicationScheduleService {
                         }
 
                         repository.deleteById(scheduleID);
+
+                        if (actorUserId != null) {
+                                notificationClient.sendNotification(
+                                                actorUserId,
+                                                "You deleted the publication schedule for Content " + schedule.getContentID(),
+                                                "EDITORIAL");
+                        }
 
                         response.put(
                                         "scheduleID",
@@ -350,6 +382,11 @@ public class PublicationScheduleService {
                                                 r.getStatus()))
                                 .count();
 
+                long approvedReviews = reviews.stream()
+                                .filter(r -> "Approved".equalsIgnoreCase(
+                                                r.getDecision()))
+                                .count();
+
                 long scheduledPublications = schedules.stream()
                                 .filter(s -> "Scheduled".equalsIgnoreCase(
                                                 s.getStatus()))
@@ -372,6 +409,10 @@ public class PublicationScheduleService {
                 response.put(
                                 "completedReviews",
                                 completedReviews);
+
+                response.put(
+                                "approvedReviews",
+                                approvedReviews);
 
                 response.put(
                                 "scheduledPublications",

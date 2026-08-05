@@ -2,9 +2,9 @@
 <div class="page-head">
   <div><h1>Collections</h1><p>Group content into Featured, Trending, Curated or New collections.</p></div>
   <div class="page-head__actions">
-    <app-filter-chip label="Category" [value]="categoryFilter()" [options]="categoryOptions" (valueChange)="categoryFilter.set($event)"></app-filter-chip>
-    <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="statusFilter.set($event)"></app-filter-chip>
-    @if (auth.hasPermission('content:write')) {
+    <app-filter-chip label="Category" [value]="categoryFilter()" [options]="categoryOptions" (valueChange)="onCategoryFilterChange($event)"></app-filter-chip>
+    <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="onStatusFilterChange($event)"></app-filter-chip>
+    @if (auth.hasPermission('editorial:manage')) {
       <button class="btn btn--primary" (click)="openCreate()">+ Collection</button>
     }
   </div>
@@ -14,7 +14,7 @@
   <app-loading-spinner></app-loading-spinner>
 } @else {
   <div class="coll-grid">
-    @for (c of rows(); track c.collectionID) {
+    @for (c of pagedRows(); track c.collectionID) {
       <div class="card">
         <div class="coll-cover" style="background:linear-gradient(135deg,#c7d2fe,#a5b4fc)"></div>
         <div class="card__body">
@@ -23,10 +23,10 @@
           <div style="display:flex;gap:8px">
             <button class="btn btn--ghost btn--sm" (click)="manage(c)">Manage Items</button>
             @if (c.status === 'Active') {
-              @if (auth.hasPermission('content:publish')) {
+              @if (auth.hasPermission('editorial:manage')) {
                 <button class="btn btn--ghost btn--sm" (click)="expire(c)">Expire</button>
               }
-            } @else if (auth.hasPermission('content:delete')) {
+            } @else if (auth.hasPermission('editorial:manage')) {
               <button class="btn btn--danger btn--sm" (click)="remove(c)">Delete</button>
             }
           </div>
@@ -36,6 +36,7 @@
       <div class="empty"><div class="empty__ico">▦</div><h3>No collections match these filters.</h3></div>
     }
   </div>
+  <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
 }
 
 @if (creating()) {

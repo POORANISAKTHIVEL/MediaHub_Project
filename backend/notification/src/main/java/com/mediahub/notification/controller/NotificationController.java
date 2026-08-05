@@ -37,8 +37,12 @@ public class NotificationController {
     }
  
     // POST — Create notification
+    // Always triggered as a side effect of some other already-authorized action (a review
+    // decision, a license being created, a subscription changing, etc.) in another service —
+    // never a standalone privileged action a user takes directly — so any authenticated caller
+    // may record one, same as AuditClient's logEvent.
     @Operation(summary = "Create Notification")
-    @PreAuthorize("hasAnyAuthority('notification:send','notification:create')")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/createNotification/v1.0")
     public ResponseEntity<?> createNotification(
         @Valid @RequestBody
@@ -60,8 +64,9 @@ public class NotificationController {
 }
  
     // GET — All notifications for a user
+    // Every user can see their own notifications; broader authorities cover admin/support access.
     @Operation(summary = "Get All Notifications")
-    @PreAuthorize("hasAnyAuthority('notification:view','notification:read')")
+    @PreAuthorize("hasAnyAuthority('notification:view','notification:read') or principal.toString() == #userId.toString()")
     @GetMapping("/getAllNotifications/v1.0/{userId}")
     public ResponseEntity<List<NotificationResponseDTO>>
         getAllNotifications(
@@ -77,7 +82,7 @@ public class NotificationController {
  
     // GET — Unread notifications for a user
     @Operation(summary = "Get Unread Notifications")
-    @PreAuthorize("hasAnyAuthority('notification:view','notification:read')")
+    @PreAuthorize("hasAnyAuthority('notification:view','notification:read') or principal.toString() == #userId.toString()")
     @GetMapping("/getUnreadNotifications/v1.0/{userId}")
     public ResponseEntity<List<NotificationResponseDTO>>
     getUnreadNotifications(
@@ -92,8 +97,9 @@ public class NotificationController {
     }
  
     // PUT — Update notification status
+    // A user can mark/dismiss their own notification; notification:update covers admin/support.
     @Operation(summary = "Update Notification Status")
-    @PreAuthorize("hasAuthority('notification:update')")
+    @PreAuthorize("hasAuthority('notification:update') or @notificationService.isOwner(#id, principal)")
     @PutMapping("/updateNotification/v1.0/{id}")
     public ResponseEntity<?> updateNotification(
             @PathVariable Long id,

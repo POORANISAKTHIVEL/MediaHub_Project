@@ -252,6 +252,13 @@ public class ProxyController {
 
         log.info("Gateway: {} {} --> {}", method, path, uri);
 
+        // Downstream services otherwise only ever see the gateway's own address as the caller,
+        // since they're never hit directly by the browser. Forwarding the real client address
+        // here lets each service's AuditClient record the actual originating IP.
+        String clientIp = exchange.getRequest().getRemoteAddress() != null
+                ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
+                : null;
+
         WebClient.RequestBodySpec spec = webClient
                 .method(method)
                 .uri(uri)
@@ -261,6 +268,9 @@ public class ProxyController {
                             h.put(k, v);
                         }
                     });
+                    if (clientIp != null) {
+                        h.add("X-Forwarded-For", clientIp);
+                    }
                 });
 
         if (method == HttpMethod.GET) {

@@ -126,25 +126,19 @@ public class ContentAssetService {
 
         contentAssetRepository.save(existing);
 
-        // ✅ Send Notification when Content is Published
+        // ✅ Send Notification when Content is Published — every active subscriber gets told,
+        // not just a hardcoded admin userId, since they're who actually cares that it's available.
         if ("Published".equalsIgnoreCase(status)) {
 
-            Map<String, Object> notification =
-                    new HashMap<>();
+            String message = "New content \"" + existing.getTitle() + "\" is available";
 
-            notification.put("userId", 1L);
-
-            notification.put(
-                    "message",
-                    "New content released: " + existing.getTitle()
-            );
-
-            notification.put(
-                    "category",
-                    "CONTENT"
-            );
-
-            notificationClient.sendNotification(notification);
+            for (Long subscriberId : subscriptionClient.getActiveSubscriberUserIds()) {
+                Map<String, Object> notification = new HashMap<>();
+                notification.put("userId", subscriberId);
+                notification.put("message", message);
+                notification.put("category", "CONTENT");
+                notificationClient.sendNotification(notification);
+            }
 
             logger.info(
                     "Notification sent successfully for content: {}",

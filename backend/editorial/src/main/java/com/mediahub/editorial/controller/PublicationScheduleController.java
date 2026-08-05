@@ -1,10 +1,13 @@
 package com.mediahub.editorial.controller;
 
+import com.mediahub.editorial.client.AuditClient;
 import com.mediahub.editorial.model.PublicationSchedule;
 import com.mediahub.editorial.service.PublicationScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,14 +20,27 @@ public class PublicationScheduleController {
     @Autowired
     private PublicationScheduleService service;
 
+    @Autowired
+    private AuditClient auditClient;
+
+    private static String actorRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(a -> a.startsWith("ROLE_"))
+            .map(a -> a.substring(5))
+            .findFirst()
+            .orElse("UNKNOWN");
+    }
+
     // API 13 — POST /schedules
-    @PreAuthorize("hasAuthority('content:write')")
+    @PreAuthorize("hasAuthority('editorial:manage')")
     @PostMapping("/schedules")
     public ResponseEntity<Map<String, Object>> createSchedule(
-            @RequestBody PublicationSchedule schedule) {
+            @RequestBody PublicationSchedule schedule,
+            Authentication authentication) {
 
         Map<String, Object> res =
-                service.createSchedule(schedule);
+                service.createSchedule(schedule, Long.valueOf(authentication.getName()));
 
         int code = (int) res.remove("statusCode");
 
@@ -56,46 +72,64 @@ public class PublicationScheduleController {
     }
 
     // API 16 — POST /schedules/{scheduleID}/publish
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('content:publish')")
+    @PreAuthorize("hasAuthority('editorial:manage')")
     @PostMapping("/schedules/{scheduleID}/publish")
     public ResponseEntity<Map<String, Object>> publishSchedule(
-            @PathVariable int scheduleID) {
+            @PathVariable int scheduleID,
+            Authentication authentication) {
 
         Map<String, Object> res =
-                service.publishSchedule(scheduleID);
+                service.publishSchedule(scheduleID, Long.valueOf(authentication.getName()));
 
         int code = (int) res.remove("statusCode");
+        if (code >= 200 && code < 300) {
+            auditClient.log("SCHEDULE_PUBLISHED", "EDITORIAL", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "PublicationSchedule", String.valueOf(scheduleID),
+                "Published schedule", "LOW");
+        }
 
         return ResponseEntity.status(code).body(res);
     }
 
     // API 17 — POST /schedules/{scheduleID}/cancel
-    @PreAuthorize("hasAuthority('content:write')")
+    @PreAuthorize("hasAuthority('editorial:manage')")
     @PostMapping("/schedules/{scheduleID}/cancel")
     public ResponseEntity<Map<String, Object>> cancelSchedule(
             @PathVariable int scheduleID,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
 
         Map<String, Object> res =
                 service.cancelSchedule(
                         scheduleID,
-                        body.get("reason"));
+                        body.get("reason"), Long.valueOf(authentication.getName()));
 
         int code = (int) res.remove("statusCode");
+        if (code >= 200 && code < 300) {
+            auditClient.log("SCHEDULE_CANCELLED", "EDITORIAL", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "PublicationSchedule", String.valueOf(scheduleID),
+                "Cancelled schedule: " + body.get("reason"), "MEDIUM");
+        }
 
         return ResponseEntity.status(code).body(res);
     }
 
     // API 18 — DELETE /schedules/{scheduleID}
-    @PreAuthorize("hasAuthority('content:delete')")
+    @PreAuthorize("hasAuthority('editorial:manage')")
     @DeleteMapping("/schedules/{scheduleID}")
     public ResponseEntity<Map<String, Object>> deleteSchedule(
-            @PathVariable int scheduleID) {
+            @PathVariable int scheduleID,
+            Authentication authentication) {
 
         Map<String, Object> res =
-                service.deleteSchedule(scheduleID);
+                service.deleteSchedule(scheduleID, Long.valueOf(authentication.getName()));
 
         int code = (int) res.remove("statusCode");
+        if (code >= 200 && code < 300) {
+            auditClient.log("SCHEDULE_DELETED", "EDITORIAL", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "PublicationSchedule", String.valueOf(scheduleID),
+                "Deleted schedule", "MEDIUM");
+        }
 
         return ResponseEntity.status(code).body(res);
     }

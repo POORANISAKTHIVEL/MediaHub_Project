@@ -29,7 +29,7 @@
           <dt>Duration</dt><dd>{{ c.durationSeconds }}s</dd>
           <dt>Status</dt><dd><app-status-badge [status]="c.status"></app-status-badge></dd>
         </dl>
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:18px">
           <a class="btn btn--ghost" routerLink="/content">← Back to catalog</a>
           @if (auth.hasPermission('content:write')) {
             <a class="btn btn--ghost" [routerLink]="['/content', c.contentId, 'edit']">✎ Edit</a>

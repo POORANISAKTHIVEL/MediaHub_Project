@@ -5,7 +5,10 @@ import com.mediahub.licensing.dto.response.TerritoryRestrictionResponseDTO;
 import com.mediahub.licensing.entity.TerritoryRestriction;
 import com.mediahub.licensing.repository.TerritoryRestrictionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +28,7 @@ public class TerritoryRestrictionService {
     @Autowired
     private LicenseNotificationExecutor executor;
 
-    public TerritoryRestrictionResponseDTO createRestriction(TerritoryRestrictionRequestDTO dto) {
+    public TerritoryRestrictionResponseDTO createRestriction(TerritoryRestrictionRequestDTO dto, Long actorUserId) {
         log.info("Creating Territory Restriction");
         TerritoryRestriction entity = toEntity(dto);
         entity.setStatus("Active");
@@ -36,7 +39,9 @@ public class TerritoryRestrictionService {
 
         NotificationRequestDTO notification = new NotificationRequestDTO();
 
-        notification.setUserId(101L);
+        // Notify the rights manager who created the restriction — this used to be hardcoded
+        // to a fake userId (101) that no real account maps to, so the notification went nowhere.
+        notification.setUserId(actorUserId);
 
         notification.setContentId(
                 saved.getContentId());
@@ -47,20 +52,21 @@ public class TerritoryRestrictionService {
 
         notification.setCategory("LICENSE");
 
-        executor.sendNotification(notification);
+        executor.sendNotification(notification, currentAuthHeader());
 
         return toResponseDTO(saved);
     }
 
     public List<TerritoryRestrictionResponseDTO> getByContentId(
-        Integer contentId) {
+        Integer contentId, boolean activeOnly) {
 
         log.info("Fetching Territory Restrictions");
 
-        return repo.findByContentIdAndStatus(
-                        contentId,
-                        "Active")
-                .stream()
+        List<TerritoryRestriction> rows = activeOnly
+                ? repo.findByContentIdAndStatus(contentId, "Active")
+                : repo.findByContentId(contentId);
+
+        return rows.stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
    }
@@ -78,11 +84,17 @@ public class TerritoryRestrictionService {
                             "Restriction not found");
                 });
 
-        existing.setRestrictedCountries(
-                dto.getRestrictedCountries());
-
-        existing.setAllowedCountries(
-                dto.getAllowedCountries());
+        // Only overwrite fields the caller actually sent — a status-only toggle shouldn't
+        // null out restrictedCountries/allowedCountries just because they weren't in that payload.
+        if (dto.getRestrictedCountries() != null) {
+            existing.setRestrictedCountries(dto.getRestrictedCountries());
+        }
+        if (dto.getAllowedCountries() != null) {
+            existing.setAllowedCountries(dto.getAllowedCountries());
+        }
+        if (dto.getStatus() != null) {
+            existing.setStatus(dto.getStatus());
+        }
 
         return toResponseDTO(repo.save(existing));
    }
@@ -105,5 +117,12 @@ public class TerritoryRestrictionService {
         dto.setEffectiveDate(entity.getEffectiveDate());
         dto.setStatus(entity.getStatus());
         return dto;
+    }
+
+    // executor.sendNotification runs @Async on a different thread, where
+    // RequestContextHolder is empty — so the header must be read here, on the request thread.
+    private String currentAuthHeader() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest().getHeader(HttpHeaders.AUTHORIZATION) : null;
     }
 }

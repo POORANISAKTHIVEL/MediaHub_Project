@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
@@ -15,7 +16,7 @@ const STATUS_OPTIONS = ['All', 'Scheduled', 'Active', 'Expired'];
 
 @Component({
   selector: 'app-collections-list',
-  imports: [FormsModule, StatusBadge, FilterChip, LoadingSpinner],
+  imports: [FormsModule, StatusBadge, FilterChip, LoadingSpinner, Pagination],
   templateUrl: './collections-list.html'
 })
 export class CollectionsList implements OnInit {
@@ -40,6 +41,21 @@ export class CollectionsList implements OnInit {
     .filter(c => !this.categoryFilter() || c.category === this.categoryFilter())
     .filter(c => !this.statusFilter() || c.status === this.statusFilter())
   );
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+
+  onCategoryFilterChange(value: string) {
+    this.categoryFilter.set(value);
+    this.page.set(0);
+  }
+
+  onStatusFilterChange(value: string) {
+    this.statusFilter.set(value);
+    this.page.set(0);
+  }
 
   ngOnInit() {
     this.load();

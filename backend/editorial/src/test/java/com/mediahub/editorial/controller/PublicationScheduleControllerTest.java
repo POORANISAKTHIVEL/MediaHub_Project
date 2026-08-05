@@ -51,7 +51,7 @@ public class PublicationScheduleControllerTest {
         resp.put("scheduleID", 1);
         resp.put("status", "Scheduled");
         resp.put("message", "Content scheduled successfully.");
-        when(service.createSchedule(any(PublicationSchedule.class))).thenReturn(resp);
+        when(service.createSchedule(any(PublicationSchedule.class), anyLong())).thenReturn(resp);
 
         mockMvc.perform(post("/MediaHub/editorial/schedules")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +67,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 400);
         resp.put("error", "Territory is required");
-        when(service.createSchedule(any(PublicationSchedule.class))).thenReturn(resp);
+        when(service.createSchedule(any(PublicationSchedule.class), anyLong())).thenReturn(resp);
 
         mockMvc.perform(post("/MediaHub/editorial/schedules")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -131,7 +131,7 @@ public class PublicationScheduleControllerTest {
         resp.put("scheduleID", 1);
         resp.put("status", "Published");
         resp.put("message", "Content published successfully.");
-        when(service.publishSchedule(1)).thenReturn(resp);
+        when(service.publishSchedule(eq(1), anyLong())).thenReturn(resp);
 
         mockMvc.perform(post("/MediaHub/editorial/schedules/1/publish"))
                 .andExpect(status().isOk())
@@ -145,7 +145,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Schedule not found");
-        when(service.publishSchedule(99)).thenReturn(resp);
+        when(service.publishSchedule(eq(99), anyLong())).thenReturn(resp);
 
         mockMvc.perform(post("/MediaHub/editorial/schedules/99/publish"))
                 .andExpect(status().isNotFound())
@@ -160,7 +160,7 @@ public class PublicationScheduleControllerTest {
         resp.put("status", "Cancelled");
         resp.put("reason", "Budget cut");
         resp.put("message", "Schedule cancelled successfully.");
-        when(service.cancelSchedule(eq(1), anyString())).thenReturn(resp);
+        when(service.cancelSchedule(eq(1), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("reason", "Budget cut");
         mockMvc.perform(post("/MediaHub/editorial/schedules/1/cancel")
@@ -178,7 +178,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Schedule not found");
-        when(service.cancelSchedule(eq(99), anyString())).thenReturn(resp);
+        when(service.cancelSchedule(eq(99), anyString(), anyLong())).thenReturn(resp);
 
         Map<String, String> body = Map.of("reason", "reason");
         mockMvc.perform(post("/MediaHub/editorial/schedules/99/cancel")
@@ -194,7 +194,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 200);
         resp.put("message", "Schedule deleted successfully.");
-        when(service.deleteSchedule(1)).thenReturn(resp);
+        when(service.deleteSchedule(eq(1), anyLong())).thenReturn(resp);
 
         mockMvc.perform(delete("/MediaHub/editorial/schedules/1"))
                 .andExpect(status().isOk())
@@ -207,7 +207,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 400);
         resp.put("error", "Cannot delete Published schedule.");
-        when(service.deleteSchedule(1)).thenReturn(resp);
+        when(service.deleteSchedule(eq(1), anyLong())).thenReturn(resp);
 
         mockMvc.perform(delete("/MediaHub/editorial/schedules/1"))
                 .andExpect(status().isBadRequest())
@@ -220,7 +220,7 @@ public class PublicationScheduleControllerTest {
         Map<String, Object> resp = new HashMap<>();
         resp.put("statusCode", 404);
         resp.put("error", "Schedule not found");
-        when(service.deleteSchedule(99)).thenReturn(resp);
+        when(service.deleteSchedule(eq(99), anyLong())).thenReturn(resp);
 
         mockMvc.perform(delete("/MediaHub/editorial/schedules/99"))
                 .andExpect(status().isNotFound())

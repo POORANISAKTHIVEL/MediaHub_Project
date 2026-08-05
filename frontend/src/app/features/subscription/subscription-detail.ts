@@ -8,6 +8,7 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-subscription-detail',
@@ -15,6 +16,7 @@ import { ConfirmService } from '../../shared/services/confirm.service';
   templateUrl: './subscription-detail.html'
 })
 export class SubscriptionDetail implements OnInit {
+  auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private subscription = inject(SubscriptionClient);

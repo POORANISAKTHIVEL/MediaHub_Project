@@ -31,8 +31,10 @@ export class ReviewDetail implements OnInit {
   tags = signal<ContentTag[]>([]);
   remarks = '';
   submitting = signal(false);
+  viewOnly = signal(false);
 
   ngOnInit() {
+    this.viewOnly.set(this.route.snapshot.queryParamMap.get('mode') === 'view');
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.editorial.getReview(id).subscribe(r => {
       this.review.set(r ?? null);
@@ -49,12 +51,24 @@ export class ReviewDetail implements OnInit {
     });
   }
 
-  private act(obs: ReturnType<EditorialClient['approve']>, okMessage: string) {
+  // The editorial decision (EditorialReview.decision) and the content's own status
+  // (ContentAsset.status) are separate records in separate services — approving/rejecting a
+  // review never touched the content's status on its own, so Content Catalog kept showing
+  // "UnderReview" forever. Sync the content status here right after the decision is recorded.
+  private act(obs: ReturnType<EditorialClient['approve']>, okMessage: string, contentID: number, newContentStatus: 'Published' | 'Draft') {
     this.submitting.set(true);
     obs.subscribe({
       next: () => {
-        this.toast.ok(okMessage);
-        this.router.navigate(['/editorial/reviews']);
+        this.content.updateContentStatus(contentID, newContentStatus).subscribe({
+          next: () => {
+            this.toast.ok(okMessage);
+            this.router.navigate(['/editorial/reviews']);
+          },
+          error: () => {
+            this.toast.ok(okMessage);
+            this.router.navigate(['/editorial/reviews']);
+          }
+        });
       },
       error: (err) => { this.submitting.set(false); this.toast.warn(err?.error?.message ?? 'Action failed'); }
     });
@@ -63,18 +77,27 @@ export class ReviewDetail implements OnInit {
   approve() {
     const r = this.review();
     if (!r) return;
-    this.act(this.editorial.approve(r.reviewID, this.remarks), 'Review approved');
+    this.act(this.editorial.approve(r.reviewID, this.remarks), 'Review approved', r.contentID, 'Published');
   }
 
   reject() {
     const r = this.review();
     if (!r) return;
-    this.act(this.editorial.reject(r.reviewID, this.remarks), 'Review rejected');
+    this.act(this.editorial.reject(r.reviewID, this.remarks), 'Review rejected', r.contentID, 'Draft');
   }
 
   requestRevision() {
     const r = this.review();
     if (!r) return;
-    this.act(this.editorial.requestRevision(r.reviewID, this.remarks), 'Revision requested');
+    const contentID = r.contentID;
+    this.submitting.set(true);
+    this.editorial.requestRevision(r.reviewID, this.remarks).subscribe({
+      next: () => {
+        this.content.updateContentStatus(contentID, 'Draft').subscribe();
+        this.toast.ok('Revision requested');
+        this.router.navigate(['/editorial/reviews']);
+      },
+      error: (err) => { this.submitting.set(false); this.toast.warn(err?.error?.message ?? 'Action failed'); }
+    });
   }
 }

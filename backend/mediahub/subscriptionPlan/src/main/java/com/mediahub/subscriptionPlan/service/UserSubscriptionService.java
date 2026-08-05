@@ -3,15 +3,19 @@ package com.mediahub.subscriptionPlan.service;
 import com.mediahub.subscriptionPlan.dto.CreateSubscriptionRequest;
 import com.mediahub.subscriptionPlan.dto.UpdateSubscriptionRequest;
 import com.mediahub.subscriptionPlan.model.UserSubscription;
+import com.mediahub.subscriptionPlan.repository.SubscriptionPlanRepository;
 import com.mediahub.subscriptionPlan.repository.UserSubscriptionRepository;
 import com.mediahub.subscriptionPlan.service.NotificationClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -22,6 +26,19 @@ public class UserSubscriptionService {
 
     @Autowired
     private NotificationClientService notificationClientService;
+
+    @Autowired
+    private SubscriptionHistoryService subscriptionHistoryService;
+
+    @Autowired
+    private SubscriptionPlanRepository subscriptionPlanRepository;
+
+    /** In-memory, per-subscription "last reminded" dates so the expiry/upgrade nudge fires at most
+     *  once a day no matter how many times fetchSubscriptions() is hit (there's no scheduler here —
+     *  this piggybacks on the existing authenticated fetch call instead of needing a service-account
+     *  token for a background cron). Resets on restart; acceptable since it only guards spam. */
+    private final Map<Long, LocalDate> lastExpiryReminder = new ConcurrentHashMap<>();
+    private final Map<Long, LocalDate> lastUpgradeReminder = new ConcurrentHashMap<>();
 
     // POST
     public Map<String, String> createSubscription(CreateSubscriptionRequest request) {
@@ -46,6 +63,10 @@ public class UserSubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
+        subscriptionHistoryService.logChange(
+                subscription.getSubscriptionId(), subscription.getUserId(),
+                null, subscription.getPlanId(), "New", "New subscription created");
+
         notificationClientService.sendNotification(
                 subscription.getUserId(),
                 "Subscription created successfully");
@@ -64,7 +85,42 @@ public class UserSubscriptionService {
 
         log.info("Fetching all subscriptions");
 
-        return userSubscriptionRepository.findAll();
+        List<UserSubscription> subscriptions = userSubscriptionRepository.findAll();
+        checkExpiryAndUpgradeReminders(subscriptions);
+        return subscriptions;
+    }
+
+    private void checkExpiryAndUpgradeReminders(List<UserSubscription> subscriptions) {
+        LocalDate today = LocalDate.now();
+        Double topPrice = subscriptionPlanRepository.findAll().stream()
+                .map(p -> p.getPrice() == null ? 0.0 : p.getPrice())
+                .max(Double::compareTo).orElse(0.0);
+
+        for (UserSubscription s : subscriptions) {
+            if (!"Active".equals(s.getStatus()) || s.getEndDate() == null) continue;
+
+            long daysLeft = ChronoUnit.DAYS.between(today, s.getEndDate());
+            if (daysLeft < 0 || daysLeft > 3) continue;
+
+            if (!today.equals(lastExpiryReminder.get(s.getSubscriptionId()))) {
+                lastExpiryReminder.put(s.getSubscriptionId(), today);
+                String planName = subscriptionPlanRepository.findById(s.getPlanId())
+                        .map(p -> p.getName()).orElse("Your");
+                // Kept short — the notification service caps message length at 100 chars.
+                notificationClientService.sendNotification(
+                        s.getUserId(),
+                        planName + " plan expires " + s.getEndDate() + " — renew to keep access.");
+            }
+
+            double planPrice = subscriptionPlanRepository.findById(s.getPlanId())
+                    .map(p -> p.getPrice() == null ? 0.0 : p.getPrice()).orElse(0.0);
+            if (planPrice < topPrice && !today.equals(lastUpgradeReminder.get(s.getSubscriptionId()))) {
+                lastUpgradeReminder.put(s.getSubscriptionId(), today);
+                notificationClientService.sendNotification(
+                        s.getUserId(),
+                        "Upgrade your plan for more devices, downloads and content access.");
+            }
+        }
     }
 
     // GET by ID
@@ -118,6 +174,18 @@ public class UserSubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
+        if (request.getPlanId() != null && !request.getPlanId().equals(oldPlanId)) {
+            String changeType = "Upgrade";
+            try {
+                double oldPrice = subscriptionPlanRepository.findById(oldPlanId).map(p -> p.getPrice()).orElse(0.0);
+                double newPrice = subscriptionPlanRepository.findById(request.getPlanId()).map(p -> p.getPrice()).orElse(0.0);
+                changeType = newPrice < oldPrice ? "Downgrade" : "Upgrade";
+            } catch (Exception ignored) { }
+            subscriptionHistoryService.logChange(
+                    subscription.getSubscriptionId(), subscription.getUserId(),
+                    oldPlanId, subscription.getPlanId(), changeType, "Plan changed via update");
+        }
+
         log.info("Subscription updated successfully");
 
         response.put("message", "Subscription updated successfully");
@@ -156,6 +224,10 @@ public class UserSubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
+        subscriptionHistoryService.logChange(
+                subscription.getSubscriptionId(), subscription.getUserId(),
+                subscription.getPlanId(), subscription.getPlanId(), "Renewal", "Subscription renewed");
+
         notificationClientService.sendNotification(
                 subscription.getUserId(),
                 "Subscription renewed successfully");
@@ -192,6 +264,10 @@ public class UserSubscriptionService {
         subscription.setStatus("Cancelled");
 
         userSubscriptionRepository.save(subscription);
+
+        subscriptionHistoryService.logChange(
+                subscription.getSubscriptionId(), subscription.getUserId(),
+                subscription.getPlanId(), subscription.getPlanId(), "Cancellation", "Subscription cancelled");
 
         notificationClientService.sendNotification(
                 subscription.getUserId(),

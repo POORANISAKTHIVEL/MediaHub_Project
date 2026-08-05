@@ -1,5 +1,6 @@
 package com.mediahub.licensing.controller;
 
+import com.mediahub.licensing.client.AuditClient;
 import com.mediahub.licensing.dto.request.LicenseAgreementRequestDTO;
 import com.mediahub.licensing.dto.response.LicenseAgreementResponseDTO;
 import com.mediahub.licensing.dto.response.LicenseExpiringSoonResponseDTO;
@@ -14,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,14 +37,21 @@ class LicenseAgreementControllerTest {
     @Mock
     private LicenseAgreementService service;
 
+    @Mock
+    private AuditClient auditClient;
+
     @InjectMocks
     private LicenseAgreementController controller;
 
     private LicenseAgreementRequestDTO requestDTO;
     private LicenseAgreementResponseDTO responseDTO;
+    private Authentication authentication;
 
     @BeforeEach
     void setUp() {
+        authentication = new UsernamePasswordAuthenticationToken(
+                "1", null, List.of(new SimpleGrantedAuthority("ROLE_admin")));
+
         requestDTO = new LicenseAgreementRequestDTO();
         requestDTO.setContentId(100);
         requestDTO.setLicensorId(200);
@@ -74,9 +85,9 @@ class LicenseAgreementControllerTest {
         @Test
         @DisplayName("TC56 - should return 201 when license created successfully")
         void create_returns201() {
-            when(service.createLicense(any())).thenReturn(responseDTO);
+            when(service.createLicense(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         }
@@ -84,9 +95,9 @@ class LicenseAgreementControllerTest {
         @Test
         @DisplayName("TC57 - should return success message in body on create")
         void create_returnsSuccessMessage() {
-            when(service.createLicense(any())).thenReturn(responseDTO);
+            when(service.createLicense(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getBody().toString()).contains("License created successfully");
         }
@@ -94,19 +105,19 @@ class LicenseAgreementControllerTest {
         @Test
         @DisplayName("TC58 - should call service.createLicense once")
         void create_callsServiceOnce() {
-            when(service.createLicense(any())).thenReturn(responseDTO);
+            when(service.createLicense(any(), any())).thenReturn(responseDTO);
 
-            controller.create(requestDTO);
+            controller.create(requestDTO, authentication);
 
-            verify(service, times(1)).createLicense(any());
+            verify(service, times(1)).createLicense(any(), any());
         }
 
         @Test
         @DisplayName("TC59 - should propagate exception when service throws")
         void create_serviceThrows_propagatesException() {
-            when(service.createLicense(any())).thenThrow(new RuntimeException("DB error"));
+            when(service.createLicense(any(), any())).thenThrow(new RuntimeException("DB error"));
 
-            assertThatThrownBy(() -> controller.create(requestDTO))
+            assertThatThrownBy(() -> controller.create(requestDTO, authentication))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("DB error");
         }
@@ -114,19 +125,19 @@ class LicenseAgreementControllerTest {
         @Test
         @DisplayName("TC60 - should pass request DTO directly to service")
         void create_passesRequestDtoToService() {
-            when(service.createLicense(any())).thenReturn(responseDTO);
+            when(service.createLicense(any(), any())).thenReturn(responseDTO);
 
-            controller.create(requestDTO);
+            controller.create(requestDTO, authentication);
 
-            verify(service).createLicense(requestDTO);
+            verify(service).createLicense(requestDTO, 1L);
         }
 
         @Test
         @DisplayName("TC61 - should return non-null body on create")
         void create_responseBodyNotNull() {
-            when(service.createLicense(any())).thenReturn(responseDTO);
+            when(service.createLicense(any(), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.create(requestDTO);
+            ResponseEntity<?> response = controller.create(requestDTO, authentication);
 
             assertThat(response.getBody()).isNotNull();
         }
@@ -350,7 +361,7 @@ class LicenseAgreementControllerTest {
         void update_returns200() {
             when(service.updateLicense(eq(1), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.update(1, requestDTO);
+            ResponseEntity<?> response = controller.update(1, requestDTO, authentication);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         }
@@ -360,7 +371,7 @@ class LicenseAgreementControllerTest {
         void update_returnsSuccessMessage() {
             when(service.updateLicense(eq(1), any())).thenReturn(responseDTO);
 
-            ResponseEntity<?> response = controller.update(1, requestDTO);
+            ResponseEntity<?> response = controller.update(1, requestDTO, authentication);
 
             assertThat(response.getBody().toString()).contains("License updated successfully");
         }
@@ -371,7 +382,7 @@ class LicenseAgreementControllerTest {
             when(service.updateLicense(eq(1), any()))
                     .thenThrow(new RuntimeException("Cannot update Expired or Terminated license"));
 
-            assertThatThrownBy(() -> controller.update(1, requestDTO))
+            assertThatThrownBy(() -> controller.update(1, requestDTO, authentication))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Cannot update Expired or Terminated license");
         }
@@ -381,7 +392,7 @@ class LicenseAgreementControllerTest {
         void update_callsServiceWithCorrectId() {
             when(service.updateLicense(eq(5), any())).thenReturn(responseDTO);
 
-            controller.update(5, requestDTO);
+            controller.update(5, requestDTO, authentication);
 
             verify(service).updateLicense(eq(5), any());
         }
@@ -392,7 +403,7 @@ class LicenseAgreementControllerTest {
             when(service.updateLicense(eq(999), any()))
                     .thenThrow(new RuntimeException("License not found"));
 
-            assertThatThrownBy(() -> controller.update(999, requestDTO))
+            assertThatThrownBy(() -> controller.update(999, requestDTO, authentication))
                     .hasMessageContaining("License not found");
         }
     }

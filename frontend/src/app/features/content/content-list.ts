@@ -9,6 +9,7 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
@@ -17,7 +18,7 @@ const TYPE_OPTIONS = ['All', 'Video', 'Audio', 'Article', 'Podcast', 'Ebook'];
 
 @Component({
   selector: 'app-content-list',
-  imports: [FormsModule, RouterLink, StatusBadge, FilterChip, RowMenu, LoadingSpinner],
+  imports: [FormsModule, RouterLink, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination],
   templateUrl: './content-list.html'
 })
 export class ContentList implements OnInit {
@@ -30,15 +31,39 @@ export class ContentList implements OnInit {
 
   loading = signal(true);
   all = signal<ContentAsset[]>([]);
+  searchTerm = signal('');
   statusFilter = signal('');
   typeFilter = signal('');
   statusOptions = STATUS_OPTIONS;
   typeOptions = TYPE_OPTIONS;
 
-  rows = computed(() => this.all()
-    .filter(c => !this.statusFilter() || c.status === this.statusFilter())
-    .filter(c => !this.typeFilter() || c.type === this.typeFilter())
-  );
+  rows = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    return this.all()
+      .filter(c => !this.statusFilter() || c.status === this.statusFilter())
+      .filter(c => !this.typeFilter() || c.type === this.typeFilter())
+      .filter(c => !term || c.title.toLowerCase().includes(term) || ('cnt-' + c.contentId).toLowerCase().includes(term) || String(c.contentId).includes(term));
+  });
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+
+  onSearchChange(term: string) {
+    this.searchTerm.set(term);
+    this.page.set(0);
+  }
+
+  onStatusFilterChange(value: string) {
+    this.statusFilter.set(value);
+    this.page.set(0);
+  }
+
+  onTypeFilterChange(value: string) {
+    this.typeFilter.set(value);
+    this.page.set(0);
+  }
 
   ngOnInit() {
     this.load();

@@ -14,6 +14,8 @@ backend/**/bin/
 
 # Local backend service logs generated during manual testing
 backend/*.log
+backend/**/*.log
+backend/**/logs/
 
 # IDEs / editors
 .idea/

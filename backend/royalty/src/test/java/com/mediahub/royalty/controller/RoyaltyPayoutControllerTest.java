@@ -1,5 +1,6 @@
 package com.mediahub.royalty.controller;
 
+import com.mediahub.royalty.client.AuditClient;
 import com.mediahub.royalty.model.RoyaltyPayout;
 import com.mediahub.royalty.exception.BadRequestException;
 import com.mediahub.royalty.exception.GlobalExceptionHandler;
@@ -13,12 +14,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -32,13 +37,21 @@ public class RoyaltyPayoutControllerTest {
     @Mock
     private RoyaltyPayoutService service;
 
+    @Mock
+    private AuditClient auditClient;
+
     @InjectMocks
     private RoyaltyPayoutController controller;
 
     private MockMvc mockMvc;
+    private final Authentication authentication =
+            new UsernamePasswordAuthenticationToken("1", null, List.of(new SimpleGrantedAuthority("ROLE_admin")));
 
     @BeforeEach
     void setUp() {
+        // RoyaltyPayoutController has an explicit constructor for `service`, so Mockito's
+        // @InjectMocks only does constructor injection and skips field injection for auditClient.
+        org.springframework.test.util.ReflectionTestUtils.setField(controller, "auditClient", auditClient);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -56,9 +69,9 @@ public class RoyaltyPayoutControllerTest {
         created.setAmount(750.0);
         created.setMethod("BankTransfer");
         created.setStatus("Pending");
-        when(service.createPayout(any(RoyaltyPayout.class))).thenReturn(created);
+        when(service.createPayout(any(RoyaltyPayout.class), any())).thenReturn(created);
 
-        mockMvc.perform(post("/api/royalty-payouts")
+        mockMvc.perform(post("/api/royalty-payouts").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"statementID\":10,\"creatorID\":501,"
                 + "\"amount\":750.0,\"method\":\"BankTransfer\"}"))
@@ -71,10 +84,10 @@ public class RoyaltyPayoutControllerTest {
     @Test
     @DisplayName("CT-28: POST /api/royalty-payouts returns 400 when StatementID missing")
     void createPayout_returns400_missingStatementID() throws Exception {
-        when(service.createPayout(any(RoyaltyPayout.class)))
+        when(service.createPayout(any(RoyaltyPayout.class), any()))
             .thenThrow(new BadRequestException("StatementID is required"));
 
-        mockMvc.perform(post("/api/royalty-payouts")
+        mockMvc.perform(post("/api/royalty-payouts").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"creatorID\":501,\"amount\":750.0,\"method\":\"BankTransfer\"}"))
             .andExpect(status().isBadRequest())
@@ -85,10 +98,10 @@ public class RoyaltyPayoutControllerTest {
     @Test
     @DisplayName("CT-29: POST /api/royalty-payouts returns 400 for invalid method")
     void createPayout_returns400_invalidMethod() throws Exception {
-        when(service.createPayout(any(RoyaltyPayout.class)))
+        when(service.createPayout(any(RoyaltyPayout.class), any()))
             .thenThrow(new BadRequestException("Method must be BankTransfer or WalletCredit"));
 
-        mockMvc.perform(post("/api/royalty-payouts")
+        mockMvc.perform(post("/api/royalty-payouts").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"statementID\":10,\"creatorID\":501,\"amount\":750.0,\"method\":\"Cash\"}"))
             .andExpect(status().isBadRequest())
@@ -99,10 +112,10 @@ public class RoyaltyPayoutControllerTest {
     @Test
     @DisplayName("CT-30: POST /api/royalty-payouts returns 400 for zero amount")
     void createPayout_returns400_zeroAmount() throws Exception {
-        when(service.createPayout(any(RoyaltyPayout.class)))
+        when(service.createPayout(any(RoyaltyPayout.class), any()))
             .thenThrow(new BadRequestException("Amount must be greater than zero"));
 
-        mockMvc.perform(post("/api/royalty-payouts")
+        mockMvc.perform(post("/api/royalty-payouts").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"statementID\":10,\"creatorID\":501,\"amount\":0,\"method\":\"BankTransfer\"}"))
             .andExpect(status().isBadRequest())
@@ -113,9 +126,9 @@ public class RoyaltyPayoutControllerTest {
     @Test
     @DisplayName("CT-31: POST /api/royalty-payouts returns 500 on repository failure")
     void createPayout_returns500() throws Exception {
-        when(service.createPayout(any(RoyaltyPayout.class))).thenThrow(new RuntimeException("DB error"));
+        when(service.createPayout(any(RoyaltyPayout.class), any())).thenThrow(new RuntimeException("DB error"));
 
-        mockMvc.perform(post("/api/royalty-payouts")
+        mockMvc.perform(post("/api/royalty-payouts").principal(authentication)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"statementID\":10,\"creatorID\":501,\"amount\":750.0,\"method\":\"BankTransfer\"}"))
             .andExpect(status().isInternalServerError())
@@ -183,9 +196,9 @@ public class RoyaltyPayoutControllerTest {
         response.put("statusCode", 200);
         response.put("status", "Processed");
         response.put("message", "Payout processed successfully.");
-        when(service.processPayout(1)).thenReturn(response);
+        when(service.processPayout(1, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-payouts/1/process"))
+        mockMvc.perform(put("/api/royalty-payouts/1/process").principal(authentication))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Processed"))
                 .andExpect(jsonPath("$.message").value("Payout processed successfully."));
@@ -198,9 +211,9 @@ public class RoyaltyPayoutControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("statusCode", 404);
         response.put("error", "Payout not found");
-        when(service.processPayout(99)).thenReturn(response);
+        when(service.processPayout(99, 1L)).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-payouts/99/process"))
+        mockMvc.perform(put("/api/royalty-payouts/99/process").principal(authentication))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Payout not found"));
     }
@@ -216,9 +229,9 @@ public class RoyaltyPayoutControllerTest {
         response.put("status", "Failed");
         response.put("reason", "Insufficient funds");
         response.put("message", "Payout marked as failed.");
-        when(service.failPayout(eq(1), anyString())).thenReturn(response);
+        when(service.failPayout(eq(1), anyString(), any())).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-payouts/1/fail")
+        mockMvc.perform(put("/api/royalty-payouts/1/fail").principal(authentication)
                 .param("reason", "Insufficient funds"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Failed"))
@@ -232,9 +245,9 @@ public class RoyaltyPayoutControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("statusCode", 404);
         response.put("error", "Payout not found");
-        when(service.failPayout(eq(99), anyString())).thenReturn(response);
+        when(service.failPayout(eq(99), anyString(), any())).thenReturn(response);
 
-        mockMvc.perform(put("/api/royalty-payouts/99/fail")
+        mockMvc.perform(put("/api/royalty-payouts/99/fail").principal(authentication)
                 .param("reason", "Error"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Payout not found"));

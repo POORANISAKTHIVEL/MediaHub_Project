@@ -17,11 +17,15 @@
           </select>
         </div>
         <div class="field"><label>Creator <span class="req">*</span></label>
-          <select class="select" [(ngModel)]="form.creatorId">
-            @for (c of creators(); track c.creatorId) {
-              <option [ngValue]="c.creatorId">{{ c.displayName }}</option>
-            }
-          </select>
+          @if (lockToOwnCreator) {
+            <input class="input" [value]="creators().find(c => c.creatorId === form.creatorId)?.displayName ?? 'No creator profile linked'" disabled>
+          } @else {
+            <select class="select" [(ngModel)]="form.creatorId">
+              @for (c of creators(); track c.creatorId) {
+                <option [ngValue]="c.creatorId">{{ c.displayName }}</option>
+              }
+            </select>
+          }
         </div>
       </div>
       <div class="grid-2">

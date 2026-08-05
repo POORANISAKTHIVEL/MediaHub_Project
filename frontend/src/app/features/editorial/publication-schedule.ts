@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { EditorialClient } from '../../core/api/editorial-client';
@@ -9,12 +9,14 @@ import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
+import { formatDateTime } from '../../shared/utils/date-format';
 
 @Component({
   selector: 'app-publication-schedule',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
   templateUrl: './publication-schedule.html'
 })
 export class PublicationSchedule implements OnInit {
@@ -25,19 +27,28 @@ export class PublicationSchedule implements OnInit {
   private confirm = inject(ConfirmService);
   auth = inject(AuthService);
 
+  formatDateTime = formatDateTime;
+
   canPublish(): boolean {
-    return this.auth.hasRole('admin') || this.auth.hasPermission('content:publish');
+    return this.auth.hasPermission('editorial:manage');
   }
 
   loading = signal(true);
   schedules = signal<ScheduleModel[]>([]);
   contentTitles = signal<Record<number, string>>({});
 
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.schedules().length / this.pageSize)));
+  pagedSchedules = computed(() => this.schedules().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+
   creating = signal(false);
   form = { contentID: 0, publishDateTime: '', expiryDateTime: '', territory: '' };
 
   cancelling = signal<ScheduleModel | null>(null);
   cancelReason = '';
+
+  viewing = signal<ScheduleModel | null>(null);
 
   ngOnInit() {
     this.load();
@@ -76,22 +87,31 @@ export class PublicationSchedule implements OnInit {
     forkJoin({
       licenses: this.licensing.getAllLicenses('Active'),
       restrictions: this.licensing.getTerritoryRestrictions(this.form.contentID)
-    }).subscribe(({ licenses, restrictions }) => {
-      this.checkingPrereqs.set(false);
-      const hasLicense = licenses.some(l => l.contentId === this.form.contentID);
-      const hasRestriction = restrictions.length > 0;
+    }).subscribe({
+      next: ({ licenses, restrictions }) => {
+        this.checkingPrereqs.set(false);
+        const hasLicense = licenses.some(l => l.contentId === this.form.contentID);
+        const hasRestriction = restrictions.length > 0;
 
-      if (!hasLicense || !hasRestriction) {
-        const missing = [!hasLicense && 'an active license', !hasRestriction && 'a territory restriction'].filter(Boolean).join(' and ');
-        this.toast.warn(`This content needs ${missing} before it can be scheduled. Set it up in Licensing first.`);
-        return;
+        if (!hasLicense || !hasRestriction) {
+          const missing = [!hasLicense && 'an active license', !hasRestriction && 'a territory restriction'].filter(Boolean).join(' and ');
+          this.toast.warn(`This content needs ${missing} before it can be scheduled. Set it up in Licensing first.`);
+          return;
+        }
+
+        this.editorial.createSchedule(this.form).subscribe({
+          next: () => {
+            this.toast.ok('Schedule created successfully');
+            this.creating.set(false);
+            this.load();
+          },
+          error: (err) => this.toast.warn(err?.error?.message ?? 'Unable to create schedule')
+        });
+      },
+      error: (err) => {
+        this.checkingPrereqs.set(false);
+        this.toast.warn(err?.error?.message ?? 'Unable to verify licensing prerequisites');
       }
-
-      this.editorial.createSchedule(this.form).subscribe(() => {
-        this.toast.ok('Schedule created successfully');
-        this.creating.set(false);
-        this.load();
-      });
     });
   }
 
@@ -127,15 +147,16 @@ export class PublicationSchedule implements OnInit {
   }
 
   menuFor(s: ScheduleModel): RowMenuItem[] {
-    if (s.status !== 'Scheduled') return [];
-    const items: RowMenuItem[] = [];
+    const items: RowMenuItem[] = [{ label: 'View', action: 'view' }];
+    if (s.status !== 'Scheduled') return items;
     if (this.canPublish()) items.push({ label: 'Publish', action: 'publish' });
-    if (this.auth.hasPermission('content:write')) items.push({ label: 'Cancel', action: 'cancel' });
-    if (this.auth.hasPermission('content:delete')) items.push({ label: 'Delete', action: 'delete' });
+    if (this.auth.hasPermission('editorial:manage')) items.push({ label: 'Cancel', action: 'cancel' });
+    if (this.auth.hasPermission('editorial:manage')) items.push({ label: 'Delete', action: 'delete' });
     return items;
   }
 
   onAction(action: string, s: ScheduleModel) {
+    if (action === 'view') this.viewing.set(s);
     if (action === 'publish') this.publish(s);
     if (action === 'cancel') this.openCancel(s);
     if (action === 'delete') this.remove(s);

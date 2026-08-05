@@ -24,14 +24,18 @@
     <div class="card">
       <div class="card__head"><h3>Actions</h3></div>
       <div class="card__body">
-        @if (s.status === 'Draft') {
-          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="finalise()">Finalise</button>
-        }
-        @if (s.status === 'Finalised') {
-          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="processPayout()">+ Process Payout</button>
-        }
-        @if (s.status === 'Paid') {
-          <p class="hint">This statement has been finalised, paid out and is now read-only.</p>
+        @if (auth.hasPermission('royalty:approve')) {
+          @if (s.status === 'Draft') {
+            <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="finalise()">Finalise</button>
+          }
+          @if (s.status === 'Finalised') {
+            <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="processPayout()">+ Process Payout</button>
+          }
+          @if (s.status === 'Paid') {
+            <p class="hint">This statement has been finalised, paid out and is now read-only.</p>
+          }
+        } @else {
+          <p class="hint">You have view-only access to royalty statements.</p>
         }
       </div>
     </div>

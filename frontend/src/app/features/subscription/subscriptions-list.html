@@ -1,8 +1,12 @@
 <div class="crumbs">Home / Commerce / <b>Subscriptions</b></div>
 <div class="tabs">
-  <a class="tab" routerLink="/subscription/plans">Plans</a>
+  @if (auth.hasPermission('plan:configure')) {
+    <a class="tab" routerLink="/subscription/plans">Plans</a>
+  }
   <a class="tab active" routerLink="/subscription/subscriptions">User Subscriptions</a>
-  <a class="tab" routerLink="/subscription/history">History</a>
+  @if (auth.hasPermission('plan:configure') || auth.hasPermission('subscription:manage')) {
+    <a class="tab" routerLink="/subscription/history">History</a>
+  }
 </div>
 <div class="page-head"><div><h1>User Subscriptions</h1><p>All active and historical user subscriptions.</p></div></div>
 
@@ -13,7 +17,7 @@
     <table>
       <thead><tr><th>User</th><th>Plan</th><th>Start</th><th>End</th><th>Renewal</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
-        @for (s of rows(); track s.subscriptionId) {
+        @for (s of pagedRows(); track s.subscriptionId) {
           <tr>
             <td class="t-primary" style="font-weight:500">{{ userName(s.userId) }}</td>
             <td>{{ planName(s.planId) }}</td>
@@ -28,5 +32,6 @@
         }
       </tbody>
     </table>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

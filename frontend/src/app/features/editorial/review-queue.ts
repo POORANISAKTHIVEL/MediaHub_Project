@@ -7,12 +7,13 @@ import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
+import { Pagination } from '../../shared/components/pagination';
 
 type Tab = 'Pending' | 'Approved' | 'Rejected';
 
 @Component({
   selector: 'app-review-queue',
-  imports: [StatusBadge, LoadingSpinner, RowMenu],
+  imports: [StatusBadge, LoadingSpinner, RowMenu, Pagination],
   templateUrl: './review-queue.html'
 })
 export class ReviewQueue implements OnInit {
@@ -34,6 +35,16 @@ export class ReviewQueue implements OnInit {
       r.decision === 'Rejected'
     );
   });
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+
+  selectTab(t: Tab) {
+    this.tab.set(t);
+    this.page.set(0);
+  }
 
   ngOnInit() {
     this.load();
@@ -57,10 +68,14 @@ export class ReviewQueue implements OnInit {
   }
 
   menuFor(_r: EditorialReview): RowMenuItem[] {
-    return [{ label: 'Edit', action: 'edit' }];
+    return [
+      { label: 'View', action: 'view' },
+      { label: 'Edit', action: 'edit' }
+    ];
   }
 
   onRowAction(action: string, r: EditorialReview) {
+    if (action === 'view') this.router.navigate(['/editorial/reviews', r.reviewID], { queryParams: { mode: 'view' } });
     if (action === 'edit') this.router.navigate(['/editorial/reviews', r.reviewID]);
   }
 }

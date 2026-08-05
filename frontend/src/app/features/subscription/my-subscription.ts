@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SubscriptionClient } from '../../core/api/subscription-client';
 import { UserSubscription } from '../../core/models/subscription.models';
 import { AuthService } from '../../core/auth/auth.service';
@@ -18,6 +18,7 @@ export class MySubscription implements OnInit {
   private auth = inject(AuthService);
   private toast = inject(ToastService);
   private confirm = inject(ConfirmService);
+  private router = inject(Router);
 
   loading = signal(true);
   sub = signal<UserSubscription | null>(null);
@@ -34,6 +35,18 @@ export class MySubscription implements OnInit {
 
   planName(planId: number): string {
     return this.subscription.planName(planId);
+  }
+
+  async changePlan() {
+    const s = this.sub();
+    if (!s) return;
+    const ok = await this.confirm.ask(
+      `Changing your plan will cancel your current ${this.planName(s.planId)} subscription first. Continue?`,
+      'Change Plan');
+    if (!ok) return;
+    this.subscription.cancelSubscription(s.subscriptionId).subscribe(() => {
+      this.router.navigate(['/subscription/catalog']);
+    });
   }
 
   async cancel() {

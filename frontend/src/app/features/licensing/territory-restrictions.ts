@@ -1,15 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LicensingClient } from '../../core/api/licensing-client';
 import { TerritoryRestriction } from '../../core/models/licensing.models';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { Pagination } from '../../shared/components/pagination';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-territory-restrictions',
-  imports: [FormsModule, RouterLink, RowMenu, LoadingSpinner],
+  imports: [FormsModule, RouterLink, RowMenu, LoadingSpinner, Pagination],
   templateUrl: './territory-restrictions.html'
 })
 export class TerritoryRestrictions implements OnInit {
@@ -18,6 +19,11 @@ export class TerritoryRestrictions implements OnInit {
 
   loading = signal(true);
   rows = signal<TerritoryRestriction[]>([]);
+
+  page = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
 
   creating = signal(false);
   editing = signal<TerritoryRestriction | null>(null);
@@ -29,7 +35,7 @@ export class TerritoryRestrictions implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.licensing.getTerritoryRestrictions().subscribe(rows => {
+    this.licensing.getTerritoryRestrictions(undefined, true).subscribe(rows => {
       this.rows.set(rows);
       this.loading.set(false);
     });
@@ -41,6 +47,16 @@ export class TerritoryRestrictions implements OnInit {
 
   onAction(action: string, t: TerritoryRestriction) {
     if (action === 'edit') this.openEdit(t);
+  }
+
+  toggle(t: TerritoryRestriction) {
+    this.licensing.toggleTerritoryStatus(t.restrictionId, t.status).subscribe({
+      next: () => {
+        this.toast.ok(t.status === 'Active' ? 'Restriction deactivated' : 'Restriction activated');
+        this.load();
+      },
+      error: (err) => this.toast.warn(err?.error?.message ?? 'Unable to update restriction status')
+    });
   }
 
   openCreate() {
@@ -69,12 +85,5 @@ export class TerritoryRestrictions implements OnInit {
         this.load();
       });
     }
-  }
-
-  toggle(t: TerritoryRestriction) {
-    this.licensing.toggleTerritoryStatus(t.restrictionId).subscribe(() => {
-      this.toast.ok(t.status === 'Active' ? 'Restriction deactivated' : 'Restriction activated');
-      this.load();
-    });
   }
 }

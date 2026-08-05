@@ -6,21 +6,97 @@
 } @else {
   <div class="plan-catalog">
     @for (p of plans(); track p.planId; let i = $index) {
-      <div class="plan-card" [class.featured]="i === 2">
-        @if (i === 2) {
+      <div class="plan-card" [class.featured]="i === 1">
+        @if (i === 1) {
           <div class="plan-card__ribbon">Most Popular</div>
         }
         <div class="plan-card__body">
           <div class="plan-card__name">{{ p.name }}</div>
-          <div class="plan-card__price">${{ p.price }}<span>/{{ p.billingCycle.toLowerCase() }}</span></div>
-          <div class="plan-card__desc">{{ p.contentAccessLevel }}</div>
+          <div class="plan-card__price">${{ p.price }}<span>/mo</span></div>
+          <div class="plan-card__desc">{{ meta(p).desc }}</div>
           <ul class="plan-card__features">
-            <li><span class="ico ico--yes">✓</span> Up to {{ p.maxDevices }} device{{ p.maxDevices === 1 ? '' : 's' }}</li>
-            <li><span class="ico" [class.ico--yes]="p.downloadAllowed" [class.ico--no]="!p.downloadAllowed">{{ p.downloadAllowed ? '✓' : '✕' }}</span> Downloads {{ p.downloadAllowed ? 'allowed' : 'not available' }}</li>
+            @for (f of meta(p).features; track f.label) {
+              <li><span class="ico" [class.ico--yes]="f.yes" [class.ico--no]="!f.yes">{{ f.yes ? '✓' : '✕' }}</span> {{ f.label }}</li>
+            }
           </ul>
-          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="subscribe(p)">Subscribe</button>
+          <hr class="plan-card__divider">
+          <dl class="plan-card__info">
+            <dt>Billing Cycle</dt><dd>{{ p.billingCycle }}</dd>
+            <dt>Content Level</dt><dd>{{ p.contentAccessLevel }}</dd>
+            <dt>Max Devices</dt><dd>{{ maxDevicesLabel(p) }}</dd>
+            <dt>Downloads</dt><dd>{{ p.downloadAllowed ? 'Allowed' : 'Not included' }}</dd>
+          </dl>
+          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="open(p)">Subscribe</button>
         </div>
       </div>
     }
+  </div>
+}
+
+@if (subscribing(); as p) {
+  <div class="overlay">
+    <div class="modal">
+      <div class="modal__head"><h3>Subscribe to Plan</h3><span class="icon-btn" (click)="close()">✕</span></div>
+      <div class="modal__body">
+        <div class="plan-summary">
+          <div class="plan-summary__ico">◈</div>
+          <div class="plan-summary__info">
+            <div class="plan-summary__name">{{ p.name }} Plan</div>
+            <div class="plan-summary__meta">
+              ${{ p.price }}.00 / {{ p.billingCycle.toLowerCase() }} · {{ p.contentAccessLevel }} catalog · {{ maxDevicesLabel(p) }} device{{ p.maxDevices === 1 ? '' : 's' }} · {{ p.downloadAllowed ? 'Downloads' : 'No downloads' }}
+            </div>
+          </div>
+          @if (isPopular(p)) { <div class="plan-summary__badge">● Most Popular</div> }
+        </div>
+
+        <div class="field">
+          <label>Plan Name <span class="req">*</span></label>
+          <input class="input" [value]="p.name" disabled>
+          <div class="hint">Plan cannot be changed here. Go back to select a different plan.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Billing Cycle <span class="req">*</span></label>
+            <select class="select" disabled>
+              <option>{{ p.billingCycle }} – ${{ p.price }}.00/mo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Renewal Type <span class="req">*</span></label>
+            <select class="select" [(ngModel)]="form.renewalType" (blur)="renewalTypeTouched.set(true)">
+              <option value="" disabled>— Select —</option>
+              <option value="AutoRenew">Auto-Renew</option>
+              <option value="Manual">Manual</option>
+            </select>
+            @if (renewalTypeTouched() && !form.renewalType) {
+              <div class="hint hint--error">⚠ Renewal type is required</div>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Subscription Start Date <span class="req">*</span></label>
+          <input class="input" type="date" [(ngModel)]="form.startDate">
+        </div>
+
+        <div class="order-summary">
+          <div class="order-summary__title">Order Summary</div>
+          <div class="row-between"><span>{{ p.name }} Plan ({{ p.billingCycle }})</span><b>${{ p.price }}.00</b></div>
+          <div class="row-between"><span>Tax</span><b>$0.00</b></div>
+          <hr class="plan-card__divider">
+          <div class="row-between order-summary__total"><span>Total Due Today</span><b>${{ p.price }}.00</b></div>
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox" [ngModel]="agreed()" (ngModelChange)="agreed.set($event)">
+          I agree to the subscription terms and auto-renewal policy.
+        </label>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="close()">Cancel</button>
+        <button class="btn btn--primary" [disabled]="submitting() || !agreed() || !form.renewalType" (click)="confirm()">{{ submitting() ? 'Activating…' : 'Activate' }}</button>
+      </div>
+    </div>
   </div>
 }

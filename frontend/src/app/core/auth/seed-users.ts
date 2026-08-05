@@ -11,11 +11,12 @@ export const ROLE_PERMISSIONS: Record<RoleType, string[]> = {
     'role:manage', 'permission:manage',
     'user:suspend', 'user:manage',
     'report:view', 'license:manage', 'audit:read',
-    'notification:view', 'notification:send', 'notification:update', 'notification:analytics'
+    'notification:view', 'notification:send', 'notification:update', 'notification:analytics',
+    'editorial:manage'
   ],
   subscriber: ['content:read', 'plan:view', 'subscription:view'],
   creator: ['content:read', 'content:write', 'royalty:view', 'plan:view', 'subscription:view'],
-  editorial: ['content:read', 'content:publish', 'content:delete', 'plan:view', 'subscription:view'],
+  editorial: ['content:read', 'content:publish', 'content:delete', 'editorial:manage', 'plan:view', 'subscription:view'],
   rightsManager: ['content:read', 'license:manage', 'plan:view', 'subscription:view'],
   revenueAnalyst: ['royalty:view', 'royalty:approve', 'report:view', 'plan:view', 'subscription:view']
 };

@@ -3,8 +3,13 @@ export interface ReportResponse {
   reportName: string;
   generatedDate: string;
   totalContents: number;
-  /** Frontend-only fields — the real ReportResponse only has the four fields above.
-   *  reportType/format/from/to would need backend additions to persist for real. */
+  activeSubscriptions?: number;
+  totalRevenue?: number;
+  activeLicenses?: number;
+  contentStatusBreakdown?: { label: string; count: number }[];
+  contentTypeBreakdown?: { label: string; count: number }[];
+  /** Frontend-only fields — reportType/format/from/to aren't persisted by the backend, they're
+   *  merged in client-side purely so the UI reflects what the user picked when generating. */
   reportType?: string;
   format?: string;
   fromDate?: string;

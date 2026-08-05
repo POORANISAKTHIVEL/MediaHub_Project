@@ -21,7 +21,7 @@ const PERMISSION_MODULE: Record<string, string> = {
   'royalty:view': 'Royalty', 'royalty:approve': 'Royalty',
   'plan:configure': 'Subscription', 'plan:view': 'Subscription', 'subscription:view': 'Subscription', 'subscription:manage': 'Subscription',
   'role:manage': 'IAM', 'permission:manage': 'IAM', 'user:suspend': 'IAM', 'user:manage': 'IAM', 'audit:read': 'IAM',
-  'report:view': 'Analytics', 'license:manage': 'Licensing',
+  'report:view': 'Analytics', 'license:manage': 'Licensing', 'editorial:manage': 'Editorial',
   'notification:view': 'Notification', 'notification:send': 'Notification', 'notification:update': 'Notification', 'notification:analytics': 'Notification'
 };
 
@@ -221,6 +221,17 @@ export class IamClient {
     const totalPages = Math.max(1, Math.ceil(totalElements / size));
     const data = rows.slice(page * size, page * size + size);
     return mockOf({ data, currentPage: page, totalPages, totalElements, pageSize: size, isFirst: page === 0, isLast: page >= totalPages - 1 });
+  }
+
+  // Fetches every audit event in one call so the Audit Log page can filter by user ID, action
+  // and module together and paginate client-side — the backend only supports one filter
+  // dimension at a time, which isn't enough for combined search.
+  getAllAuditEvents(): Observable<AuditEvent[]> {
+    if (!environment.useMockAuth) {
+      const url = `${environment.apiBaseUrl}/mediaHub/auditlog/events/getAllEvents/v1.0?page=0&size=5000`;
+      return this.http.get<{ data: AuditEvent[] }>(url).pipe(map(r => r.data));
+    }
+    return mockOf([...this.auditEvents.all()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
   }
 
   // ---- Role <-> Permission assignments ----

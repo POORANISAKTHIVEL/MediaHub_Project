@@ -1,5 +1,7 @@
 package com.mediahub.iam.controller;
 
+import com.mediahub.auditlog.entity.AuditEvent;
+import com.mediahub.iam.client.AuditClient;
 import com.mediahub.iam.dto.LoginRequest;
 import com.mediahub.iam.dto.RegisterRequest;
 import com.mediahub.iam.service.AuthService;
@@ -18,6 +20,9 @@ public class AuthController {
     // Spring injects the AuthService bean automatically at startup via field injection.
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private AuditClient auditClient;
 
     // POST /auth/register/v1.0
     // Accepts a RegisterRequest body and delegates new-account creation to the service.
@@ -51,6 +56,14 @@ public class AuthController {
             request.getEmail(),
             request.getPassword()
         );
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> loggedInUser = (Map<String, Object>) result.get("user");
+        auditClient.log("USER_LOGIN",
+            Long.valueOf(loggedInUser.get("userId").toString()),
+            String.valueOf(loggedInUser.get("roleType")),
+            "User", String.valueOf(loggedInUser.get("userId")),
+            "User logged in", AuditEvent.Severity.LOW);
 
         return ResponseEntity.ok(result);
     }

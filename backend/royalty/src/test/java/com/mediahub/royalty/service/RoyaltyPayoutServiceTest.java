@@ -1,5 +1,7 @@
 package com.mediahub.royalty.service;
 
+import com.mediahub.royalty.client.CreatorClient;
+import com.mediahub.royalty.client.NotificationClient;
 import com.mediahub.royalty.model.RoyaltyPayout;
 import com.mediahub.royalty.repository.RoyaltyPayoutRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 import com.mediahub.royalty.exception.BadRequestException;
 import com.mediahub.royalty.exception.ResourceNotFoundException;
 
@@ -23,10 +27,17 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RoyaltyPayoutServiceTest {
 
     @Mock
     private RoyaltyPayoutRepository repository;
+
+    @Mock
+    private CreatorClient creatorClient;
+
+    @Mock
+    private NotificationClient notificationClient;
 
     @InjectMocks
     private RoyaltyPayoutService service;
@@ -35,6 +46,12 @@ public class RoyaltyPayoutServiceTest {
 
     @BeforeEach
     void setUp() {
+        // RoyaltyPayoutService has an explicit constructor for `repository`, so Mockito's
+        // @InjectMocks only does constructor injection and skips field injection for the other
+        // @Autowired clients — wire them manually or they stay null and NPE on first use.
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "creatorClient", creatorClient);
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "notificationClient", notificationClient);
+
         payout = new RoyaltyPayout();
         payout.setStatementID(10);
         payout.setCreatorID(501);
@@ -50,7 +67,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_success() {
         doNothing().when(repository).save(any(RoyaltyPayout.class));
 
-        RoyaltyPayout result = service.createPayout(payout);
+        RoyaltyPayout result = service.createPayout(payout, 1L);
 
         assertEquals("Pending", result.getStatus());
         assertEquals(10, result.getStatementID());
@@ -62,7 +79,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_missingStatementID() {
         payout.setStatementID(0);
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
         verify(repository, never()).save(any());
     }
 
@@ -71,7 +88,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_missingCreatorID() {
         payout.setCreatorID(0);
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-36: Create payout — zero amount
@@ -79,7 +96,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_zeroAmount() {
         payout.setAmount(0);
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-37: Create payout — negative amount
@@ -87,7 +104,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_negativeAmount() {
         payout.setAmount(-100.0);
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-38: Create payout — invalid method
@@ -95,7 +112,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_invalidMethod() {
         payout.setMethod("Cash");
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-39: Create payout — null method
@@ -103,7 +120,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_nullMethod() {
         payout.setMethod(null);
 
-        assertThrows(BadRequestException.class, () -> service.createPayout(payout));
+        assertThrows(BadRequestException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-40: Create payout — repository failure
@@ -111,7 +128,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_repositoryFailure() {
         doThrow(new RuntimeException("DB error")).when(repository).save(any(RoyaltyPayout.class));
 
-        assertThrows(RuntimeException.class, () -> service.createPayout(payout));
+        assertThrows(RuntimeException.class, () -> service.createPayout(payout, 1L));
     }
 
     // TC-41: Get all payouts — returns list
@@ -158,7 +175,7 @@ public class RoyaltyPayoutServiceTest {
     void processPayout_success() {
         when(repository.updateStatus(1, "Processed")).thenReturn(1);
 
-        Map<String, Object> result = service.processPayout(1);
+        Map<String, Object> result = service.processPayout(1, 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Processed", result.get("status"));
@@ -170,7 +187,7 @@ public class RoyaltyPayoutServiceTest {
     void processPayout_notFound() {
         when(repository.updateStatus(anyInt(), anyString())).thenReturn(0);
 
-        assertThrows(ResourceNotFoundException.class, () -> service.processPayout(99));
+        assertThrows(ResourceNotFoundException.class, () -> service.processPayout(99, 1L));
     }
 
     // TC-47: Fail payout — success
@@ -178,7 +195,7 @@ public class RoyaltyPayoutServiceTest {
     void failPayout_success() {
         when(repository.updateStatus(1, "Failed")).thenReturn(1);
 
-        Map<String, Object> result = service.failPayout(1, "Insufficient funds");
+        Map<String, Object> result = service.failPayout(1, "Insufficient funds", 1L);
 
         assertEquals(200, result.get("statusCode"));
         assertEquals("Failed", result.get("status"));
@@ -191,7 +208,7 @@ public class RoyaltyPayoutServiceTest {
     void failPayout_notFound() {
         when(repository.updateStatus(anyInt(), anyString())).thenReturn(0);
 
-        assertThrows(ResourceNotFoundException.class, () -> service.failPayout(99, "Error"));
+        assertThrows(ResourceNotFoundException.class, () -> service.failPayout(99, "Error", 1L));
     }
 
     // TC-49: Delete Processed payout — blocked
@@ -233,7 +250,7 @@ public class RoyaltyPayoutServiceTest {
         payout.setStatus("Processed");
         doNothing().when(repository).save(any(RoyaltyPayout.class));
 
-        RoyaltyPayout returned = service.createPayout(payout);
+        RoyaltyPayout returned = service.createPayout(payout, 1L);
 
         assertEquals("Pending", returned.getStatus());
     }
@@ -245,7 +262,7 @@ public class RoyaltyPayoutServiceTest {
         payout.setMethod("WalletCredit");
         doNothing().when(repository).save(any(RoyaltyPayout.class));
 
-        RoyaltyPayout result = service.createPayout(payout);
+        RoyaltyPayout result = service.createPayout(payout, 1L);
 
         assertEquals("Pending", result.getStatus());
     }
@@ -256,7 +273,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_responseContainsAllFields() {
         doNothing().when(repository).save(any(RoyaltyPayout.class));
 
-        RoyaltyPayout result = service.createPayout(payout);
+        RoyaltyPayout result = service.createPayout(payout, 1L);
 
         assertEquals(10, result.getStatementID());
         assertEquals(501, result.getCreatorID());
@@ -271,7 +288,7 @@ public class RoyaltyPayoutServiceTest {
     void createPayout_repositoryThrowsException() {
         doThrow(new RuntimeException("DB unavailable")).when(repository).save(any(RoyaltyPayout.class));
 
-        assertThrows(RuntimeException.class, () -> service.createPayout(payout));
+        assertThrows(RuntimeException.class, () -> service.createPayout(payout, 1L));
     }
 
     // EX-19: Process payout — repository throws exception
@@ -281,7 +298,7 @@ public class RoyaltyPayoutServiceTest {
         when(repository.updateStatus(anyInt(), anyString()))
             .thenThrow(new RuntimeException("Timeout"));
 
-        assertThrows(RuntimeException.class, () -> service.processPayout(1));
+        assertThrows(RuntimeException.class, () -> service.processPayout(1, 1L));
     }
 
     // EX-20: Delete payout — findStatusById throws exception

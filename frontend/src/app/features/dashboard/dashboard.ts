@@ -1,125 +1,85 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { AnalyticsClient } from '../../core/api/analytics-client';
+import { RoyaltyClient } from '../../core/api/royalty-client';
 import { StatCard } from '../../shared/components/stat-card';
+import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { ToastService } from '../../shared/services/toast.service';
-
-interface TrendPoint {
-  label: string;
-  value: number;
-}
-
-const TREND_DATA: Record<string, TrendPoint[]> = {
-  'Last 3 months': [
-    { label: 'May', value: 360 },
-    { label: 'Jun', value: 430 },
-    { label: 'Jul', value: 480 }
-  ],
-  'Last 6 months': [
-    { label: 'Feb', value: 210 },
-    { label: 'Mar', value: 260 },
-    { label: 'Apr', value: 240 },
-    { label: 'May', value: 360 },
-    { label: 'Jun', value: 430 },
-    { label: 'Jul', value: 480 }
-  ],
-  'Last 12 months': [
-    { label: 'Aug', value: 120 },
-    { label: 'Sep', value: 150 },
-    { label: 'Oct', value: 140 },
-    { label: 'Nov', value: 175 },
-    { label: 'Dec', value: 190 },
-    { label: 'Jan', value: 180 },
-    { label: 'Feb', value: 210 },
-    { label: 'Mar', value: 260 },
-    { label: 'Apr', value: 240 },
-    { label: 'May', value: 360 },
-    { label: 'Jun', value: 430 },
-    { label: 'Jul', value: 480 }
-  ]
-};
-
-const CHART_X_START = 40;
-const CHART_X_END = 616;
-const CHART_Y_TOP = 20;
-const CHART_Y_BASE = 200;
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, StatCard],
+  imports: [RouterLink, StatCard, LoadingSpinner],
   templateUrl: './dashboard.html'
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   auth = inject(AuthService);
+  private analytics = inject(AnalyticsClient);
+  private royalty = inject(RoyaltyClient);
   private toast = inject(ToastService);
 
-  durationOptions = Object.keys(TREND_DATA);
-  duration = signal('Last 6 months');
-  menuOpen = signal(false);
+  loading = signal(true);
+  data = signal<any>(null);
 
-  trend = computed(() => TREND_DATA[this.duration()]);
+  // Not covered by the aggregated /analytics/dashboard payload — matches the same real
+  // getAllStatements()/getAllPayouts() calls the Royalty Dashboard itself uses.
+  draftStatements = signal(0);
+  pendingPayouts = signal(0);
+  statementStatusBreakdown = signal<{ label: string; count: number }[]>([]);
 
-  private coords = computed(() => {
-    const data = this.trend();
-    const values = data.map(d => d.value);
-    const max = Math.max(...values);
-    const min = Math.min(...values, 0);
-    const range = max - min || 1;
-    const step = data.length > 1 ? (CHART_X_END - CHART_X_START) / (data.length - 1) : 0;
-    return data.map((d, i) => {
-      const x = CHART_X_START + step * i;
-      const y = CHART_Y_BASE - ((d.value - min) / range) * (CHART_Y_BASE - CHART_Y_TOP);
-      return { x, y, label: d.label };
+  ngOnInit() {
+    this.analytics.getDashboard().subscribe({
+      next: d => { this.data.set(d); this.loading.set(false); },
+      error: () => this.loading.set(false)
     });
-  });
 
-  linePoints = computed(() => this.coords().map(c => `${c.x},${c.y}`).join(' '));
-
-  areaPoints = computed(() => {
-    const pts = this.coords();
-    if (!pts.length) return '';
-    const first = pts[0];
-    const last = pts[pts.length - 1];
-    return `${first.x},${CHART_Y_BASE} ${this.linePoints()} ${last.x},${CHART_Y_BASE}`;
-  });
-
-  labelPositions = computed(() => this.coords().map(c => ({ x: c.x - 12, label: c.label })));
-
-  toggleMenu(ev: Event) {
-    ev.stopPropagation();
-    this.menuOpen.set(!this.menuOpen());
+    if (this.auth.hasPermission('royalty:view')) {
+      this.royalty.getAllStatements().subscribe(rows => {
+        this.draftStatements.set(rows.filter(r => r.status === 'Draft').length);
+        const counts: Record<string, number> = {};
+        rows.forEach(r => counts[r.status] = (counts[r.status] ?? 0) + 1);
+        this.statementStatusBreakdown.set(Object.entries(counts).map(([label, count]) => ({ label, count })));
+      });
+      this.royalty.getAllPayouts().subscribe(rows => {
+        this.pendingPayouts.set(rows.filter(p => p.status === 'Pending').length);
+      });
+    }
   }
 
-  selectDuration(d: string) {
-    this.duration.set(d);
-    this.menuOpen.set(false);
-  }
-
-  @HostListener('document:click')
-  closeMenu() {
-    this.menuOpen.set(false);
+  barPct(count: number, breakdown: { label: string; count: number }[]): number {
+    const max = Math.max(...breakdown.map(b => b.count), 1);
+    return Math.round((count / max) * 100);
   }
 
   export() {
+    const d = this.data();
+    if (!d) return;
     const canContent = this.auth.hasPermission('content:read');
     const rows: string[][] = [
       ['Metric', 'Value'],
-      ...(canContent ? [['Total Content', '2,847']] : []),
-      ...(this.auth.hasPermission('subscription:manage') ? [['Active Subscriptions', '18,204']] : []),
-      ...(canContent ? [['Pending Reviews', '37']] : []),
-      ...(this.auth.hasPermission('royalty:view') ? [['Royalty Payable', '$94.2k']] : []),
+      ...(canContent ? [['Total Content', String(d.contentCatalogAnalytics?.totalContents ?? '')]] : []),
+      ...(this.auth.hasPermission('subscription:manage') ? [['Active Subscriptions', String(d.subscriptionAnalytics?.activeSubscriptions ?? '')]] : []),
+      ...(canContent ? [['Pending Reviews', String(d.editorialAnalytics?.pendingReviews ?? '')]] : []),
+      ...(canContent ? [['Approved Reviews', String(d.editorialAnalytics?.approvedReviews ?? '')]] : []),
+      ...(this.auth.hasPermission('royalty:view') ? [
+        ['Total Revenue', String(d.revenueAnalytics?.totalRevenue ?? '')],
+        ['Royalty Payable', String(d.revenueAnalytics?.totalRoyaltyAmount ?? '')],
+        ['Draft Statements', String(this.draftStatements())],
+        ['Pending Payouts', String(this.pendingPayouts())]
+      ] : []),
       ...(canContent ? [
         [],
-        ['Content Publishing Trend', this.duration()],
-        ['Month', 'Content Published'],
-        ...this.trend().map(t => [t.label, String(t.value)]),
-        [],
         ['Content by Status', 'Count'],
-        ['Published', '1940'],
-        ['In Review', '312'],
-        ['Scheduled', '168'],
-        ['Draft', '427'],
-        ...(this.auth.hasPermission('license:manage') ? [['Licenses expiring < 30d', '14']] : [])
+        ...(d.contentCatalogAnalytics?.contentStatusBreakdown ?? []).map((b: any) => [b.label, String(b.count)]),
+        [],
+        ['Content by Type', 'Count'],
+        ...(d.contentCatalogAnalytics?.contentTypeBreakdown ?? []).map((b: any) => [b.label, String(b.count)]),
+        ...(this.auth.hasPermission('license:manage') ? [[], ['Licenses expiring < 30d', String(d.licensingAnalytics?.expiringSoonLicenses ?? '')]] : [])
+      ] : []),
+      ...(this.auth.hasPermission('royalty:view') ? [
+        [],
+        ['Statements by Status', 'Count'],
+        ...this.statementStatusBreakdown().map(b => [b.label, String(b.count)])
       ] : [])
     ].map(row => row ?? []);
 

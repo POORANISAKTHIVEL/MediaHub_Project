@@ -1,5 +1,7 @@
 package com.mediahub.iam.controller;
 
+import com.mediahub.auditlog.entity.AuditEvent;
+import com.mediahub.iam.client.AuditClient;
 import com.mediahub.iam.dto.AssignPermissionRequest;
 import com.mediahub.iam.entity.Permission;
 import com.mediahub.iam.entity.Role;
@@ -9,6 +11,8 @@ import com.mediahub.iam.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -26,6 +30,17 @@ public class RoleController {
     private RoleService roleService;
     @Autowired
     private PermissionService permissionService;
+    @Autowired
+    private AuditClient auditClient;
+
+    private static String actorRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(a -> a.startsWith("ROLE_"))
+            .map(a -> a.substring(5))
+            .findFirst()
+            .orElse("UNKNOWN");
+    }
 
     // GET all roles
     // Handles GET "/getAllRoles/v1.0" and fetches every role record from the service.
@@ -69,8 +84,11 @@ public class RoleController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/createRole/v1.0")
     public ResponseEntity<Map<String, String>> createRole(
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
         roleService.createRole(body.get("roleType"));
+        auditClient.log("ROLE_CREATED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "Role", body.get("roleType"), "Created role: " + body.get("roleType"), AuditEvent.Severity.MEDIUM);
         return ResponseEntity.status(201).body(
             Map.of("message", "Role created successfully"));
     }
@@ -82,8 +100,11 @@ public class RoleController {
     @PutMapping("/updateRole/v1/{roleId}")
     public ResponseEntity<Map<String, String>> updateRole(
             @PathVariable Long roleId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
         roleService.updateRole(roleId, body.get("roleType"));
+        auditClient.log("ROLE_UPDATED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "Role", roleId.toString(), "Updated role to: " + body.get("roleType"), AuditEvent.Severity.MEDIUM);
         return ResponseEntity.ok(
             Map.of("message", "Role updated successfully"));
     }
@@ -96,8 +117,12 @@ public class RoleController {
     @DeleteMapping("/revokePermission/v1/{roleId}/{permissionId}")
     public ResponseEntity<Map<String, String>> revokePermission(
             @PathVariable Long roleId,
-            @PathVariable Long permissionId) {
+            @PathVariable Long permissionId,
+            Authentication authentication) {
         roleService.revokePermission(roleId, permissionId);
+        auditClient.log("PERMISSION_REVOKED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "Role", roleId.toString(), "Revoked permission id " + permissionId + " from role " + roleId,
+            AuditEvent.Severity.MEDIUM);
         return ResponseEntity.ok(Map.of("message", "Permission revoked successfully"));
     }
 
@@ -107,8 +132,11 @@ public class RoleController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/deleteRole/v1/{roleId}")
     public ResponseEntity<Map<String, String>> deleteRole(
-            @PathVariable Long roleId) {
+            @PathVariable Long roleId,
+            Authentication authentication) {
         roleService.deleteRole(roleId);
+        auditClient.log("ROLE_DELETED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "Role", roleId.toString(), "Deleted role", AuditEvent.Severity.MEDIUM);
         return ResponseEntity.ok(
             Map.of("message", "Role deleted. Permissions unlinked automatically."));
     }
@@ -121,8 +149,12 @@ public class RoleController {
     @PostMapping("/assignPermission/v1/{roleId}")
     public ResponseEntity<Map<String, String>> assignPermission(
             @PathVariable Long roleId,
-            @RequestBody AssignPermissionRequest request) {
+            @RequestBody AssignPermissionRequest request,
+            Authentication authentication) {
         roleService.assignPermission(roleId, request.getPermissionId());
+        auditClient.log("PERMISSION_ASSIGNED", Long.valueOf(authentication.getName()), actorRole(authentication),
+            "Role", roleId.toString(), "Assigned permission id " + request.getPermissionId() + " to role " + roleId,
+            AuditEvent.Severity.MEDIUM);
         return ResponseEntity.status(201).body(
             Map.of("message", "Permission assigned successfully"));
     }

@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -19,35 +21,22 @@ public class ReportService {
 
     public ReportResponse generateReport(Map<String, Object> analyticsData) {
 
-        // Extract content count from content catalog analytics
-        int totalContents = 0;
-        Object contentAnalytics = analyticsData.get("contentCatalogAnalytics");
-        if (contentAnalytics instanceof Map) {
-            Object tc = ((Map<?, ?>) contentAnalytics).get("totalContents");
-            if (tc != null) {
-                totalContents = Integer.parseInt(tc.toString());
-            }
-        }
+        // The dashboard already assembles all of this from the same 7-module analyticsData map
+        // (see AnalyticsService#getAnalytics) — the report was only ever pulling totalContents
+        // out of it and discarding the rest, so downloads never had subscriptions/revenue/
+        // licenses/breakdowns even though the dashboard clearly has the data.
+        Map<?, ?> contentAnalytics = asMap(analyticsData.get("contentCatalogAnalytics"));
+        Map<?, ?> subAnalytics     = asMap(analyticsData.get("subscriptionAnalytics"));
+        Map<?, ?> revenueAnalytics = asMap(analyticsData.get("revenueAnalytics"));
+        Map<?, ?> licensingAnalytics = asMap(analyticsData.get("licensingAnalytics"));
 
-        // Extract total subscriptions from subscription analytics
-        int totalSubscriptions = 0;
-        Object subAnalytics = analyticsData.get("subscriptionAnalytics");
-        if (subAnalytics instanceof Map) {
-            Object ts = ((Map<?, ?>) subAnalytics).get("totalSubscriptions");
-            if (ts != null) {
-                totalSubscriptions = Integer.parseInt(ts.toString());
-            }
-        }
+        int totalContents = intOf(contentAnalytics, "totalContents");
+        int activeSubscriptions = intOf(subAnalytics, "activeSubscriptions");
+        double totalRevenue = doubleOf(revenueAnalytics, "totalRevenue");
+        int activeLicenses = intOf(licensingAnalytics, "activeLicenses");
 
-        // Extract total audit events from IAM analytics
-        long totalAuditEvents = 0;
-        Object iamAnalytics = analyticsData.get("iamAuditAnalytics");
-        if (iamAnalytics instanceof Map) {
-            Object te = ((Map<?, ?>) iamAnalytics).get("totalAuditEvents");
-            if (te != null) {
-                totalAuditEvents = Long.parseLong(te.toString());
-            }
-        }
+        List<Map<String, Object>> statusBreakdown = listOf(contentAnalytics, "contentStatusBreakdown");
+        List<Map<String, Object>> typeBreakdown = listOf(contentAnalytics, "contentTypeBreakdown");
 
         ReportResponse report = new ReportResponse(
                 reportCounter++,
@@ -55,9 +44,34 @@ public class ReportService {
                 LocalDate.now().toString(),
                 totalContents
         );
+        report.setActiveSubscriptions(activeSubscriptions);
+        report.setTotalRevenue(totalRevenue);
+        report.setActiveLicenses(activeLicenses);
+        report.setContentStatusBreakdown(statusBreakdown);
+        report.setContentTypeBreakdown(typeBreakdown);
 
         reportStore.put(report.getReportId(), report);
         return report;
+    }
+
+    private Map<?, ?> asMap(Object value) {
+        return value instanceof Map ? (Map<?, ?>) value : Collections.emptyMap();
+    }
+
+    private int intOf(Map<?, ?> map, String key) {
+        Object v = map.get(key);
+        return v != null ? Integer.parseInt(v.toString()) : 0;
+    }
+
+    private double doubleOf(Map<?, ?> map, String key) {
+        Object v = map.get(key);
+        return v != null ? Double.parseDouble(v.toString()) : 0.0;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> listOf(Map<?, ?> map, String key) {
+        Object v = map.get(key);
+        return v instanceof List ? (List<Map<String, Object>>) v : Collections.emptyList();
     }
 
     public ReportResponse getReportById(Long id) {
@@ -104,6 +118,22 @@ public class ReportService {
             row3.createCell(0).setCellValue("Total Contents");
             row3.createCell(1).setCellValue(report.getTotalContents());
 
+            Row row4 = sheet.createRow(5);
+            row4.createCell(0).setCellValue("Active Subscriptions");
+            row4.createCell(1).setCellValue(report.getActiveSubscriptions());
+
+            Row row5 = sheet.createRow(6);
+            row5.createCell(0).setCellValue("Total Revenue");
+            row5.createCell(1).setCellValue(report.getTotalRevenue());
+
+            Row row6 = sheet.createRow(7);
+            row6.createCell(0).setCellValue("Active Licenses");
+            row6.createCell(1).setCellValue(report.getActiveLicenses());
+
+            int nextRow = 9;
+            nextRow = writeBreakdown(sheet, nextRow, "Content by Status", report.getContentStatusBreakdown());
+            nextRow = writeBreakdown(sheet, nextRow, "Content by Type", report.getContentTypeBreakdown());
+
             // Auto-size columns
             sheet.autoSizeColumn(0);
             sheet.autoSizeColumn(1);
@@ -112,5 +142,20 @@ public class ReportService {
             workbook.write(out);
             return out.toByteArray();
         }
+    }
+
+    private int writeBreakdown(Sheet sheet, int startRow, String title, List<Map<String, Object>> breakdown) {
+        Row titleRow = sheet.createRow(startRow);
+        titleRow.createCell(0).setCellValue(title);
+        int row = startRow + 1;
+        if (breakdown != null) {
+            for (Map<String, Object> entry : breakdown) {
+                Row r = sheet.createRow(row++);
+                r.createCell(0).setCellValue(String.valueOf(entry.get("label")));
+                Object count = entry.get("count");
+                r.createCell(1).setCellValue(count != null ? Double.parseDouble(count.toString()) : 0);
+            }
+        }
+        return row + 1;
     }
 }

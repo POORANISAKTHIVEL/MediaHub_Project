@@ -36,8 +36,31 @@
           <dt>Report Name</dt><dd>{{ r.reportName }}</dd>
           <dt>Generated Date</dt><dd>{{ r.generatedDate }}</dd>
           <dt>Total Contents</dt><dd>{{ r.totalContents }}</dd>
+          <dt>Active Subscriptions</dt><dd>{{ r.activeSubscriptions ?? '—' }}</dd>
+          <dt>Total Revenue</dt><dd>{{ r.totalRevenue != null ? ('$' + r.totalRevenue.toLocaleString()) : '—' }}</dd>
+          <dt>Active Licenses</dt><dd>{{ r.activeLicenses ?? '—' }}</dd>
           <dt>Format</dt><dd>{{ r.format }}</dd>
         </dl>
+        @if (r.contentStatusBreakdown?.length || r.contentTypeBreakdown?.length) {
+          <div class="grid-2" style="margin-top:16px">
+            @if (r.contentStatusBreakdown?.length) {
+              <div>
+                <h4 style="font-size:13px;color:var(--ink-500);margin-bottom:8px">Content by Status</h4>
+                @for (b of r.contentStatusBreakdown; track b.label) {
+                  <div class="row-between" style="font-size:13px;padding:4px 0"><span>{{ b.label }}</span><b>{{ b.count }}</b></div>
+                }
+              </div>
+            }
+            @if (r.contentTypeBreakdown?.length) {
+              <div>
+                <h4 style="font-size:13px;color:var(--ink-500);margin-bottom:8px">Content by Type</h4>
+                @for (b of r.contentTypeBreakdown; track b.label) {
+                  <div class="row-between" style="font-size:13px;padding:4px 0"><span>{{ b.label }}</span><b>{{ b.count }}</b></div>
+                }
+              </div>
+            }
+          </div>
+        }
         <div style="display:flex;gap:10px;margin-top:18px">
           <button class="btn btn--primary" (click)="download()">⤓ Download</button>
           <a class="btn btn--ghost" [routerLink]="['/analytics/reports', r.reportId]">View Report</a>

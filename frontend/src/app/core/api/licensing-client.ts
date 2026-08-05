@@ -87,18 +87,23 @@ export class LicensingClient {
 
   // ---- Territory restrictions ----
   /** Real backend has no "get all" endpoint — only getTerritoryRestriction/v1.0/{contentId}.
-   *  When no contentId is given, aggregate across every content asset instead. */
-  getTerritoryRestrictions(contentId?: number): Observable<TerritoryRestriction[]> {
+   *  When no contentId is given, aggregate across every content asset instead.
+   *  includeInactive: the schedule-creation prerequisite check needs Active-only (the default);
+   *  the management list page wants everything so deactivated rows don't just vanish. */
+  getTerritoryRestrictions(contentId?: number, includeInactive = false): Observable<TerritoryRestriction[]> {
     if (!environment.useMockLicensing) {
-      if (contentId) return this.http.get<TerritoryRestriction[]>(`${this.base}/getTerritoryRestriction/v1.0/${contentId}`);
+      const activeOnlyParam = includeInactive ? '?activeOnly=false' : '';
+      if (contentId) return this.http.get<TerritoryRestriction[]>(`${this.base}/getTerritoryRestriction/v1.0/${contentId}${activeOnlyParam}`);
       return this.content.fetchContents().pipe(
         switchMap(contents => contents.length
-          ? forkJoin(contents.map(c => this.http.get<TerritoryRestriction[]>(`${this.base}/getTerritoryRestriction/v1.0/${c.contentId}`)))
+          ? forkJoin(contents.map(c => this.http.get<TerritoryRestriction[]>(`${this.base}/getTerritoryRestriction/v1.0/${c.contentId}${activeOnlyParam}`)))
           : of([] as TerritoryRestriction[][])),
         map(lists => lists.flat())
       );
     }
-    const rows = contentId ? this.restrictions.filterBy(t => t.contentId === contentId && t.status === 'Active') : this.restrictions.all();
+    const rows = contentId
+      ? this.restrictions.filterBy(t => t.contentId === contentId && (includeInactive || t.status === 'Active'))
+      : this.restrictions.all();
     return mockOf(rows);
   }
 
@@ -114,15 +119,12 @@ export class LicensingClient {
     return t ? mockOf({ message: 'Territory rule updated successfully' }) : mockError(404, 'Territory restriction not found');
   }
 
-  /** Frontend-only extension — TerritoryRestrictionRequestDTO has no status field and the real
-   *  backend has no endpoint to toggle a restriction's Active/Inactive state at all. */
-  toggleTerritoryStatus(id: number): Observable<{ message: string }> {
-    if (!environment.useMockLicensing) {
-      return mockError(400, 'Toggling territory restriction status is not supported by the backend yet.');
-    }
+  toggleTerritoryStatus(id: number, currentStatus: string): Observable<{ message: string }> {
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    if (!environment.useMockLicensing) return this.http.put<{ message: string }>(`${this.base}/updateTerritoryRestriction/v1.0/${id}`, { status: newStatus });
     const t = this.restrictions.find(x => x.restrictionId === id);
     if (!t) return mockError(404, 'Territory restriction not found');
-    this.restrictions.update(id, { status: t.status === 'Active' ? 'Inactive' : 'Active' });
+    this.restrictions.update(id, { status: newStatus });
     return mockOf({ message: 'Territory restriction updated' });
   }
 }

@@ -52,9 +52,14 @@ export class LicenseEdit implements OnInit {
   terminate() {
     const l = this.license();
     if (!l) return;
-    this.licensing.updateLicense(l.licenseId, { status: 'Terminated' }).subscribe(() => {
-      this.toast.ok('License terminated');
-      this.router.navigate(['/licensing', l.licenseId]);
+    // Send the full form, not just { status }, since the backend overwrites every field
+    // from the request body — a partial payload would null out territory/rightsType/endDate.
+    this.licensing.updateLicense(l.licenseId, { ...this.form, status: 'Terminated' }).subscribe({
+      next: () => {
+        this.toast.ok('License terminated');
+        this.router.navigate(['/licensing', l.licenseId]);
+      },
+      error: (err) => this.toast.warn(err?.error?.message ?? 'Unable to terminate license')
     });
   }
 }

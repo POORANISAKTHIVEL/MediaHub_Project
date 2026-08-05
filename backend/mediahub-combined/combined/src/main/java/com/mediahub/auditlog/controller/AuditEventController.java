@@ -104,7 +104,9 @@ public class AuditEventController {
                 entityType, entityId)));
     }
 
-        // POST log event
+        // POST log event — any authenticated caller may record an event for their own
+        // action; only reading the log (class-level annotation above) is admin-only.
+        @PreAuthorize("isAuthenticated()")
         @PostMapping("/logEvent/v1.0")
         public ResponseEntity<String> logEvent(
             @RequestBody Map<String, Object> body) {

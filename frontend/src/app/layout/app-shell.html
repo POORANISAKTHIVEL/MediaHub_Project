@@ -12,15 +12,33 @@
         <a class="nav__item" [routerLink]="item.route" routerLinkActive="active" [innerHTML]="item.icon + '&nbsp;&nbsp;' + item.label + (item.badge ? ' <span class=\'nav__badge\'>' + item.badge + '</span>' : '')"></a>
       }
     }
-
-    <div class="sidebar__foot">
-      <div class="nav__item" (click)="logout()">⏻ &nbsp;Logout</div>
-    </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <div class="search">⌕ &nbsp;Search content, users, licenses…</div>
+      <div class="search" style="position:relative" (click)="$event.stopPropagation()">
+        <span>⌕</span>
+        <input type="text" placeholder="Search content, users, licenses…" [ngModel]="searchTerm()" (ngModelChange)="onSearchInput($event)" (focus)="searchResults().length && searchOpen.set(true)">
+        @if (searchOpen()) {
+          <div class="menu" style="position:absolute;top:calc(100% + 6px);left:0;right:0;min-width:320px;max-height:360px;overflow:auto">
+            @if (searching()) {
+              <div style="padding:12px 14px;color:var(--ink-400);font-size:13px">Searching…</div>
+            } @else if (searchResults().length === 0) {
+              <div style="padding:12px 14px;color:var(--ink-400);font-size:13px">No matches found.</div>
+            } @else {
+              @for (r of searchResults(); track r.route.join('/') + r.label) {
+                <button (click)="goToResult(r)" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left">
+                  <span>{{ r.icon }}</span>
+                  <span style="display:flex;flex-direction:column;overflow:hidden">
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.label }}</span>
+                    <span class="t-sub" style="font-size:12px">{{ r.sub }}</span>
+                  </span>
+                </button>
+              }
+            }
+          </div>
+        }
+      </div>
       <div class="topbar__spacer"></div>
       <a class="topbar__icon" routerLink="/notifications">◇<span class="dot"></span></a>
       <div class="user-chip" (click)="toggleAccount($event)" style="position:relative">

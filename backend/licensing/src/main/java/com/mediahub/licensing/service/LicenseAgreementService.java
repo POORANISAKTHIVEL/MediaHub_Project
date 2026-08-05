@@ -6,7 +6,10 @@ import com.mediahub.licensing.dto.response.LicenseExpiringSoonResponseDTO;
 import com.mediahub.licensing.entity.LicenseAgreement;
 import com.mediahub.licensing.repository.LicenseAgreementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import com.mediahub.licensing.executor.ContentValidationExecutor;
 import com.mediahub.licensing.dto.request.NotificationRequestDTO;
 
@@ -38,7 +41,7 @@ private static final Logger log = LoggerFactory.getLogger(LicenseAgreementServic
 
     
  
-public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto) {
+public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto, Long actorUserId) {
  
     log.info("Creating License");
  
@@ -69,8 +72,9 @@ public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto)
     NotificationRequestDTO notification =
             new NotificationRequestDTO();
  
-    notification.setUserId(
-            Long.valueOf(saved.getLicensorId()));
+    // Notify the rights manager who created the license, not the manually-typed
+    // licensorId field (which is often not a real user account at all).
+    notification.setUserId(actorUserId);
  
     notification.setLicenseId(
             saved.getLicenseId());
@@ -87,7 +91,7 @@ public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto)
  
     notification.setCategory("LICENSE");
  
-    executor.sendNotification(notification);
+    executor.sendNotification(notification, currentAuthHeader());
  
     return toResponseDTO(saved);
 }
@@ -275,7 +279,14 @@ public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto)
                 entity.getEndDate());
  
         dto.setDaysRemaining(days);
- 
+
         return dto;
+    }
+
+    // executor.sendNotification runs @Async on a different thread, where
+    // RequestContextHolder is empty — so the header must be read here, on the request thread.
+    private String currentAuthHeader() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest().getHeader(HttpHeaders.AUTHORIZATION) : null;
     }
 }

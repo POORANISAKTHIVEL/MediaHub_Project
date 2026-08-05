@@ -2,7 +2,10 @@ package com.mediahub.editorial.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +35,14 @@ public class NotificationClient {
         request.put("message", message);
         request.put("category", category);
 
+        // Forward the caller's JWT — the notification service requires an authenticated
+        // caller, and without this every cross-service notification silently failed.
+        String authHeader = currentAuthHeader();
+
         // Send notification asynchronously to avoid blocking POST response
         webClient.post()
                 .uri(notificationServiceUrl + "/mediaHub/notifications/createNotification/v1.0")
+                .headers(h -> { if (authHeader != null) h.set(HttpHeaders.AUTHORIZATION, authHeader); })
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)
@@ -43,5 +51,10 @@ public class NotificationClient {
                     response -> logger.info("Notification sent successfully"),
                     error -> logger.error("Error sending notification to user {}: {}", userId, error.getMessage())
                 );
+    }
+
+    private String currentAuthHeader() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest().getHeader(HttpHeaders.AUTHORIZATION) : null;
     }
 }

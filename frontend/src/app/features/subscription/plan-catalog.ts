@@ -1,14 +1,50 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { SubscriptionClient } from '../../core/api/subscription-client';
 import { SubscriptionPlan } from '../../core/models/subscription.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { ToastService } from '../../shared/services/toast.service';
 
+const CURATED_PLAN_NAMES = ['Basic', 'Premium', 'Enterprise'];
+
+/** Legacy plans (Standard/gold) predate this curated catalog and can't be renamed via the
+ *  update API (UpdatePlanRequest has no name field) — they stay Active for existing
+ *  subscribers but are hidden from this browse page in favor of the curated set. */
+const PLAN_META: Record<string, { desc: string; features: { label: string; yes: boolean }[] }> = {
+  Basic: {
+    desc: 'Great for individuals getting started.',
+    features: [
+      { label: 'Standard content library', yes: true },
+      { label: '1 device at a time', yes: true },
+      { label: 'Offline downloads', yes: false },
+      { label: 'Priority support', yes: false }
+    ]
+  },
+  Premium: {
+    desc: 'Best value for regular viewers.',
+    features: [
+      { label: 'Full content library', yes: true },
+      { label: 'Up to 4 devices', yes: true },
+      { label: 'Offline downloads', yes: true },
+      { label: 'Priority support', yes: false }
+    ]
+  },
+  Enterprise: {
+    desc: 'For power users and teams.',
+    features: [
+      { label: 'Full + exclusive content library', yes: true },
+      { label: 'Unlimited devices', yes: true },
+      { label: 'Offline downloads', yes: true },
+      { label: 'Priority support', yes: true }
+    ]
+  }
+};
+
 @Component({
   selector: 'app-plan-catalog',
-  imports: [LoadingSpinner],
+  imports: [LoadingSpinner, FormsModule],
   templateUrl: './plan-catalog.html'
 })
 export class PlanCatalog implements OnInit {
@@ -20,21 +56,65 @@ export class PlanCatalog implements OnInit {
   loading = signal(true);
   plans = signal<SubscriptionPlan[]>([]);
 
+  subscribing = signal<SubscriptionPlan | null>(null);
+  agreed = signal(false);
+  submitting = signal(false);
+  renewalTypeTouched = signal(false);
+  form = { renewalType: '' as '' | 'AutoRenew' | 'Manual', startDate: '' };
+
   ngOnInit() {
     this.subscription.fetchPlans().subscribe(rows => {
-      this.plans.set(rows.filter(p => p.status === 'Active'));
+      const curated = rows
+        .filter(p => p.status === 'Active' && CURATED_PLAN_NAMES.includes(p.name))
+        .sort((a, b) => a.price - b.price);
+      this.plans.set(curated);
       this.loading.set(false);
     });
   }
 
-  subscribe(p: SubscriptionPlan) {
+  meta(p: SubscriptionPlan) {
+    return PLAN_META[p.name] ?? { desc: '', features: [] };
+  }
+
+  maxDevicesLabel(p: SubscriptionPlan) {
+    return (p.maxDevices ?? 0) >= 999 ? 'Unlimited' : String(p.maxDevices ?? 0);
+  }
+
+  isPopular(p: SubscriptionPlan) {
+    return this.plans()[1]?.planId === p.planId;
+  }
+
+  open(p: SubscriptionPlan) {
+    this.subscribing.set(p);
+    this.agreed.set(false);
+    this.renewalTypeTouched.set(false);
+    this.form = { renewalType: '', startDate: new Date().toISOString().slice(0, 10) };
+  }
+
+  close() {
+    this.subscribing.set(null);
+  }
+
+  confirm() {
+    const p = this.subscribing();
     const userId = this.auth.currentUser()?.userId;
-    if (!userId) return;
-    const start = new Date().toISOString().slice(0, 10);
-    const end = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-    this.subscription.createSubscription({ userId, planId: p.planId, startDate: start, endDate: end, renewalType: 'AutoRenew' }).subscribe({
-      next: () => { this.toast.ok(`Subscribed to ${p.name}`); this.router.navigate(['/subscription/my']); },
-      error: (err) => this.toast.warn(err?.error?.message ?? 'You already have an active subscription')
+    this.renewalTypeTouched.set(true);
+    if (!p || !userId || !this.form.renewalType || !this.agreed()) return;
+    const end = new Date(new Date(this.form.startDate).getTime() + 30 * 86400000).toISOString().slice(0, 10);
+    this.submitting.set(true);
+    this.subscription.createSubscription({
+      userId, planId: p.planId, startDate: this.form.startDate, endDate: end, renewalType: this.form.renewalType
+    }).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.toast.ok(`Subscribed to ${p.name}`);
+        this.close();
+        this.router.navigate(['/subscription/my']);
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        this.toast.warn(err?.error?.message ?? 'You already have an active subscription');
+      }
     });
   }
 }

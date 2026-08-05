@@ -1,5 +1,6 @@
 package com.mediahub.subscriptionPlan.controller;
 
+import com.mediahub.subscriptionPlan.client.AuditClient;
 import com.mediahub.subscriptionPlan.dto.CreateSubscriptionRequest;
 import com.mediahub.subscriptionPlan.dto.UpdateSubscriptionRequest;
 import com.mediahub.subscriptionPlan.model.UserSubscription;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +29,18 @@ public class UserSubscriptionController {
 
     @Autowired
     private UserSubscriptionService userSubscriptionService;
+
+    @Autowired
+    private AuditClient auditClient;
+
+    private static String actorRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(a -> a.startsWith("ROLE_"))
+            .map(a -> a.substring(5))
+            .findFirst()
+            .orElse("UNKNOWN");
+    }
 
 
     @Operation(summary = "Create Subscription")
@@ -112,11 +127,15 @@ public class UserSubscriptionController {
     @PreAuthorize("hasAuthority('subscription:manage') or @userSubscriptionService.isOwner(#subscriptionId, principal)")
     @PutMapping("/cancelSubscription/{subscriptionId}")
     public ResponseEntity<?> cancelSubscription(
-            @PathVariable Long subscriptionId) {
+            @PathVariable Long subscriptionId,
+            Authentication authentication) {
 
         try {
-            return ResponseEntity.ok(
-                    userSubscriptionService.cancelSubscription(subscriptionId));
+            Object result = userSubscriptionService.cancelSubscription(subscriptionId);
+            auditClient.log("SUBSCRIPTION_CANCELLED", "SUBSCRIPTION", Long.valueOf(authentication.getName()),
+                actorRole(authentication), "UserSubscription", subscriptionId.toString(),
+                "Cancelled subscription", "LOW");
+            return ResponseEntity.ok(result);
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("message", ex.getMessage()));
