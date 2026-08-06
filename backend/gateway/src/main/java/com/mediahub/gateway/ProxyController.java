@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import jakarta.annotation.PostConstruct;
+import java.net.InetAddress;
 import java.util.Set;
 
 /**
@@ -256,7 +257,7 @@ public class ProxyController {
         // since they're never hit directly by the browser. Forwarding the real client address
         // here lets each service's AuditClient record the actual originating IP.
         String clientIp = exchange.getRequest().getRemoteAddress() != null
-                ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
+                ? normalizeClientIp(exchange.getRequest().getRemoteAddress().getAddress())
                 : null;
 
         WebClient.RequestBodySpec spec = webClient
@@ -298,6 +299,18 @@ public class ProxyController {
         }
 
         return spec.exchangeToMono(response -> writeResponse(exchange, response));
+    }
+
+    // On one machine, "localhost" can resolve to either the IPv4 loopback (127.0.0.1) or the
+    // IPv6 loopback (::1, shown by Java as "0:0:0:0:0:0:0:1") depending on which socket family
+    // the OS happened to pick for that particular connection — the browser and OS can flip
+    // between them from one request to the next even though it's the same physical machine.
+    // Left unnormalized, that makes the audit log's IP column look like two different clients
+    // were involved. Collapsing every loopback address to one canonical string guarantees every
+    // module's audit rows show the same IP for the same machine.
+    private String normalizeClientIp(InetAddress addr) {
+        if (addr.isLoopbackAddress()) return "127.0.0.1";
+        return addr.getHostAddress();
     }
 
     private Mono<Void> writeResponse(

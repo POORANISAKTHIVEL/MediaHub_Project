@@ -10,8 +10,8 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
-      <thead><tr><th>Review ID</th><th>Content</th><th>Submitted</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
+      <thead><tr><th>Review ID</th><th>Content</th><th>Submitted</th><th>Status</th><th style="width:70px">Actions</th><th style="width:64px">Order</th></tr></thead>
       <tbody>
         @for (r of pagedRows(); track r.reviewID) {
           <tr>
@@ -20,12 +20,16 @@
             <td>{{ r.submissionDate }}</td>
             <td><app-status-badge [status]="r.decision || r.status"></app-status-badge></td>
             <td><app-row-menu [items]="menuFor(r)" (actionSelected)="onRowAction($event, r)"></app-row-menu></td>
+            <td style="white-space:nowrap">
+              <button class="icon-btn" title="Move up" (click)="moveUp(r)">↑</button>
+              <button class="icon-btn" title="Move down" (click)="moveDown(r)">↓</button>
+            </td>
           </tr>
         } @empty {
           <tr><td colspan="5" class="t-sub" style="text-align:center;padding:24px">No reviews in this tab.</td></tr>
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

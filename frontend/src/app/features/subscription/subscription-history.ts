@@ -6,10 +6,11 @@ import { IamClient } from '../../core/api/iam-client';
 import { IamUser } from '../../core/models/iam.models';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 
 @Component({
   selector: 'app-subscription-history',
-  imports: [RouterLink, LoadingSpinner, Pagination],
+  imports: [RouterLink, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './subscription-history.html'
 })
 export class SubscriptionHistoryPage implements OnInit {
@@ -21,9 +22,15 @@ export class SubscriptionHistoryPage implements OnInit {
   users = signal<IamUser[]>([]);
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   ngOnInit() {
     this.iam.getAllUsers().subscribe(u => this.users.set(u));

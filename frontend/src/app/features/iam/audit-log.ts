@@ -4,13 +4,14 @@ import { IamClient } from '../../core/api/iam-client';
 import { AuditEvent, IamUser, ModuleSource } from '../../core/models/iam.models';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 
 const MODULES: ModuleSource[] = ['IAM', 'CONTENT', 'SUBSCRIPTION', 'EDITORIAL', 'LICENSING', 'ROYALTY', 'ANALYTICS', 'NOTIFICATION', 'SYSTEM'];
 
 @Component({
   selector: 'app-audit-log',
-  imports: [FormsModule, FilterChip, Pagination, LoadingSpinner],
+  imports: [FormsModule, FilterChip, Pagination, LoadingSpinner, FitRowsDirective],
   templateUrl: './audit-log.html'
 })
 export class AuditLog implements OnInit {
@@ -25,7 +26,7 @@ export class AuditLog implements OnInit {
   moduleOptions = ['All', ...MODULES];
 
   currentPage = signal(0);
-  pageSize = 10;
+  pageSize = signal(10);
 
   filteredEvents = computed(() => {
     const action = this.actionFilter().trim().toLowerCase();
@@ -37,12 +38,18 @@ export class AuditLog implements OnInit {
   });
 
   totalElements = computed(() => this.filteredEvents().length);
-  totalPages = computed(() => Math.max(1, Math.ceil(this.totalElements() / this.pageSize)));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalElements() / this.pageSize())));
 
   pagedEvents = computed(() => {
-    const start = this.currentPage() * this.pageSize;
-    return this.filteredEvents().slice(start, start + this.pageSize);
+    const start = this.currentPage() * this.pageSize();
+    return this.filteredEvents().slice(start, start + this.pageSize());
   });
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.currentPage.set(0);
+  }
 
   ngOnInit() {
     this.iam.getAllUsers().subscribe(u => this.users.set(u));

@@ -18,7 +18,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Creator</th><th>Genre</th><th>Country</th><th>Royalty Tier</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
         @for (c of pagedCreators(); track c.creatorId) {
@@ -33,7 +33,7 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="creators().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="creators().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -43,7 +43,11 @@
       <div class="modal__head"><h3>{{ editing() ? 'Edit Creator' : 'New Creator' }}</h3></div>
       <div class="modal__body">
         <div class="grid-2">
-          <div class="field"><label>Display Name <span class="req">*</span></label><input class="input" [(ngModel)]="form.displayName"></div>
+          <div class="field">
+            <label>Display Name <span class="req">*</span></label>
+            <input class="input" [class.input--err]="nameError" [(ngModel)]="form.displayName" (blur)="nameTouched.set(true)" placeholder="Letters only, e.g. Priya Menon">
+            <span class="err">{{ nameError }}</span>
+          </div>
           <div class="field"><label>Genre</label><input class="input" [(ngModel)]="form.genre"></div>
         </div>
         <div class="grid-2">
@@ -57,7 +61,11 @@
         @if (!editing()) {
           <div class="field"><label>Linked User ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.userId"></div>
         }
-        <div class="field"><label>Bank Account Reference</label><input class="input" [(ngModel)]="form.bankAccountRef"></div>
+        <div class="field">
+          <label>Bank Account Reference</label>
+          <input class="input" [class.input--err]="bankRefError" [(ngModel)]="form.bankAccountRef" [maxlength]="bankRefMax" (blur)="bankRefTouched.set(true)" placeholder="e.g. US-IBAN-0021">
+          <span class="err">{{ bankRefError }}</span>
+        </div>
       </div>
       <div class="modal__foot">
         <button class="btn btn--ghost" (click)="creating.set(false); editing.set(null)">Cancel</button>

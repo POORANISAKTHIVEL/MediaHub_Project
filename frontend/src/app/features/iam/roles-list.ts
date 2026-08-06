@@ -7,12 +7,13 @@ import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 
 const PAGE_SIZE = 6;
 
 @Component({
   selector: 'app-roles-list',
-  imports: [RouterLink, FormsModule, LoadingSpinner, Pagination],
+  imports: [RouterLink, FormsModule, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './roles-list.html'
 })
 export class RolesList implements OnInit {
@@ -27,7 +28,7 @@ export class RolesList implements OnInit {
   activeRolePermissionTypes = signal<string[]>([]);
   loadingRolePermissions = signal(false);
   permPage = signal(0);
-  pageSize = PAGE_SIZE;
+  pageSize = signal(PAGE_SIZE);
 
   activeRole = computed(() => this.roles().find(r => r.roleId === this.activeRoleId()) ?? null);
 
@@ -44,10 +45,16 @@ export class RolesList implements OnInit {
   }
 
   pagedPermissions = computed(() => {
-    const start = this.permPage() * this.pageSize;
-    return this.permissions().slice(start, start + this.pageSize);
+    const start = this.permPage() * this.pageSize();
+    return this.permissions().slice(start, start + this.pageSize());
   });
-  totalPermPages = computed(() => Math.max(1, Math.ceil(this.permissions().length / this.pageSize)));
+  totalPermPages = computed(() => Math.max(1, Math.ceil(this.permissions().length / this.pageSize())));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.permPage.set(0);
+  }
 
   creatingRole = signal(false);
   newRoleType = '';

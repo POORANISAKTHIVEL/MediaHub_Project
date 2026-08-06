@@ -4,15 +4,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EditorialClient } from '../../core/api/editorial-client';
 import { ContentClient } from '../../core/api/content-client';
 import { EditorialReview } from '../../core/models/editorial.models';
-import { ContentTag } from '../../core/models/content.models';
+import { ContentAsset, ContentTag } from '../../core/models/content.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { ContentPreview } from '../../shared/components/content-preview';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-review-detail',
-  imports: [FormsModule, RouterLink, StatusBadge, LoadingSpinner],
+  imports: [FormsModule, RouterLink, StatusBadge, LoadingSpinner, ContentPreview],
   templateUrl: './review-detail.html'
 })
 export class ReviewDetail implements OnInit {
@@ -27,9 +28,20 @@ export class ReviewDetail implements OnInit {
   review = signal<EditorialReview | null>(null);
   contentTitle = signal('');
   contentType = signal('');
+  contentAsset = signal<ContentAsset | null>(null);
   creatorName = signal('');
   tags = signal<ContentTag[]>([]);
   remarks = '';
+  remarksTouched = signal(false);
+  readonly remarksMax = 300;
+
+  get remarksError(): string {
+    if (!this.remarksTouched()) return '';
+    if (!this.remarks.trim()) return 'Review comment is required';
+    if (this.remarks.length > this.remarksMax) return `Comment must be ${this.remarksMax} characters or fewer`;
+    return '';
+  }
+
   submitting = signal(false);
   viewOnly = signal(false);
 
@@ -44,6 +56,7 @@ export class ReviewDetail implements OnInit {
         this.content.fetchContentById(r.contentID).subscribe(c => {
           this.contentTitle.set(c?.title ?? ('CNT-' + r.contentID));
           this.contentType.set(c?.type ?? '');
+          this.contentAsset.set(c ?? null);
           if (c) this.content.fetchCreatorById(c.creatorId).subscribe(cr => this.creatorName.set(cr?.displayName ?? ('Creator #' + c.creatorId)));
         });
         this.content.tagsByContent(r.contentID).subscribe(t => this.tags.set(t));
@@ -75,18 +88,24 @@ export class ReviewDetail implements OnInit {
   }
 
   approve() {
+    this.remarksTouched.set(true);
+    if (this.remarksError) return;
     const r = this.review();
     if (!r) return;
     this.act(this.editorial.approve(r.reviewID, this.remarks), 'Review approved', r.contentID, 'Published');
   }
 
   reject() {
+    this.remarksTouched.set(true);
+    if (this.remarksError) return;
     const r = this.review();
     if (!r) return;
     this.act(this.editorial.reject(r.reviewID, this.remarks), 'Review rejected', r.contentID, 'Draft');
   }
 
   requestRevision() {
+    this.remarksTouched.set(true);
+    if (this.remarksError) return;
     const r = this.review();
     if (!r) return;
     const contentID = r.contentID;

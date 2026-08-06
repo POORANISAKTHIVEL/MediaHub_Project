@@ -3,13 +3,13 @@
 } @else if (item(); as c) {
   <div class="crumbs">Home / Content / <b>{{ c.title }}</b></div>
   <div class="page-head">
-    <div><h1>{{ c.title }} <app-status-badge [status]="c.status" style="vertical-align:middle;margin-left:8px"></app-status-badge></h1><p>CNT-{{ c.contentId }} · {{ c.genre }}</p></div>
+    <div><h1>{{ c.title }} @if (auth.currentUser()?.roleType !== 'subscriber') {<app-status-badge [status]="c.status" style="vertical-align:middle;margin-left:8px"></app-status-badge>}</h1><p>CNT-{{ c.contentId }} · {{ c.genre }}</p></div>
   </div>
   <div class="split">
     <div class="card">
       <div class="card__head"><h3>Preview</h3></div>
       <div class="card__body">
-        <div style="height:260px;border-radius:10px;background:linear-gradient(135deg,#c7d2fe,#a5b4fc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:44px">▶</div>
+        <app-content-preview [asset]="c"></app-content-preview>
         <h3 style="margin:18px 0 8px;font-size:16px">Description</h3>
         <p style="color:var(--ink-500);font-size:14px">{{ c.synopsis }}</p>
         <div style="display:flex;gap:8px;margin-top:16px">
@@ -27,9 +27,11 @@
           <dt>Type</dt><dd>{{ c.type }}</dd>
           <dt>Language</dt><dd>{{ c.language }}</dd>
           <dt>Duration</dt><dd>{{ c.durationSeconds }}s</dd>
-          <dt>Status</dt><dd><app-status-badge [status]="c.status"></app-status-badge></dd>
+          @if (auth.currentUser()?.roleType !== 'subscriber') {
+            <dt>Status</dt><dd><app-status-badge [status]="c.status"></app-status-badge></dd>
+          }
         </dl>
-        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:18px">
+        <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
           <a class="btn btn--ghost" routerLink="/content">← Back to catalog</a>
           @if (auth.hasPermission('content:write')) {
             <a class="btn btn--ghost" [routerLink]="['/content', c.contentId, 'edit']">✎ Edit</a>

@@ -10,7 +10,9 @@
 
 <div class="toolbar">
   <div class="search"><span>⌕</span><input type="text" placeholder="Search by title or ID…" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"></div>
-  <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="onStatusFilterChange($event)"></app-filter-chip>
+  @if (!auth.hasRole('subscriber')) {
+    <app-filter-chip label="Status" [value]="statusFilter()" [options]="statusOptions" (valueChange)="onStatusFilterChange($event)"></app-filter-chip>
+  }
   <app-filter-chip label="Type" [value]="typeFilter()" [options]="typeOptions" (valueChange)="onTypeFilterChange($event)"></app-filter-chip>
   <div class="toolbar__spacer"></div>
   <span style="font-size:13px;color:var(--ink-400)">{{ rows().length }} items</span>
@@ -20,7 +22,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Content</th><th>Type</th><th>Genre</th>@if (!auth.hasRole('subscriber')) {<th>Status</th>}<th style="width:90px">Actions</th></tr></thead>
       <tbody>
         @for (c of pagedRows(); track c.contentId) {
@@ -36,6 +38,6 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

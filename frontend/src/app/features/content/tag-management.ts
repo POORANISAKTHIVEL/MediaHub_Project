@@ -7,11 +7,13 @@ import { ConfirmService } from '../../shared/services/confirm.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
+import { clampContentId, contentIdError as contentIdErrorFor } from '../../shared/utils/content-id';
 
 @Component({
   selector: 'app-tag-management',
-  imports: [FormsModule, LoadingSpinner, RowMenu, Pagination],
+  imports: [FormsModule, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './tag-management.html'
 })
 export class TagManagement implements OnInit {
@@ -24,14 +26,29 @@ export class TagManagement implements OnInit {
   tags = signal<ContentTag[]>([]);
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.tags().length / this.pageSize)));
-  pagedTags = computed(() => this.tags().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.tags().length / this.pageSize())));
+  pagedTags = computed(() => this.tags().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
   creating = signal(false);
   viewing = signal<ContentTag | null>(null);
   newTagName = '';
   newTagCategory: ContentTag['tagCategory'] = 'Genre';
   newTagContentId = 0;
+  contentIdTouched = signal(false);
+
+  get contentIdError(): string {
+    return this.contentIdTouched() ? contentIdErrorFor(this.newTagContentId) : '';
+  }
+
+  onContentIdChange(value: number) {
+    this.newTagContentId = clampContentId(value);
+  }
 
   ngOnInit() {
     this.load();
@@ -46,11 +63,14 @@ export class TagManagement implements OnInit {
   }
 
   create() {
-    if (!this.newTagName.trim() || !this.newTagContentId) return;
+    this.contentIdTouched.set(true);
+    if (!this.newTagName.trim() || contentIdErrorFor(this.newTagContentId)) return;
     this.content.addTag({ tagName: this.newTagName.trim(), tagCategory: this.newTagCategory, contentId: this.newTagContentId }).subscribe(() => {
       this.toast.ok('Tag added successfully');
       this.creating.set(false);
       this.newTagName = '';
+      this.newTagContentId = 0;
+      this.contentIdTouched.set(false);
       this.load();
     });
   }

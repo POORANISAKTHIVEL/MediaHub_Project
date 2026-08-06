@@ -13,7 +13,7 @@
 @if (loading()) {
   <app-loading-spinner></app-loading-spinner>
 } @else {
-  <div class="coll-grid">
+  <div class="coll-grid" appFitRows [gridMode]="true" rowSelector=".card" (rowsThatFit)="onRowsThatFit($event)">
     @for (c of pagedRows(); track c.collectionID) {
       <div class="card">
         <div class="coll-cover" style="background:linear-gradient(135deg,#c7d2fe,#a5b4fc)"></div>
@@ -36,7 +36,7 @@
       <div class="empty"><div class="empty__ico">▦</div><h3>No collections match these filters.</h3></div>
     }
   </div>
-  <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+  <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
 }
 
 @if (creating()) {
@@ -44,7 +44,15 @@
     <div class="modal">
       <div class="modal__head"><h3>New Collection</h3></div>
       <div class="modal__body">
-        <div class="field"><label>Name <span class="req">*</span></label><input class="input" [(ngModel)]="form.name"></div>
+        <div class="field">
+          <label>Name <span class="req">*</span></label>
+          <input class="input" [class.input--err]="nameError" [ngModel]="form.name" (ngModelChange)="onNameChange($event)" (blur)="nameTouched.set(true)" [maxlength]="nameMax" placeholder="e.g. Featured Documentaries">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="err">{{ nameError }}</span>
+            <span class="hint" [style.color]="form.name.length >= nameMax ? 'var(--red-600)' : ''">{{ form.name.length }}/{{ nameMax }}</span>
+          </div>
+          <span class="hint" style="margin-top:2px">Letters and spaces only — no numbers or special characters.</span>
+        </div>
         <div class="field"><label>Category</label>
           <select class="select" [(ngModel)]="form.category">
             <option>Featured</option><option>Trending</option><option>Curated</option><option>New</option>
@@ -54,7 +62,9 @@
           <div class="field"><label>Publish Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.publishDate"></div>
           <div class="field"><label>Expiry Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.expiryDate"></div>
         </div>
-        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentID">
+        <div class="field"><label>Content ID <span class="req">*</span></label>
+          <input class="input" [class.input--err]="contentIdError" type="number" [ngModel]="form.contentID" (ngModelChange)="onContentIdChange($event)" (blur)="contentIdTouched.set(true)">
+          <span class="err">{{ contentIdError }}</span>
           <div class="note">A collection needs at least one content item. Add more from the collection's Manage Items page.</div>
         </div>
       </div>

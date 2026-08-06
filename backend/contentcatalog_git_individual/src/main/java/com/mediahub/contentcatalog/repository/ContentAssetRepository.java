@@ -10,4 +10,7 @@ public interface ContentAssetRepository extends JpaRepository<ContentAsset, Inte
 
     // ✅ ROYALTY INTEGRATION — fetch all content for a given creator
     List<ContentAsset> findByCreatorId(int creatorId);
+
+    // Used by DemoDataSeeder to insert sample rows idempotently.
+    boolean existsByTitle(String title);
 }

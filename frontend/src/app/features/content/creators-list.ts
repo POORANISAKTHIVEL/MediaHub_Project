@@ -8,12 +8,19 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
+const NAME_PATTERN = /^[A-Za-z\s]+$/;
+// Real-world bank account references (IBAN, etc.) top out at 34 characters — the international
+// IBAN maximum — and are alphanumeric plus hyphens (this app's own seed data uses e.g. "US-IBAN-0021").
+const BANK_REF_MAX = 34;
+const BANK_REF_PATTERN = /^[A-Za-z0-9-]*$/;
+
 @Component({
   selector: 'app-creators-list',
-  imports: [FormsModule, StatusBadge, RowMenu, LoadingSpinner, Pagination],
+  imports: [FormsModule, StatusBadge, RowMenu, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './creators-list.html'
 })
 export class CreatorsList implements OnInit {
@@ -34,18 +41,46 @@ export class CreatorsList implements OnInit {
   });
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.creators().length / this.pageSize)));
-  pagedCreators = computed(() => this.creators().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.creators().length / this.pageSize())));
+  pagedCreators = computed(() => this.creators().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
 
   onSearchChange(term: string) {
     this.searchTerm.set(term);
     this.page.set(0);
   }
 
+  // Called by [appFitRows] with however many rows actually fit the screen without scrolling —
+  // pagination absorbs the rest instead of an internal scrollbar.
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
+
   creating = signal(false);
   editing = signal<Creator | null>(null);
   form = { displayName: '', genre: '', country: '', royaltyTier: 'Standard', userId: 0, bankAccountRef: '' };
+  nameTouched = signal(false);
+  bankRefTouched = signal(false);
+  bankRefMax = BANK_REF_MAX;
+
+  get nameError(): string {
+    if (!this.nameTouched()) return '';
+    const v = this.form.displayName.trim();
+    if (!v) return 'Display name is required';
+    if (!NAME_PATTERN.test(v)) return 'Only letters and spaces are allowed';
+    return '';
+  }
+
+  get bankRefError(): string {
+    if (!this.bankRefTouched()) return '';
+    const v = this.form.bankAccountRef.trim();
+    if (!v) return '';
+    if (v.length > BANK_REF_MAX) return `Must be ${BANK_REF_MAX} characters or fewer`;
+    if (!BANK_REF_PATTERN.test(v)) return 'Only letters, numbers and hyphens are allowed';
+    return '';
+  }
 
   ngOnInit() {
     this.load();
@@ -93,16 +128,25 @@ export class CreatorsList implements OnInit {
 
   openCreate() {
     this.form = { displayName: '', genre: '', country: '', royaltyTier: 'Standard', userId: 0, bankAccountRef: '' };
+    this.nameTouched.set(false);
+    this.bankRefTouched.set(false);
     this.creating.set(true);
   }
 
   openEdit(c: Creator) {
     this.form = { displayName: c.displayName, genre: c.genre ?? '', country: c.country ?? '', royaltyTier: c.royaltyTier ?? 'Standard', userId: c.userId, bankAccountRef: c.bankAccountRef ?? '' };
+    this.nameTouched.set(false);
+    this.bankRefTouched.set(false);
     this.editing.set(c);
   }
 
   save() {
-    if (!this.form.displayName.trim()) return;
+    this.nameTouched.set(true);
+    this.bankRefTouched.set(true);
+    if (this.nameError || this.bankRefError) {
+      this.toast.warn(this.nameError || this.bankRefError);
+      return;
+    }
     const editing = this.editing();
     if (editing) {
       this.content.updateCreator(editing.creatorId, this.form).subscribe(() => {

@@ -14,15 +14,20 @@
 html,body{height:100%}
 body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink-900);-webkit-font-smoothing:antialiased}
 
+/* No visible scrollbars anywhere in the app — scrolling still works (wheel/trackpad/keys),
+   the track/thumb chrome is just hidden so no page ever shows a scrollbar. */
+*{scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+
 /* ---- Primitives ---- */
-.btn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--r-sm);font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--r-sm);font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;text-decoration:none}
 .btn--primary{background:linear-gradient(135deg,var(--brand-600),#6d28d9);box-shadow:0 4px 14px rgba(79,70,229,.28);border:none;color:#fff}
 .btn--primary:hover{filter:brightness(1.07)}
 .btn--ghost{background:#fff;color:var(--ink-700);border-color:var(--line)}
 .btn--danger{background:#fff;color:var(--red-600);border-color:#fecaca}
 .btn--red{background:var(--red-600);color:#fff}
 .btn--sm{height:32px;padding:0 12px;font-size:13px}
-.btn--link{background:none;border:none;color:var(--brand-600);font-weight:600;cursor:pointer;font-family:inherit}
+.btn--link{background:none;border:none;color:var(--brand-600);font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn--plus-icon{font-size:22px;font-weight:700;line-height:1;padding:0 15px;min-width:44px;justify-content:center}
 .badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600}
@@ -49,8 +54,8 @@ body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;back
 .check.on::after{content:"\2713";display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:15px}
 
 /* ---- Shell ---- */
-.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
-.sidebar{background:#111827;color:#cbd5e1;padding:20px 14px;display:flex;flex-direction:column;overflow-y:auto}
+.shell{display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden}
+.sidebar{background:#111827;color:#cbd5e1;padding:20px 14px;display:flex;flex-direction:column;overflow-y:auto;height:100%}
 .brand{display:flex;align-items:center;gap:10px;padding:8px 10px 22px}
 .brand__logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand-500),var(--violet-600));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;box-shadow:0 6px 16px rgba(109,40,217,.35)}
 .brand__name{font-weight:700;color:#fff;font-size:17px}.brand__name small{display:block;font-size:11px;font-weight:500;color:#94a3b8}
@@ -61,19 +66,22 @@ body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;back
 .nav__badge{margin-left:auto;background:#334155;color:#e2e8f0;font-size:11px;font-weight:600;border-radius:999px;padding:1px 7px}
 .nav__item.active .nav__badge{background:#6d5efc}
 .sidebar__foot{margin-top:auto;padding-top:16px;border-top:1px solid #1f2937}
-.main{display:flex;flex-direction:column;background:linear-gradient(180deg,#f7f9fc 0%, var(--bg) 55%);min-height:100vh}
+.main{display:flex;flex-direction:column;background:linear-gradient(180deg,#f7f9fc 0%, var(--bg) 55%);height:100vh;overflow:hidden}
 .topbar{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 28px;flex-shrink:0}
 .search{flex:0 0 340px;height:40px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--ink-400);font-size:14px;cursor:text}
 .search input{border:none;background:none;outline:none;width:100%;font-size:14px;color:var(--ink-900);font-family:inherit;padding:0}
 .search input::placeholder{color:var(--ink-400)}
 .topbar__spacer{flex:1}
-.topbar__icon{width:40px;height:40px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-500);position:relative;cursor:pointer}
+.topbar__icon{width:40px;height:40px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-500);position:relative;cursor:pointer;text-decoration:none}
 .topbar__icon .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red-600);border:2px solid #fff}
 .avatar{width:38px;height:38px;border-radius:50%;background:var(--brand-100);color:var(--brand-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
 .user-chip{display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:8px;padding:4px 6px}
 .user-chip:hover{background:var(--surface-2)}
 .user-chip__meta{font-size:13px}.user-chip__meta b{display:block;font-weight:600}.user-chip__meta span{color:var(--ink-400);font-size:12px}
-.content{padding:26px 28px;flex:1}
+/* Pages size to their own natural content height — a 3-row table stays a 3-row table, no forced
+   stretching. If a page's content genuinely exceeds the viewport, this is the one scroll region
+   that kicks in (scrollbar hidden globally above), instead of the whole browser page scrolling. */
+.content{padding:26px 28px;flex:1;overflow-y:auto;min-height:0}
 .crumbs{font-size:13px;color:var(--ink-400);margin-bottom:6px}.crumbs b{color:var(--brand-600);font-weight:600}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
 .page-head h1{font-size:23px;font-weight:700;letter-spacing:-.02em;background:linear-gradient(96deg,var(--ink-900) 35%,var(--brand-600));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -117,7 +125,7 @@ tbody tr:hover{background:var(--surface-2)}
 .pager button:disabled{opacity:.4;cursor:not-allowed}
 .thumb{width:40px;height:40px;border-radius:8px;display:inline-block;background:linear-gradient(135deg,#c7d2fe,#a5b4fc)}
 .avatar-cell{display:flex;align-items:center;gap:12px}
-.split{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
+.split{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:stretch}
 .kv{display:grid;grid-template-columns:130px 1fr;gap:10px 16px;font-size:14px}
 .kv dt{color:var(--ink-400);font-weight:500}.kv dd{color:var(--ink-900);font-weight:500}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px}
@@ -147,20 +155,18 @@ tbody tr:hover{background:var(--surface-2)}
 .plan .price span{font-size:14px;color:var(--ink-400);font-weight:500}
 .plan ul{list-style:none;margin:18px 0;display:flex;flex-direction:column;gap:11px}
 .plan li{display:flex;gap:9px;align-items:center;font-size:14px;color:var(--ink-700)}
-.plan-catalog{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.plan-catalog{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .plan-card{border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;overflow:hidden;transition:box-shadow .15s,border-color .15s}
 .plan-card:hover{box-shadow:var(--sh);border-color:var(--brand-100)}
-.plan-card.featured{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-50)}
-.plan-card__ribbon{background:var(--brand-600);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:5px;text-transform:uppercase;letter-spacing:.04em}
-.plan-card__body{padding:26px}
-.plan-card__name{font-size:18px;font-weight:700}
-.plan-card__price{font-size:36px;font-weight:700;margin:14px 0 4px}.plan-card__price span{font-size:14px;color:var(--ink-400);font-weight:500}
-.plan-card__desc{color:var(--ink-500);font-size:13px;margin-bottom:18px}
-.plan-card__features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
-.plan-card__features li{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink-700)}
-.plan-card__features li .ico{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-.plan-card__divider{border:none;border-top:1px solid var(--line);margin:0 0 16px}
-.plan-card__info{display:grid;grid-template-columns:1fr auto;row-gap:8px;column-gap:10px;margin:0 0 22px;font-size:13px}
+.plan-card__body{padding:18px}
+.plan-card__name{font-size:16px;font-weight:700}
+.plan-card__price{font-size:30px;font-weight:700;margin:10px 0 3px}.plan-card__price span{font-size:13px;color:var(--ink-400);font-weight:500}
+.plan-card__desc{color:var(--ink-500);font-size:12px;margin-bottom:14px}
+.plan-card__features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.plan-card__features li{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-700)}
+.plan-card__features li .ico{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.plan-card__divider{border:none;border-top:1px solid var(--line);margin:0 0 12px}
+.plan-card__info{display:grid;grid-template-columns:1fr auto;row-gap:6px;column-gap:8px;margin:0 0 16px;font-size:12px}
 .plan-card__info dt{color:var(--ink-500);margin:0}
 .plan-card__info dd{margin:0;font-weight:600;text-align:right}
 .hint--error{color:var(--red-600)}

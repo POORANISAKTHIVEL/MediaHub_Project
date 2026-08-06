@@ -8,6 +8,7 @@ import { FilterChip } from '../../shared/components/filter-chip';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 
 const ROLE_OPTIONS = ['All', 'admin', 'subscriber', 'creator', 'rightsManager', 'editorial', 'revenueAnalyst'];
@@ -15,7 +16,7 @@ const STATUS_OPTIONS = ['All', 'active', 'suspended'];
 
 @Component({
   selector: 'app-users-list',
-  imports: [RouterLink, FormsModule, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination],
+  imports: [RouterLink, FormsModule, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './users-list.html'
 })
 export class UsersList implements OnInit {
@@ -36,9 +37,15 @@ export class UsersList implements OnInit {
   }
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   onRoleFilterChange(value: string) {
     this.roleFilter.set(value);

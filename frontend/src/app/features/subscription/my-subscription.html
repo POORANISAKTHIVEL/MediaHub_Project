@@ -4,21 +4,47 @@
 @if (loading()) {
   <app-loading-spinner></app-loading-spinner>
 } @else if (sub(); as s) {
-  <div class="card" style="max-width:560px">
-    <div class="card__head"><h3>{{ planName(s.planId) }} Plan</h3><app-status-badge [status]="s.status"></app-status-badge></div>
-    <div class="card__body">
-      <dl class="kv">
-        <dt>Start Date</dt><dd>{{ s.startDate }}</dd>
-        <dt>Renews / Ends</dt><dd>{{ s.endDate }}</dd>
-        <dt>Renewal Type</dt><dd>{{ s.renewalType }}</dd>
-      </dl>
-      @if (s.status === 'Active') {
-        <div style="display:flex;gap:10px;margin-top:20px">
-          <button class="btn btn--ghost" (click)="changePlan()">Change Plan</button>
-          <button class="btn btn--danger" (click)="cancel()">Cancel Subscription</button>
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:20px;max-width:960px">
+
+    <!-- Left: plan detail card -->
+    <div class="card">
+      <div class="card__head">
+        <h3>{{ planName(s.planId) }} Plan</h3>
+        <app-status-badge [status]="s.status"></app-status-badge>
+      </div>
+      <div class="card__body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:0">
+
+          <div style="background:var(--surface-2,#f8faff);border:1px solid var(--line);border-radius:10px;padding:16px 18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);margin-bottom:6px">Start Date</div>
+            <div style="font-size:18px;font-weight:700;color:var(--ink-900)">{{ s.startDate }}</div>
+          </div>
+
+          <div style="background:var(--surface-2,#f8faff);border:1px solid var(--line);border-radius:10px;padding:16px 18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);margin-bottom:6px">Renews / Ends</div>
+            <div style="font-size:18px;font-weight:700;color:var(--ink-900)">{{ s.endDate }}</div>
+          </div>
+
+          <div style="background:var(--surface-2,#f8faff);border:1px solid var(--line);border-radius:10px;padding:16px 18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);margin-bottom:6px">Renewal Type</div>
+            <div style="font-size:18px;font-weight:700;color:var(--ink-900)">{{ s.renewalType }}</div>
+          </div>
+
         </div>
-      }
+      </div>
     </div>
+
+    <!-- Right: actions card -->
+    @if (s.status === 'Active') {
+      <div class="card" style="display:flex;flex-direction:column;gap:0">
+        <div class="card__head"><h3>Actions</h3></div>
+        <div class="card__body" style="display:flex;flex-direction:column;gap:12px">
+          <button class="btn btn--primary" style="width:100%;justify-content:center" (click)="changePlan()">Change Plan</button>
+          <button class="btn btn--danger" style="width:100%;justify-content:center" (click)="cancel()">Cancel</button>
+        </div>
+      </div>
+    }
+
   </div>
 } @else {
   <div class="empty">

@@ -5,7 +5,7 @@
       <div class="brand__name">MediaHub<small>Content Platform</small></div>
     </div>
 
-    @for (item of navItems; track item.label ?? item.group) {
+    @for (item of navItems(); track item.label ?? item.group) {
       @if (item.group) {
         <div class="nav__group">{{ item.group }}</div>
       } @else {
@@ -40,7 +40,7 @@
         }
       </div>
       <div class="topbar__spacer"></div>
-      <a class="topbar__icon" routerLink="/notifications">◇<span class="dot"></span></a>
+      <a class="topbar__icon" routerLink="/notifications">🔔<span class="dot"></span></a>
       <div class="user-chip" (click)="toggleAccount($event)" style="position:relative">
         <div class="avatar">{{ initials }}</div>
         <div class="user-chip__meta"><b>{{ auth.currentUser()?.name }}</b><span>{{ auth.currentUser()?.roleType }}</span></div>

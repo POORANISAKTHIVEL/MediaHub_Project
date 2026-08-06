@@ -3,22 +3,23 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ContentClient } from '../../core/api/content-client';
 import { EditorialClient } from '../../core/api/editorial-client';
-import { ContentAsset } from '../../core/models/content.models';
+import { CONTENT_TYPES, ContentAsset } from '../../core/models/content.models';
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
 const STATUS_OPTIONS = ['All', 'Draft', 'UnderReview', 'Published', 'Archived', 'Removed'];
-const TYPE_OPTIONS = ['All', 'Video', 'Audio', 'Article', 'Podcast', 'Ebook'];
+const TYPE_OPTIONS = ['All', ...CONTENT_TYPES];
 
 @Component({
   selector: 'app-content-list',
-  imports: [FormsModule, RouterLink, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination],
+  imports: [FormsModule, RouterLink, StatusBadge, FilterChip, RowMenu, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './content-list.html'
 })
 export class ContentList implements OnInit {
@@ -46,9 +47,9 @@ export class ContentList implements OnInit {
   });
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
 
   onSearchChange(term: string) {
     this.searchTerm.set(term);
@@ -62,6 +63,14 @@ export class ContentList implements OnInit {
 
   onTypeFilterChange(value: string) {
     this.typeFilter.set(value);
+    this.page.set(0);
+  }
+
+  // Called by [appFitRows] with however many rows actually fit the screen without scrolling —
+  // pagination absorbs the rest instead of an internal scrollbar.
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
     this.page.set(0);
   }
 

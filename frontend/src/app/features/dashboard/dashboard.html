@@ -1,16 +1,75 @@
 <div class="crumbs">Home / <b>Dashboard</b></div>
 <div class="page-head">
-  <div><h1>Dashboard</h1><p>Welcome back, {{ auth.currentUser()?.name }}. Here's what's happening across MediaHub.</p></div>
+  <div><h1>Dashboard</h1>
+    @if (isSubscriber) {
+      <p>Welcome back, {{ auth.currentUser()?.name }}. Here's what's new for you.</p>
+    } @else {
+      <p>Welcome back, {{ auth.currentUser()?.name }}. Here's what's happening across MediaHub.</p>
+    }
+  </div>
   <div class="page-head__actions">
-    <button class="btn btn--ghost" (click)="export()">⤓ Export</button>
-    @if (auth.hasPermission('content:write')) {
-      <a class="btn btn--primary tip" data-tip="New Content" routerLink="/content/create">+ Content</a>
+    @if (isSubscriber) {
+      <a class="btn btn--primary" routerLink="/content">🎞 Browse Catalog</a>
+    } @else {
+      <button class="btn btn--ghost" (click)="export()">⤓ Export</button>
     }
   </div>
 </div>
 
 @if (loading()) {
   <app-loading-spinner></app-loading-spinner>
+} @else if (isSubscriber) {
+  <div class="stat-grid">
+    <app-stat-card label="My Plan" [value]="myPlan()?.name ?? 'No plan'" icon="◈" bg="var(--brand-50)" color="var(--brand-600)"></app-stat-card>
+    <app-stat-card label="Max Devices" [value]="myPlan()?.maxDevices ?? '—'" icon="▤" bg="var(--blue-50)" color="var(--blue-600)"></app-stat-card>
+    <app-stat-card label="Downloads" [value]="myPlan()?.downloadAllowed ? 'Allowed' : 'Not included'" icon="⤓" bg="var(--green-50)" color="var(--green-600)"></app-stat-card>
+    <app-stat-card label="Unread Alerts" [value]="unreadCount()" icon="◇" bg="var(--amber-50)" color="var(--amber-600)"></app-stat-card>
+  </div>
+
+  <div class="split">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div class="card">
+        <div class="card__head"><h3>New Releases</h3><a class="btn--link" routerLink="/content">View all</a></div>
+        <div class="card__body">
+          @if (newReleases().length) {
+            <div style="display:flex;flex-direction:column;gap:14px">
+              @for (c of newReleases(); track c.contentId) {
+                <a [routerLink]="['/content', c.contentId]" class="row-between" style="text-decoration:none;color:inherit">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span class="thumb" style="display:inline-flex;align-items:center;justify-content:center;font-size:16px">{{ contentIcon(c.type) }}</span>
+                    <div>
+                      <div class="t-primary">{{ c.title }}</div>
+                      <div class="t-sub">{{ c.genre || c.type }}</div>
+                    </div>
+                  </div>
+                  <span class="t-sub">{{ c.publishedDate }}</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <app-empty-state icon="🎞" title="No content yet" message="Check back soon for new releases."></app-empty-state>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h3>Recent Notifications</h3><a class="btn--link" routerLink="/notifications">View all</a></div>
+      <div class="card__body" style="padding:8px 20px">
+        @if (recentNotifications().length) {
+          @for (n of recentNotifications(); track n.notificationId) {
+            <div class="notif" [class.unread]="n.status === 'UNREAD'" (click)="dismissNotification(n)" style="cursor:pointer" title="Click to view — dismisses this notification">
+              <div class="notif__ico" style="background:var(--brand-50);color:var(--brand-600)">{{ notifIcon(n) }}</div>
+              <div class="notif__txt"><b>{{ n.category }}</b><p>{{ n.message }}</p></div>
+              <span class="notif__time">{{ n.createdDate.slice(0, 10) }}</span>
+            </div>
+          }
+        } @else {
+          <app-empty-state icon="◇" title="No notifications" message="You're all caught up."></app-empty-state>
+        }
+      </div>
+    </div>
+  </div>
 } @else if (data(); as d) {
   <div class="stat-grid">
     @if (auth.hasPermission('content:read')) {
@@ -20,23 +79,14 @@
       <app-stat-card label="Active Subscriptions" [value]="d.subscriptionAnalytics.activeSubscriptions ?? '—'" icon="◈" bg="var(--green-50)" color="var(--green-600)"></app-stat-card>
     }
     @if (auth.hasPermission('content:read')) {
-      <app-stat-card label="Pending Reviews" [value]="d.editorialAnalytics.pendingReviews ?? '—'" icon="✎" bg="var(--amber-50)" color="var(--amber-600)"></app-stat-card>
-      <app-stat-card label="Approved Reviews" [value]="d.editorialAnalytics.approvedReviews ?? '—'" icon="✓" bg="var(--green-50)" color="var(--green-600)"></app-stat-card>
-    }
-    @if (auth.hasPermission('royalty:view')) {
-      <app-stat-card label="Total Revenue" [value]="d.revenueAnalytics.totalRevenue != null ? ('$' + d.revenueAnalytics.totalRevenue.toLocaleString()) : '—'" icon="$" bg="var(--green-50)" color="var(--green-600)"></app-stat-card>
-      <app-stat-card label="Royalty Payable" [value]="d.revenueAnalytics.totalRoyaltyAmount != null ? ('$' + d.revenueAnalytics.totalRoyaltyAmount.toLocaleString()) : '—'" icon="$" bg="var(--violet-50)" color="var(--violet-600)"></app-stat-card>
-      <app-stat-card label="Draft Statements" [value]="draftStatements()" icon="✎" bg="var(--amber-50)" color="var(--amber-600)"></app-stat-card>
-      <app-stat-card label="Pending Payouts" [value]="pendingPayouts()" icon="◔" bg="var(--blue-50)" color="var(--blue-600)"></app-stat-card>
+      <app-stat-card label="Pending Reviews" [value]="d.editorialAnalytics.pendingReviews ?? '—'" icon="✎" bg="var(--amber-50)" color="var(--amber-600)" textColor="var(--amber-600)"></app-stat-card>
+      <app-stat-card label="Approved Reviews" [value]="d.editorialAnalytics.approvedReviews ?? '—'" icon="✓" bg="var(--green-50)" color="var(--green-600)" textColor="var(--green-600)"></app-stat-card>
+      <app-stat-card label="Rejected Reviews" [value]="d.editorialAnalytics.rejectedReviews ?? '—'" icon="✕" bg="var(--red-50)" color="var(--red-600)" textColor="var(--red-600)"></app-stat-card>
     }
   </div>
 
   <div style="display:flex;flex-direction:column;gap:22px">
     @if (auth.hasPermission('royalty:view')) {
-      <div class="card">
-        <div class="card__head"><h3>Royalty Rules</h3></div>
-        <div class="card__body"><p class="t-sub">Configure revenue-share percentages by creator tier.</p></div>
-      </div>
       <div class="card">
         <div class="card__head"><h3>Royalty Statements</h3></div>
         <div class="card__body">
@@ -50,10 +100,6 @@
             <p class="t-sub">No statements yet.</p>
           }
         </div>
-      </div>
-      <div class="card">
-        <div class="card__head"><h3>Royalty Payouts</h3></div>
-        <div class="card__body"><p class="t-sub">Process, retry and track creator payouts.</p></div>
       </div>
     }
     @if (auth.hasPermission('content:read')) {

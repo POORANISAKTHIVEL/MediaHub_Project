@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -10,6 +10,8 @@ import { ConfirmDialog } from '../shared/components/confirm-dialog';
 import { ContentClient } from '../core/api/content-client';
 import { IamClient } from '../core/api/iam-client';
 import { LicensingClient } from '../core/api/licensing-client';
+import { NotificationClient } from '../core/api/notification-client';
+import { ROLE_NOTIFICATION_CATEGORIES } from '../core/models/notification.models';
 
 export interface SearchResult {
   icon: string;
@@ -33,13 +35,16 @@ function dropEmptyGroups(items: NavEntry[]): NavEntry[] {
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastContainer, ConfirmDialog, FormsModule],
   templateUrl: './app-shell.html'
 })
-export class AppShell {
+export class AppShell implements OnInit {
   auth = inject(AuthService);
   private router = inject(Router);
   private content = inject(ContentClient);
   private iam = inject(IamClient);
   private licensing = inject(LicensingClient);
+  private notifications = inject(NotificationClient);
   acctOpen = false;
+
+  unreadCount = signal(0);
 
   searchTerm = signal('');
   searchOpen = signal(false);
@@ -92,10 +97,30 @@ export class AppShell {
     this.router.navigate(r.route);
   }
 
-  navItems = dropEmptyGroups(NAV_ITEMS.filter(item => {
+  private baseNavItems = dropEmptyGroups(NAV_ITEMS.filter(item => {
     if (item.hideForRoles?.includes(this.auth.currentUser()?.roleType ?? '')) return false;
+    if (item.group && this.auth.currentUser()?.roleType === 'subscriber') return false;
     return item.group || !item.permissions || item.permissions.length === 0 || this.auth.hasAnyPermission(item.permissions);
   }));
+
+  navItems = computed(() => this.baseNavItems.map(item =>
+    item.route === '/notifications' && this.unreadCount() > 0
+      ? { ...item, badge: String(this.unreadCount()) }
+      : item
+  ));
+
+  ngOnInit() {
+    const userId = this.auth.currentUser()?.userId;
+    if (!userId) return;
+    // Mirrors the Dashboard's own approach — the real backend has no working
+    // getUnreadNotifications endpoint, only getAllNotifications (filter client-side).
+    // Also honors the same role category allowlist as the Notifications page/Dashboard,
+    // so e.g. a subscriber's badge count never includes editorial-only notifications.
+    const allowed = ROLE_NOTIFICATION_CATEGORIES[this.auth.roleType() ?? ''] ?? null;
+    this.notifications.getAllForUser(userId).subscribe(rows =>
+      this.unreadCount.set(rows.filter(n => n.status === 'UNREAD' && (!allowed || allowed.includes(n.category))).length)
+    );
+  }
 
   get initials(): string {
     const name = this.auth.currentUser()?.name ?? '';

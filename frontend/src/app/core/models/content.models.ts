@@ -1,4 +1,5 @@
-export type ContentType = 'Video' | 'Audio' | 'Article' | 'Podcast' | 'Ebook';
+export type ContentType = 'Video' | 'Image' | 'Article';
+export const CONTENT_TYPES: ContentType[] = ['Video', 'Image', 'Article'];
 export type ContentStatus = 'Draft' | 'UnderReview' | 'Published' | 'Archived' | 'Removed';
 export type CreatorStatus = 'Active' | 'Suspended' | 'PendingReview';
 

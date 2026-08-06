@@ -1,6 +1,7 @@
 package com.mediahub.contentcatalog.service;
 
 import com.mediahub.contentcatalog.entity.ContentAsset;
+import com.mediahub.contentcatalog.enums.ContentType;
 import com.mediahub.contentcatalog.repository.ContentAssetRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ public class ContentAssetServiceTest {
         contentAsset.setContentId(1);
         contentAsset.setCreatorId(1);
         contentAsset.setTitle("My First Short Film");
-        contentAsset.setType("Video");
+        contentAsset.setType(ContentType.Video);
         contentAsset.setGenre("Drama");
         contentAsset.setLanguage("Tamil");
         contentAsset.setDurationSeconds(1800);

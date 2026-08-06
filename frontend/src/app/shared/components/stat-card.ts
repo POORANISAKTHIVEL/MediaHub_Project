@@ -5,10 +5,10 @@ import { Component, Input } from '@angular/core';
   template: `
     <div class="stat">
       <div class="stat__top">
-        <span>{{ label }}</span>
+        <span [style.color]="textColor || ''">{{ label }}</span>
         <div class="stat__ico" [style.background]="bg" [style.color]="color">{{ icon }}</div>
       </div>
-      <div class="stat__val">{{ value }}</div>
+      <div class="stat__val" [style.color]="textColor || ''">{{ value }}</div>
       @if (delta) {
         <div class="stat__delta" [class]="deltaUp ? 'up' : 'down'">{{ delta }}</div>
       }
@@ -21,6 +21,7 @@ export class StatCard {
   @Input() icon = '📊';
   @Input() color = 'var(--brand-600)';
   @Input() bg = 'var(--brand-50)';
+  @Input() textColor = '';
   @Input() delta = '';
   @Input() deltaUp = true;
 }

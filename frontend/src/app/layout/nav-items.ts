@@ -15,8 +15,6 @@ export interface NavEntry {
  *  permission derived from the backend's @PreAuthorize authority strings so the sidebar only
  *  ever shows what the user is actually allowed to open. */
 export const NAV_ITEMS: NavEntry[] = [
-  { group: 'Account' },
-  { route: '/profile', icon: '◔', label: 'Profile' },
   { group: 'Overview' },
   { route: '/dashboard', icon: '▚', label: 'Dashboard' },
   { group: 'Content' },
@@ -37,7 +35,6 @@ export const NAV_ITEMS: NavEntry[] = [
   { route: '/subscription/my', icon: '⊞', label: 'Current Subscription', permissions: ['subscription:view'], hideForRoles: ['rightsManager', 'creator'] },
   { group: 'Platform' },
   { route: '/analytics', icon: '◔', label: 'Analytics & Reports', permissions: ['report:view'] },
-  { route: '/notifications', icon: '◇', label: 'Notifications' },
   { route: '/iam/users', icon: '⛨', label: 'IAM & Users', permissions: ['user:manage', 'role:manage', 'permission:manage'] },
   { route: '/audit', icon: '▤', label: 'Audit & Compliance', permissions: ['audit:read'] }
 ];

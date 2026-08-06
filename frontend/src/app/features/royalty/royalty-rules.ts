@@ -6,6 +6,7 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,7 +14,7 @@ import { formatDate } from '../../shared/utils/date-format';
 
 @Component({
   selector: 'app-royalty-rules',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './royalty-rules.html'
 })
 export class RoyaltyRules implements OnInit {
@@ -28,9 +29,15 @@ export class RoyaltyRules implements OnInit {
   rules = signal<RoyaltyRule[]>([]);
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rules().length / this.pageSize)));
-  pagedRules = computed(() => this.rules().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rules().length / this.pageSize())));
+  pagedRules = computed(() => this.rules().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   creating = signal(false);
   editing = signal<RoyaltyRule | null>(null);

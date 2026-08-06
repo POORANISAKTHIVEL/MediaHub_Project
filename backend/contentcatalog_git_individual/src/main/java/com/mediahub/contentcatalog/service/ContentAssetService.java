@@ -92,6 +92,7 @@ public class ContentAssetService {
         }
 
         existing.setTitle(contentAsset.getTitle());
+        existing.setType(contentAsset.getType());
         existing.setGenre(contentAsset.getGenre());
         existing.setLanguage(contentAsset.getLanguage());
         existing.setSynopsis(contentAsset.getSynopsis());

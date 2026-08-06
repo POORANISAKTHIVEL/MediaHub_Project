@@ -57,9 +57,17 @@ public class AuditClient {
             HttpServletRequest req = attrs.getRequest();
             String forwarded = req.getHeader("X-Forwarded-For");
             if (forwarded != null && !forwarded.isBlank()) return forwarded.split(",")[0].trim();
-            return req.getRemoteAddr();
+            return normalizeLoopback(req.getRemoteAddr());
         } catch (IllegalStateException e) {
             return null;
         }
+    }
+
+    // Only reached when this service is called directly, bypassing the gateway (e.g. a local
+    // test) — the gateway already normalizes X-Forwarded-For for the normal request path. Java
+    // reports the IPv6 loopback as "0:0:0:0:0:0:0:1" and the IPv4 loopback as "127.0.0.1" for
+    // what is the same machine, so collapse both to one canonical string here too.
+    private String normalizeLoopback(String ip) {
+        return ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) ? "127.0.0.1" : ip;
     }
 }

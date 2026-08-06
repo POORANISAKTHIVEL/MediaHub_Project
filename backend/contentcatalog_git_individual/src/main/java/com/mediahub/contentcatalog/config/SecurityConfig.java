@@ -1,5 +1,6 @@
 package com.mediahub.contentcatalog.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +37,14 @@ public class SecurityConfig {
                         .authenticationEntryPoint(unauthorizedEntryPoint())
                         .accessDeniedHandler(accessDeniedHandler()))
                 .authorizeHttpRequests(auth -> auth
+                        // The servlet container's internal ERROR dispatch (used to render a
+                        // resolved exception like a bad @RequestBody) re-enters this filter chain
+                        // without the original Authorization header — without this, a real 400
+                        // from invalid input gets clobbered into a misleading 401.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        // Local demo asset files (video/image/article previews) — no auth,
+                        // since a plain <video>/<img> tag never carries the JWT header.
+                        .requestMatchers("/media/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -47,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:8094", "http://localhost:8091", "http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:8094", "http://localhost:8091", "http://localhost:3000", "http://localhost:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));

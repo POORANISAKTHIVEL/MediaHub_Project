@@ -8,15 +8,17 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
+import { clampContentId, contentIdError as contentIdErrorFor } from '../../shared/utils/content-id';
 
 const CATEGORY_OPTIONS = ['All', 'Featured', 'Trending', 'Curated', 'New'];
 const STATUS_OPTIONS = ['All', 'Scheduled', 'Active', 'Expired'];
 
 @Component({
   selector: 'app-collections-list',
-  imports: [FormsModule, StatusBadge, FilterChip, LoadingSpinner, Pagination],
+  imports: [FormsModule, StatusBadge, FilterChip, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './collections-list.html'
 })
 export class CollectionsList implements OnInit {
@@ -36,6 +38,34 @@ export class CollectionsList implements OnInit {
   creating = signal(false);
   form: { name: string; category: CollectionCategory; publishDate: string; expiryDate: string; contentID: number } =
     { name: '', category: 'Featured', publishDate: '', expiryDate: '', contentID: 0 };
+  nameTouched = signal(false);
+  contentIdTouched = signal(false);
+
+  readonly nameMax = 50;
+  private namePattern = /^[a-zA-Z ]*$/;
+
+  get nameError(): string {
+    if (!this.nameTouched()) return '';
+    const v = this.form.name;
+    if (!v.trim()) return 'Name is required';
+    if (v.length > this.nameMax) return `Name must be ${this.nameMax} characters or fewer`;
+    if (!this.namePattern.test(v)) return 'Name may only contain letters and spaces';
+    return '';
+  }
+
+  onNameChange(value: string) {
+    const cleaned = value.replace(/[^a-zA-Z ]/g, '').slice(0, this.nameMax);
+    this.form.name = cleaned;
+    this.nameTouched.set(true);
+  }
+
+  get contentIdError(): string {
+    return this.contentIdTouched() ? contentIdErrorFor(this.form.contentID) : '';
+  }
+
+  onContentIdChange(value: number) {
+    this.form.contentID = clampContentId(value);
+  }
 
   rows = computed(() => this.all()
     .filter(c => !this.categoryFilter() || c.category === this.categoryFilter())
@@ -43,9 +73,15 @@ export class CollectionsList implements OnInit {
   );
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   onCategoryFilterChange(value: string) {
     this.categoryFilter.set(value);
@@ -71,11 +107,15 @@ export class CollectionsList implements OnInit {
 
   openCreate() {
     this.form = { name: '', category: 'Featured', publishDate: '', expiryDate: '', contentID: 0 };
+    this.nameTouched.set(false);
+    this.contentIdTouched.set(false);
     this.creating.set(true);
   }
 
   create() {
-    if (!this.form.name.trim() || !this.form.publishDate || !this.form.expiryDate || !this.form.contentID) return;
+    this.nameTouched.set(true);
+    this.contentIdTouched.set(true);
+    if (this.nameError || !this.form.publishDate || !this.form.expiryDate || contentIdErrorFor(this.form.contentID)) return;
     const { contentID, ...rest } = this.form;
     this.editorial.createCollection({ ...rest, contentIDs: [contentID] }).subscribe({
       next: () => {

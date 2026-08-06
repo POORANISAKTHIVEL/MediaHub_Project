@@ -15,7 +15,7 @@
             <div class="tray-item">
               <span>{{ item.title }}</span>
               @if (auth.hasPermission('editorial:manage')) {
-                <button class="btn btn--ghost btn--sm" (click)="add(item)">+ Add</button>
+                <button class="btn btn--primary btn--sm" (click)="add(item)">+ Add</button>
               }
             </div>
           } @empty {

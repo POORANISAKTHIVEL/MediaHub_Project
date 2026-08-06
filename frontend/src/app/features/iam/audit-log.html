@@ -13,7 +13,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Action Taken</th><th>User Name</th><th>Service Module</th><th>IP Address</th><th>Timestamp</th></tr></thead>
       <tbody>
         @for (a of pagedEvents(); track a.eventId) {
@@ -29,6 +29,6 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" [totalElements]="totalElements()" [pageSize]="pageSize" (pageChange)="onPageChange($event)"></app-pagination>
+    <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" [totalElements]="totalElements()" [pageSize]="pageSize()" (pageChange)="onPageChange($event)"></app-pagination>
   }
 </div>

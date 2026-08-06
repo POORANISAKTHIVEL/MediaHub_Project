@@ -5,12 +5,13 @@ import { EditorialClient } from '../../core/api/editorial-client';
 import { ContentAsset, ContentTag } from '../../core/models/content.models';
 import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
+import { ContentPreview } from '../../shared/components/content-preview';
 import { AuthService } from '../../core/auth/auth.service';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-content-detail',
-  imports: [RouterLink, StatusBadge, LoadingSpinner],
+  imports: [RouterLink, StatusBadge, LoadingSpinner, ContentPreview],
   templateUrl: './content-detail.html'
 })
 export class ContentDetail implements OnInit {

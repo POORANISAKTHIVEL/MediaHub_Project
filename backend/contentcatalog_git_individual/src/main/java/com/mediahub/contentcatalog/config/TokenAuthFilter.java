@@ -28,6 +28,14 @@ public class TokenAuthFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Public demo asset files (see SecurityConfig's permitAll for /media/**) — skip token
+        // validation entirely so a stale/expired token lying around can't 401 a plain <video>/
+        // <img> preview or the article-text fetch.
+        return request.getServletPath().startsWith("/media/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 

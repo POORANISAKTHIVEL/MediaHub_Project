@@ -29,8 +29,6 @@
       <div class="card__body">
         <div class="row-between" style="margin-bottom:10px"><span class="t-sub">Fee</span><b>${{ l.licenseFee }}</b></div>
         <div class="row-between"><span class="t-sub">Status</span><app-status-badge [status]="l.status"></app-status-badge></div>
-        <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
-        <a class="btn btn--ghost" [routerLink]="['/licensing', l.licenseId, 'edit']">✎ Edit License</a>
       </div>
     </div>
   </div>

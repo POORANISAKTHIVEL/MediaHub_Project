@@ -7,11 +7,12 @@ import { MockStore, mockOf, mockError } from './mock-store';
 import { ContentAsset, ContentTag, Creator } from '../models/content.models';
 
 const CONTENT_SEED: ContentAsset[] = [
-  { contentId: 10482, creatorId: 1, title: 'The Silent Frontier', type: 'Video', genre: 'Documentary', language: 'English', durationSeconds: 5400, synopsis: 'A documentary exploring remote frontier communities and the people who sustain them across four continents.', filePath: '/media/10482.mp4', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-18' },
-  { contentId: 10479, creatorId: 2, title: 'Modern Jazz Sessions Vol. 3', type: 'Audio', genre: 'Jazz', language: 'English', durationSeconds: 2700, synopsis: 'Live jazz session recordings.', filePath: '/media/10479.mp3', thumbnailPath: '', status: 'UnderReview' },
-  { contentId: 10475, creatorId: 3, title: 'Urban Photography Guide', type: 'Article', genre: 'Photography', language: 'English', durationSeconds: 0, synopsis: 'A guide to urban photography techniques.', filePath: '/media/10475.pdf', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-10' },
-  { contentId: 10470, creatorId: 4, title: 'Deep Space — 4K Series', type: 'Video', genre: 'Science', language: 'English', durationSeconds: 9600, synopsis: 'A 4K documentary series on deep space exploration.', filePath: '/media/10470.mp4', thumbnailPath: '', status: 'Draft' },
-  { contentId: 10466, creatorId: 5, title: 'Culinary Journeys: Asia', type: 'Video', genre: 'Food', language: 'English', durationSeconds: 4200, synopsis: 'Exploring the culinary traditions of Asia.', filePath: '/media/10466.mp4', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-09' }
+  { contentId: 20001, creatorId: 1, title: 'Space Documentary', type: 'Video', genre: 'Documentary', language: 'English', durationSeconds: 720, synopsis: "A sweeping look at humanity's push into orbit and beyond.", filePath: 'Videos/space-documentary.mp4', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-18' },
+  { contentId: 20002, creatorId: 1, title: 'Future Cities', type: 'Video', genre: 'Documentary', language: 'English', durationSeconds: 540, synopsis: "How tomorrow's urban centers are being designed today.", filePath: 'Videos/future-cities.mp4', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-17' },
+  { contentId: 20003, creatorId: 1, title: 'AI Landscape', type: 'Image', genre: 'Digital Art', language: 'English', durationSeconds: 0, synopsis: 'A generative-art landscape exploring AI-assisted imagery.', filePath: 'Images/ai-landscape.jpg', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-16' },
+  { contentId: 20004, creatorId: 1, title: 'Nature Gallery', type: 'Image', genre: 'Photography', language: 'English', durationSeconds: 0, synopsis: 'A curated gallery of natural landscapes.', filePath: 'Images/nature-gallery.jpg', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-15' },
+  { contentId: 20005, creatorId: 1, title: 'Future of Streaming Platforms', type: 'Article', genre: 'Technology', language: 'English', durationSeconds: 0, synopsis: 'An analysis of where streaming platforms are headed next.', filePath: 'Articles/future-of-streaming-platforms.html', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-14' },
+  { contentId: 20006, creatorId: 1, title: 'Introduction to Digital Rights Management', type: 'Article', genre: 'Technology', language: 'English', durationSeconds: 0, synopsis: 'A primer on how DRM protects licensed digital content.', filePath: 'Articles/introduction-to-digital-rights-management.html', thumbnailPath: '', status: 'Published', publishedDate: '2026-07-13' }
 ];
 
 const CREATOR_SEED: Creator[] = [
@@ -23,11 +24,11 @@ const CREATOR_SEED: Creator[] = [
 ];
 
 const TAG_SEED: ContentTag[] = [
-  { tagId: 1, contentId: 10482, tagName: 'documentary', tagCategory: 'Genre' },
-  { tagId: 2, contentId: 10482, tagName: 'nature', tagCategory: 'Theme' },
-  { tagId: 3, contentId: 10479, tagName: 'jazz', tagCategory: 'Genre' },
-  { tagId: 4, contentId: 10470, tagName: 'space', tagCategory: 'Theme' },
-  { tagId: 5, contentId: 10466, tagName: 'travel', tagCategory: 'Mood' }
+  { tagId: 1, contentId: 20001, tagName: 'space', tagCategory: 'Theme' },
+  { tagId: 2, contentId: 20001, tagName: 'documentary', tagCategory: 'Genre' },
+  { tagId: 3, contentId: 20002, tagName: 'urban', tagCategory: 'Theme' },
+  { tagId: 4, contentId: 20003, tagName: 'ai-art', tagCategory: 'Theme' },
+  { tagId: 5, contentId: 20004, tagName: 'nature', tagCategory: 'Theme' }
 ];
 
 @Injectable({ providedIn: 'root' })

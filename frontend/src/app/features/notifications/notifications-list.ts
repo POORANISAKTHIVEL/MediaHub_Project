@@ -1,27 +1,20 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationClient } from '../../core/api/notification-client';
-import { AppNotification } from '../../core/models/notification.models';
+import { AppNotification, ROLE_NOTIFICATION_CATEGORIES } from '../../core/models/notification.models';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { EmptyState } from '../../shared/components/empty-state';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 
 const CATEGORY_OPTIONS = ['All', 'CONTENT', 'SUBSCRIPTION', 'ROYALTY', 'LICENSE', 'EDITORIAL'];
 const CATEGORY_ICON: Record<string, string> = { CONTENT: '🎞', SUBSCRIPTION: '◈', ROYALTY: '$', LICENSE: '⚖', EDITORIAL: '✎' };
 
-/** Roles whose notifications feed is narrowed to categories relevant to their own work — e.g. a
- *  creator cares about what happens to their content (editorial decisions, publication/territory,
- *  royalty), not platform-wide subscription billing events that happen to share their account. */
-const ROLE_CATEGORY_ALLOWLIST: Record<string, string[]> = {
-  creator: ['CONTENT', 'EDITORIAL', 'LICENSE', 'ROYALTY'],
-  subscriber: ['SUBSCRIPTION', 'CONTENT']
-};
-
 @Component({
   selector: 'app-notifications-list',
-  imports: [FilterChip, LoadingSpinner, EmptyState, Pagination],
+  imports: [FilterChip, LoadingSpinner, EmptyState, Pagination, FitRowsDirective],
   templateUrl: './notifications-list.html'
 })
 export class NotificationsList implements OnInit {
@@ -35,11 +28,12 @@ export class NotificationsList implements OnInit {
   categoryFilter = signal('');
   categoryOptions = CATEGORY_OPTIONS;
 
-  private allowedCategories = computed(() => ROLE_CATEGORY_ALLOWLIST[this.auth.roleType() ?? ''] ?? null);
+  private allowedCategories = computed(() => ROLE_NOTIFICATION_CATEGORIES[this.auth.roleType() ?? ''] ?? null);
 
   rows = computed(() => {
     const allowed = this.allowedCategories();
     return this.all()
+      .filter(n => n.status !== 'DISMISSED')
       .filter(n => !allowed || allowed.includes(n.category))
       .filter(n => this.tab() === 'All' || n.status === 'UNREAD')
       .filter(n => !this.categoryFilter() || n.category === this.categoryFilter());
@@ -48,13 +42,13 @@ export class NotificationsList implements OnInit {
   // Only offer the categories this role can actually see in the filter dropdown.
   visibleCategoryOptions = computed(() => {
     const allowed = this.allowedCategories();
-    return allowed ? ['All', ...this.categoryOptions.slice(1).filter(c => allowed.includes(c))] : this.categoryOptions;
+    return allowed ? ['All', ...this.categoryOptions.slice(1).filter(c => (allowed as readonly string[]).includes(c))] : this.categoryOptions;
   });
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
 
   selectTab(t: 'All' | 'Unread') {
     this.tab.set(t);
@@ -63,6 +57,12 @@ export class NotificationsList implements OnInit {
 
   onCategoryFilterChange(value: string) {
     this.categoryFilter.set(value);
+    this.page.set(0);
+  }
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
     this.page.set(0);
   }
 
@@ -83,6 +83,7 @@ export class NotificationsList implements OnInit {
     return CATEGORY_ICON[n.category] ?? '◇';
   }
 
+  // Clicking a notification only marks it read — it stays in the list until the Dismiss button is used.
   markRead(n: AppNotification) {
     if (n.status !== 'UNREAD') return;
     this.notif.updateStatus(n.notificationId, 'READ').subscribe(() => this.load());

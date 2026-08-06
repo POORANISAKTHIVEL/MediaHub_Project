@@ -12,7 +12,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Tag Name</th><th>Category</th><th>Content ID</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
         @for (t of pagedTags(); track t.tagId) {
@@ -29,7 +29,7 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="tags().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="tags().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -59,7 +59,10 @@
             <option>Genre</option><option>Mood</option><option>Theme</option><option>AgeRating</option>
           </select>
         </div>
-        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="newTagContentId"></div>
+        <div class="field"><label>Content ID <span class="req">*</span></label>
+          <input class="input" [class.input--err]="contentIdError" type="number" [ngModel]="newTagContentId" (ngModelChange)="onContentIdChange($event)" (blur)="contentIdTouched.set(true)">
+          <span class="err">{{ contentIdError }}</span>
+        </div>
       </div>
       <div class="modal__foot">
         <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>

@@ -387,6 +387,11 @@ public class PublicationScheduleService {
                                                 r.getDecision()))
                                 .count();
 
+                long rejectedReviews = reviews.stream()
+                                .filter(r -> "Rejected".equalsIgnoreCase(
+                                                r.getDecision()))
+                                .count();
+
                 long scheduledPublications = schedules.stream()
                                 .filter(s -> "Scheduled".equalsIgnoreCase(
                                                 s.getStatus()))
@@ -413,6 +418,10 @@ public class PublicationScheduleService {
                 response.put(
                                 "approvedReviews",
                                 approvedReviews);
+
+                response.put(
+                                "rejectedReviews",
+                                rejectedReviews);
 
                 response.put(
                                 "scheduledPublications",

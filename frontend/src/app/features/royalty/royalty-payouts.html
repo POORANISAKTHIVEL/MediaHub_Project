@@ -12,7 +12,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Payout</th><th>Statement</th><th>Creator</th><th>Amount</th><th>Method</th><th>Status</th><th style="width:220px">Actions</th></tr></thead>
       <tbody>
         @for (p of pagedPayouts(); track p.payoutID) {
@@ -32,7 +32,7 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="payouts().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="payouts().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 

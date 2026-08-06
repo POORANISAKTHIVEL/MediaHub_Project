@@ -7,7 +7,7 @@
 <div class="page-head">
   <div><h1>License Agreements</h1><p>Manage content licenses and territory restrictions.</p></div>
   <div class="page-head__actions">
-    <a class="btn btn--ghost" routerLink="/licensing/expiring">⚠ Expiring soon ({{ expiringSoon().length }})</a>
+    <a class="btn btn--ghost" routerLink="/licensing/expiring"><span style="color:#dc2626">⚠</span> Expiring soon ({{ expiringSoon().length }})</a>
     <button class="btn btn--primary tip" data-tip="New License" (click)="openCreate()">+ License</button>
   </div>
 </div>
@@ -16,7 +16,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>License ID</th><th>Content ID</th><th>Licensee</th><th>Territory</th><th>Valid Until</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
         @for (l of pagedLicenses(); track l.licenseId) {
@@ -34,20 +34,29 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="licenses().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="licenses().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
 @if (creating()) {
   <div class="overlay">
     <div class="modal">
-      <div class="modal__head"><h3>New License Agreement</h3><span class="icon-btn" (click)="creating.set(false)">✕</span></div>
+      <div class="modal__head"><h3>New License Agreement</h3></div>
       <div class="modal__body">
         <div class="grid-2">
-          <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentId"></div>
-          <div class="field"><label>Licensor ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.licensorId"></div>
+          <div class="field"><label>Content ID <span class="req">*</span></label>
+            <input class="input" [class.input--err]="contentIdError" type="number" [ngModel]="form.contentId" (ngModelChange)="onContentIdChange($event)" (blur)="contentIdTouched.set(true)">
+            <span class="err">{{ contentIdError }}</span>
+          </div>
+          <div class="field"><label>Licensor ID <span class="req">*</span></label>
+            <input class="input" [class.input--err]="licensorIdError" type="number" [ngModel]="form.licensorId" (ngModelChange)="onLicensorIdChange($event)" (blur)="licensorIdTouched.set(true)">
+            <span class="err">{{ licensorIdError }}</span>
+          </div>
         </div>
-        <div class="field"><label>Licensee Ref <span class="req">*</span></label><input class="input" [(ngModel)]="form.licenseeRef" placeholder="e.g. StreamCo Global"></div>
+        <div class="field"><label>Licensee Ref <span class="req">*</span></label>
+          <input class="input" [class.input--err]="licenseeRefLimitMsg()" [ngModel]="form.licenseeRef" (ngModelChange)="onLicenseeRefChange($event)" placeholder="e.g. StreamCo Global">
+          <span class="err">{{ licenseeRefLimitMsg() }}</span>
+        </div>
         <div class="grid-2">
           <div class="field"><label>Territory <span class="req">*</span></label><input class="input" [(ngModel)]="form.territory"></div>
           <div class="field"><label>Rights Type</label>
@@ -60,9 +69,15 @@
           <div class="field"><label>Start Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.startDate"></div>
           <div class="field"><label>End Date <span class="req">*</span></label><input class="input" type="date" [(ngModel)]="form.endDate"></div>
         </div>
-        <div class="field"><label>License Fee (USD)</label><input class="input" type="number" [(ngModel)]="form.licenseFee"></div>
+        <div class="field"><label>License Fee (USD)</label>
+          <input class="input" [class.input--err]="licenseFeeLimitMsg()" type="number" [ngModel]="form.licenseFee" (ngModelChange)="onLicenseFeeChange($event)">
+          <span class="err">{{ licenseFeeLimitMsg() }}</span>
+        </div>
       </div>
-      <div class="modal__foot"><button class="btn btn--primary" style="width:100%;justify-content:center" (click)="create()">Create</button></div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="creating.set(false)">Cancel</button>
+        <button class="btn btn--primary" (click)="create()">Create</button>
+      </div>
     </div>
   </div>
 }

@@ -6,7 +6,7 @@
 </div>
 <div class="page-head">
   <div><h1>Roles</h1><p>Manage roles and the permissions assigned to each.</p></div>
-  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Role" (click)="creatingRole.set(true)">Role +</button></div>
+  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Role" (click)="creatingRole.set(true)">+ Role</button></div>
 </div>
 
 @if (loading()) {
@@ -30,7 +30,7 @@
     </div></div>
     <div class="card">
       <div class="card__head"><h3>Permissions · {{ activeRole()?.roleType }}</h3></div>
-      <div class="card__body" style="padding:14px 20px">
+      <div class="card__body" style="padding:14px 20px" appFitRows rowSelector=".row-between" (rowsThatFit)="onRowsThatFit($event)">
         @for (p of pagedPermissions(); track p.permissionId) {
           <div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--line-2)">
             <div>
@@ -41,7 +41,7 @@
           </div>
         }
       </div>
-      <app-pagination [currentPage]="permPage()" [totalPages]="totalPermPages()" [totalElements]="permissions().length" [pageSize]="pageSize" (pageChange)="permPage.set($event)"></app-pagination>
+      <app-pagination [currentPage]="permPage()" [totalPages]="totalPermPages()" [totalElements]="permissions().length" [pageSize]="pageSize()" (pageChange)="permPage.set($event)"></app-pagination>
     </div>
   </div>
 }

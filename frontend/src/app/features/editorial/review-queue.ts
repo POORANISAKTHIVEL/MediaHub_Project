@@ -8,12 +8,13 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 
 type Tab = 'Pending' | 'Approved' | 'Rejected';
 
 @Component({
   selector: 'app-review-queue',
-  imports: [StatusBadge, LoadingSpinner, RowMenu, Pagination],
+  imports: [StatusBadge, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './review-queue.html'
 })
 export class ReviewQueue implements OnInit {
@@ -23,13 +24,13 @@ export class ReviewQueue implements OnInit {
   auth = inject(AuthService);
 
   loading = signal(true);
-  all = signal<EditorialReview[]>([]);
+  orderedAll = signal<EditorialReview[]>([]);
   contentTitles = signal<Record<number, string>>({});
   tab = signal<Tab>('Pending');
 
   rows = computed(() => {
     const t = this.tab();
-    return this.all().filter(r =>
+    return this.orderedAll().filter(r =>
       t === 'Pending' ? r.status === 'Pending' :
       t === 'Approved' ? r.decision === 'Approved' :
       r.decision === 'Rejected'
@@ -37,9 +38,15 @@ export class ReviewQueue implements OnInit {
   });
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
-  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  pagedRows = computed(() => this.rows().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   selectTab(t: Tab) {
     this.tab.set(t);
@@ -58,9 +65,31 @@ export class ReviewQueue implements OnInit {
   load() {
     this.loading.set(true);
     this.editorial.getAllReviews().subscribe(r => {
-      this.all.set(r);
+      this.orderedAll.set(r);
       this.loading.set(false);
     });
+  }
+
+  moveUp(r: EditorialReview) {
+    const tabRows = this.rows();
+    const idx = tabRows.findIndex(x => x.reviewID === r.reviewID);
+    if (idx <= 0) return;
+    const all = [...this.orderedAll()];
+    const aIdx = all.findIndex(x => x.reviewID === r.reviewID);
+    const bIdx = all.findIndex(x => x.reviewID === tabRows[idx - 1].reviewID);
+    [all[aIdx], all[bIdx]] = [all[bIdx], all[aIdx]];
+    this.orderedAll.set(all);
+  }
+
+  moveDown(r: EditorialReview) {
+    const tabRows = this.rows();
+    const idx = tabRows.findIndex(x => x.reviewID === r.reviewID);
+    if (idx >= tabRows.length - 1) return;
+    const all = [...this.orderedAll()];
+    const aIdx = all.findIndex(x => x.reviewID === r.reviewID);
+    const bIdx = all.findIndex(x => x.reviewID === tabRows[idx + 1].reviewID);
+    [all[aIdx], all[bIdx]] = [all[bIdx], all[aIdx]];
+    this.orderedAll.set(all);
   }
 
   titleFor(contentID: number): string {

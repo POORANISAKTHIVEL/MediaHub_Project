@@ -16,21 +16,19 @@
   } @else if (rows().length === 0) {
     <app-empty-state icon="◇" title="No notifications" message="You're all caught up."></app-empty-state>
   } @else {
-    <div class="card__body" style="padding:8px 20px">
+    <div class="card__body" style="padding:8px 20px" appFitRows rowSelector=".notif" (rowsThatFit)="onRowsThatFit($event)">
       @for (n of pagedRows(); track n.notificationId) {
-        <div class="notif" [class.unread]="n.status === 'UNREAD'" (click)="markRead(n)" style="cursor:pointer">
+        <div class="notif" [class.unread]="n.status === 'UNREAD'" (click)="markRead(n)" style="cursor:pointer" title="Click to mark as read">
           <div class="notif__ico" style="background:var(--brand-50);color:var(--brand-600)">{{ icon(n) }}</div>
           <div class="notif__txt">
             <b>{{ n.category }}</b>
             <p>{{ n.message }}</p>
           </div>
           <span class="notif__time">{{ n.createdDate.slice(0, 10) }}</span>
-          @if (n.status !== 'DISMISSED') {
-            <button class="btn btn--ghost btn--sm" style="margin-left:10px" (click)="dismiss(n); $event.stopPropagation()">Dismiss</button>
-          }
+          <span class="icon-btn tip" data-tip="Dismiss" (click)="$event.stopPropagation(); dismiss(n)">✕</span>
         </div>
       }
     </div>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>

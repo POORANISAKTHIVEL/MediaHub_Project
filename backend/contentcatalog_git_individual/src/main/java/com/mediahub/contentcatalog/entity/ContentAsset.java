@@ -1,5 +1,6 @@
 package com.mediahub.contentcatalog.entity;
 
+import com.mediahub.contentcatalog.enums.ContentType;
 import jakarta.persistence.*;
 
 @Entity
@@ -17,8 +18,9 @@ public class ContentAsset {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private String type;
+    private ContentType type;
 
     @Column(name = "genre")
     private String genre;
@@ -50,8 +52,8 @@ public class ContentAsset {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public ContentType getType() { return type; }
+    public void setType(ContentType type) { this.type = type; }
 
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }

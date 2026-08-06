@@ -10,7 +10,7 @@
     <div class="card">
       <div class="card__head"><h3>Content Preview</h3><app-status-badge [status]="r.decision || r.status"></app-status-badge></div>
       <div class="card__body">
-        <div style="height:220px;border-radius:10px;background:linear-gradient(135deg,#fbcfe8,#f9a8d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px">▶</div>
+        <app-content-preview [asset]="contentAsset()"></app-content-preview>
         <h3 style="margin:18px 0 8px;font-size:16px">Description</h3>
         <p style="color:var(--ink-500);font-size:14px">A studio session featuring content submitted for editorial review.</p>
         <div style="display:flex;gap:8px;margin-top:16px">
@@ -33,7 +33,14 @@
             <dt>Status</dt><dd><app-status-badge [status]="r.decision || r.status"></app-status-badge></dd>
           </dl>
           <div style="height:1px;background:var(--line-2);margin:18px 0"></div>
-          <div class="field"><label>Review comment</label><textarea class="textarea" rows="4" placeholder="Add notes for the creator…" [(ngModel)]="remarks"></textarea></div>
+          <div class="field">
+            <label>Review comment <span class="req">*</span></label>
+            <textarea class="textarea" [class.input--err]="remarksError" rows="4" placeholder="Add notes for the creator…" [(ngModel)]="remarks" [maxlength]="remarksMax" (blur)="remarksTouched.set(true)"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="err">{{ remarksError }}</span>
+              <span class="hint" [style.color]="remarks.length >= remarksMax ? 'var(--red-600)' : ''">{{ remarks.length }}/{{ remarksMax }}</span>
+            </div>
+          </div>
         </div>
       </div>
     }

@@ -7,7 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { ToastService } from '../../shared/services/toast.service';
 
-const CURATED_PLAN_NAMES = ['Basic', 'Premium', 'Enterprise'];
+const CURATED_PLAN_NAMES = ['Basic', 'Standard', 'Premium', 'Enterprise'];
 
 /** Legacy plans (Standard/gold) predate this curated catalog and can't be renamed via the
  *  update API (UpdatePlanRequest has no name field) — they stay Active for existing
@@ -18,6 +18,15 @@ const PLAN_META: Record<string, { desc: string; features: { label: string; yes: 
     features: [
       { label: 'Standard content library', yes: true },
       { label: '1 device at a time', yes: true },
+      { label: 'Offline downloads', yes: false },
+      { label: 'Priority support', yes: false }
+    ]
+  },
+  Standard: {
+    desc: 'Perfect for growing households.',
+    features: [
+      { label: 'Standard content library', yes: true },
+      { label: 'Up to 2 devices', yes: true },
       { label: 'Offline downloads', yes: false },
       { label: 'Priority support', yes: false }
     ]
@@ -78,10 +87,6 @@ export class PlanCatalog implements OnInit {
 
   maxDevicesLabel(p: SubscriptionPlan) {
     return (p.maxDevices ?? 0) >= 999 ? 'Unlimited' : String(p.maxDevices ?? 0);
-  }
-
-  isPopular(p: SubscriptionPlan) {
-    return this.plans()[1]?.planId === p.planId;
   }
 
   open(p: SubscriptionPlan) {

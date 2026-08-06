@@ -10,13 +10,15 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 import { formatDateTime } from '../../shared/utils/date-format';
+import { clampContentId, contentIdError as contentIdErrorFor } from '../../shared/utils/content-id';
 
 @Component({
   selector: 'app-publication-schedule',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './publication-schedule.html'
 })
 export class PublicationSchedule implements OnInit {
@@ -38,12 +40,43 @@ export class PublicationSchedule implements OnInit {
   contentTitles = signal<Record<number, string>>({});
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.schedules().length / this.pageSize)));
-  pagedSchedules = computed(() => this.schedules().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.schedules().length / this.pageSize())));
+  pagedSchedules = computed(() => this.schedules().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   creating = signal(false);
   form = { contentID: 0, publishDateTime: '', expiryDateTime: '', territory: '' };
+  contentIdTouched = signal(false);
+  territoryTouched = signal(false);
+
+  get contentIdError(): string {
+    return this.contentIdTouched() ? contentIdErrorFor(this.form.contentID) : '';
+  }
+
+  onContentIdChange(value: number) {
+    this.form.contentID = clampContentId(value);
+  }
+
+  get territoryError(): string {
+    if (!this.territoryTouched()) return '';
+    const v = this.form.territory.trim();
+    if (!v) return 'Territory is required';
+    if (/\d/.test(v)) return 'Territory may not contain numbers';
+    if (/[^a-zA-Z ,]/.test(v)) return 'Territory may only contain letters, commas and spaces';
+    if (/,\s/.test(v)) return 'No spaces after a comma — use "US,CA" not "US, CA"';
+    return '';
+  }
+
+  onTerritoryChange(value: string) {
+    this.form.territory = value;
+    this.territoryTouched.set(true);
+  }
 
   cancelling = signal<ScheduleModel | null>(null);
   cancelReason = '';
@@ -73,13 +106,17 @@ export class PublicationSchedule implements OnInit {
 
   openCreate() {
     this.form = { contentID: 0, publishDateTime: '', expiryDateTime: '', territory: '' };
+    this.contentIdTouched.set(false);
+    this.territoryTouched.set(false);
     this.creating.set(true);
   }
 
   checkingPrereqs = signal(false);
 
   create() {
-    if (!this.form.contentID || !this.form.publishDateTime || !this.form.expiryDateTime || !this.form.territory.trim()) return;
+    this.contentIdTouched.set(true);
+    this.territoryTouched.set(true);
+    if (contentIdErrorFor(this.form.contentID) || !this.form.publishDateTime || !this.form.expiryDateTime || this.territoryError) return;
 
     // Business rule: a rights manager must have granted a license and a territory restriction
     // for this content before it can be scheduled for publication.

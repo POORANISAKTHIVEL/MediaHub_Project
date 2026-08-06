@@ -6,7 +6,7 @@
 </div>
 <div class="page-head">
   <div><h1>Permissions</h1><p>All authorities defined in the system.</p></div>
-  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Permission" (click)="creating.set(true)">Permission +</button></div>
+  <div class="page-head__actions"><button class="btn btn--primary tip" data-tip="New Permission" (click)="creating.set(true)">+ Permission</button></div>
 </div>
 
 <div class="toolbar">
@@ -18,7 +18,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Permission</th><th>Module</th><th>Held by roles</th><th style="width:110px">Actions</th></tr></thead>
       <tbody>
         @for (p of pagedRows(); track p.permissionId) {
@@ -38,7 +38,7 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="rows().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 

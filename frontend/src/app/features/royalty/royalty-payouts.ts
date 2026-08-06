@@ -6,12 +6,13 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-royalty-payouts',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './royalty-payouts.html'
 })
 export class RoyaltyPayouts implements OnInit {
@@ -23,9 +24,15 @@ export class RoyaltyPayouts implements OnInit {
   payouts = signal<RoyaltyPayout[]>([]);
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.payouts().length / this.pageSize)));
-  pagedPayouts = computed(() => this.payouts().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.payouts().length / this.pageSize())));
+  pagedPayouts = computed(() => this.payouts().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   creating = signal(false);
   form: { statementID: number; creatorID: number; amount: number; method: RoyaltyPayout['method'] } =

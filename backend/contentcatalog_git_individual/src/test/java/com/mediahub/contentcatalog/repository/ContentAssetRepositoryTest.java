@@ -1,6 +1,7 @@
 package com.mediahub.contentcatalog.repository;
 
 import com.mediahub.contentcatalog.entity.ContentAsset;
+import com.mediahub.contentcatalog.enums.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class ContentAssetRepositoryTest {
         contentAsset = new ContentAsset();
         contentAsset.setCreatorId(1);
         contentAsset.setTitle("My First Short Film");
-        contentAsset.setType("Video");
+        contentAsset.setType(ContentType.Video);
         contentAsset.setGenre("Drama");
         contentAsset.setLanguage("Tamil");
         contentAsset.setDurationSeconds(1800);
@@ -47,19 +48,19 @@ public class ContentAssetRepositoryTest {
     void testSaveContent_Positive() {
         ContentAsset newContent = new ContentAsset();
         newContent.setCreatorId(1);
-        newContent.setTitle("New Podcast");
-        newContent.setType("Podcast");
+        newContent.setTitle("New Article");
+        newContent.setType(ContentType.Article);
         newContent.setGenre("Education");
         newContent.setLanguage("English");
-        newContent.setDurationSeconds(3600);
+        newContent.setDurationSeconds(0);
         newContent.setSynopsis("AI Introduction");
-        newContent.setFilePath("/content/podcasts/ep1.mp3");
+        newContent.setFilePath("/content/articles/ep1.html");
         newContent.setThumbnailPath("/content/thumbs/ep1.jpg");
         newContent.setStatus("Draft");
         ContentAsset saved = contentAssetRepository.save(newContent);
         assertNotNull(saved);
         assertNotNull(saved.getContentId());
-        assertEquals("New Podcast", saved.getTitle());
+        assertEquals("New Article", saved.getTitle());
     }
 
     @Test
@@ -67,7 +68,7 @@ public class ContentAssetRepositoryTest {
         ContentAsset newContent = new ContentAsset();
         newContent.setCreatorId(1);
         newContent.setTitle("Test Content");
-        newContent.setType("Video");
+        newContent.setType(ContentType.Video);
         newContent.setStatus("Draft");
         newContent.setFilePath("/content/videos/test.mp4");
         ContentAsset saved = contentAssetRepository.save(newContent);

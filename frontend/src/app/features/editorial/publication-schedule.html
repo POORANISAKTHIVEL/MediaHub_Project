@@ -12,7 +12,7 @@
   @if (loading()) {
     <app-loading-spinner></app-loading-spinner>
   } @else {
-    <table>
+    <table appFitRows rowSelector="tbody tr" (rowsThatFit)="onRowsThatFit($event)">
       <thead><tr><th>Content</th><th>Publish</th><th>Expiry</th><th>Territory</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
       <tbody>
         @for (s of pagedSchedules(); track s.scheduleID) {
@@ -31,7 +31,7 @@
         }
       </tbody>
     </table>
-    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="schedules().length" [pageSize]="pageSize" (pageChange)="page.set($event)"></app-pagination>
+    <app-pagination [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="schedules().length" [pageSize]="pageSize()" (pageChange)="page.set($event)"></app-pagination>
   }
 </div>
 
@@ -40,12 +40,20 @@
     <div class="modal">
       <div class="modal__head"><h3>New Publication Schedule</h3></div>
       <div class="modal__body">
-        <div class="field"><label>Content ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.contentID"></div>
+        <div class="field"><label>Content ID <span class="req">*</span></label>
+          <input class="input" [class.input--err]="contentIdError" type="number" [ngModel]="form.contentID" (ngModelChange)="onContentIdChange($event)" (blur)="contentIdTouched.set(true)">
+          <span class="err">{{ contentIdError }}</span>
+        </div>
         <div class="grid-2">
           <div class="field"><label>Publish Date/Time <span class="req">*</span></label><input class="input" type="datetime-local" [(ngModel)]="form.publishDateTime"></div>
           <div class="field"><label>Expiry Date/Time <span class="req">*</span></label><input class="input" type="datetime-local" [(ngModel)]="form.expiryDateTime"></div>
         </div>
-        <div class="field"><label>Territory <span class="req">*</span></label><input class="input" [(ngModel)]="form.territory" placeholder="e.g. US, CA or Global"></div>
+        <div class="field">
+          <label>Territory <span class="req">*</span></label>
+          <input class="input" [class.input--err]="territoryError" [ngModel]="form.territory" (ngModelChange)="onTerritoryChange($event)" (blur)="territoryTouched.set(true)" placeholder="e.g. US,CA or Global">
+          <span class="err">{{ territoryError }}</span>
+          <span class="hint">Letters and commas only. Multiple countries: no spaces after commas (e.g. US,CA,GB).</span>
+        </div>
         <div class="note">This content must already have an active License and Territory Restriction (set up under Licensing) before it can be scheduled.</div>
       </div>
       <div class="modal__foot">

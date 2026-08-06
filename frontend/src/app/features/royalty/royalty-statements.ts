@@ -7,12 +7,13 @@ import { StatusBadge } from '../../shared/components/status-badge';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { RowMenu, RowMenuItem } from '../../shared/components/row-menu';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-royalty-statements',
-  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination],
+  imports: [FormsModule, StatusBadge, LoadingSpinner, RowMenu, Pagination, FitRowsDirective],
   templateUrl: './royalty-statements.html'
 })
 export class RoyaltyStatements implements OnInit {
@@ -25,9 +26,15 @@ export class RoyaltyStatements implements OnInit {
   statements = signal<RoyaltyStatement[]>([]);
 
   page = signal(0);
-  pageSize = 10;
-  totalPages = computed(() => Math.max(1, Math.ceil(this.statements().length / this.pageSize)));
-  pagedStatements = computed(() => this.statements().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  pageSize = signal(10);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.statements().length / this.pageSize())));
+  pagedStatements = computed(() => this.statements().slice(this.page() * this.pageSize(), (this.page() + 1) * this.pageSize()));
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   generating = signal(false);
   form = { creatorID: 0, period: '', totalViews: 0, totalRevenue: 0 };

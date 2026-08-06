@@ -1,0 +1,34 @@
+<article>
+  <h1>Introduction to Digital Rights Management</h1>
+  <p>Digital Rights Management (DRM) is the set of technologies and policies that control how
+  licensed digital content — video, audio, images, and text — can be accessed, copied, and shared
+  after it's been distributed.</p>
+
+  <h2>Why DRM exists</h2>
+  <p>A content owner licenses their work to a platform under specific terms: which territories it
+  can be shown in, which devices can play it, whether downloads are allowed, and for how long.
+  Without a technical enforcement layer, those terms are just words in a contract. DRM is what
+  actually makes "licensed for streaming only in this region" a rule the software enforces rather
+  than a rule someone has to trust the viewer to follow.</p>
+
+  <h2>The building blocks</h2>
+  <ul>
+    <li><strong>Encryption</strong> — the content itself is unreadable without a valid key.</li>
+    <li><strong>License issuance</strong> — a server decides, per request, whether this user/device/
+    session is allowed to get that key right now.</li>
+    <li><strong>Playback enforcement</strong> — the player checks the license's rules (expiry,
+    device limits, output restrictions) before and during playback.</li>
+  </ul>
+
+  <h2>DRM in a subscription platform</h2>
+  <p>For a platform like this one, DRM concerns show up as very practical questions: does this
+  user's subscription tier include this content's access level? Is their subscription still
+  active? Has the content been geo-restricted? Those checks are what separate "the file is on our
+  server" from "the file is actually available to this specific viewer right now."</p>
+
+  <h2>Common misconceptions</h2>
+  <p>DRM is often confused with copyright itself — it isn't. Copyright is the legal right; DRM is
+  the technical mechanism that makes a licensing agreement enforceable in practice. A piece of
+  content can be copyrighted with no DRM at all, and DRM without a valid underlying license
+  protects nothing legally.</p>
+</article>

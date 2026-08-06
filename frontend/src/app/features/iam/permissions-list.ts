@@ -6,6 +6,7 @@ import { Permission } from '../../core/models/iam.models';
 import { FilterChip } from '../../shared/components/filter-chip';
 import { LoadingSpinner } from '../../shared/components/loading-spinner';
 import { Pagination } from '../../shared/components/pagination';
+import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmService } from '../../shared/services/confirm.service';
 
@@ -14,7 +15,7 @@ const PAGE_SIZE = 8;
 
 @Component({
   selector: 'app-permissions-list',
-  imports: [RouterLink, FormsModule, FilterChip, LoadingSpinner, Pagination],
+  imports: [RouterLink, FormsModule, FilterChip, LoadingSpinner, Pagination, FitRowsDirective],
   templateUrl: './permissions-list.html'
 })
 export class PermissionsList implements OnInit {
@@ -29,7 +30,7 @@ export class PermissionsList implements OnInit {
   moduleFilter = signal('');
   moduleOptions = MODULE_OPTIONS;
   page = signal(0);
-  pageSize = PAGE_SIZE;
+  pageSize = signal(PAGE_SIZE);
 
   rows = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -37,11 +38,17 @@ export class PermissionsList implements OnInit {
       .filter(p => !this.moduleFilter() || this.iam.moduleOf(p.permissionType) === this.moduleFilter())
       .filter(p => !term || p.permissionType.toLowerCase().includes(term));
   });
-  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize)));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
   pagedRows = computed(() => {
-    const start = this.page() * this.pageSize;
-    return this.rows().slice(start, start + this.pageSize);
+    const start = this.page() * this.pageSize();
+    return this.rows().slice(start, start + this.pageSize());
   });
+
+  onRowsThatFit(n: number) {
+    if (n === this.pageSize()) return;
+    this.pageSize.set(n);
+    this.page.set(0);
+  }
 
   creating = signal(false);
   newType = '';

@@ -6,10 +6,8 @@
 } @else {
   <div class="plan-catalog">
     @for (p of plans(); track p.planId; let i = $index) {
-      <div class="plan-card" [class.featured]="i === 1">
-        @if (i === 1) {
-          <div class="plan-card__ribbon">Most Popular</div>
-        }
+      <div class="plan-card">
+
         <div class="plan-card__body">
           <div class="plan-card__name">{{ p.name }}</div>
           <div class="plan-card__price">${{ p.price }}<span>/mo</span></div>
@@ -46,7 +44,6 @@
               ${{ p.price }}.00 / {{ p.billingCycle.toLowerCase() }} · {{ p.contentAccessLevel }} catalog · {{ maxDevicesLabel(p) }} device{{ p.maxDevices === 1 ? '' : 's' }} · {{ p.downloadAllowed ? 'Downloads' : 'No downloads' }}
             </div>
           </div>
-          @if (isPopular(p)) { <div class="plan-summary__badge">● Most Popular</div> }
         </div>
 
         <div class="field">
@@ -94,7 +91,6 @@
         </label>
       </div>
       <div class="modal__foot">
-        <button class="btn btn--ghost" (click)="close()">Cancel</button>
         <button class="btn btn--primary" [disabled]="submitting() || !agreed() || !form.renewalType" (click)="confirm()">{{ submitting() ? 'Activating…' : 'Activate' }}</button>
       </div>
     </div>
