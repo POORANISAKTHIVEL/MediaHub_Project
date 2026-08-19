@@ -48,9 +48,16 @@
             <input class="input" [class.input--err]="contentIdError" type="number" [ngModel]="form.contentId" (ngModelChange)="onContentIdChange($event)" (blur)="contentIdTouched.set(true)">
             <span class="err">{{ contentIdError }}</span>
           </div>
-          <div class="field"><label>Licensor ID <span class="req">*</span></label>
-            <input class="input" [class.input--err]="licensorIdError" type="number" [ngModel]="form.licensorId" (ngModelChange)="onLicensorIdChange($event)" (blur)="licensorIdTouched.set(true)">
-            <span class="err">{{ licensorIdError }}</span>
+          <div class="field"><label>Licensor (Creator) <span class="req">*</span></label>
+            <select class="select" [(ngModel)]="form.licensorId" (blur)="licensorIdTouched.set(true)">
+              <option [ngValue]="0" disabled>— Select Creator —</option>
+              @for (c of creators(); track c.creatorId) {
+                <option [ngValue]="c.creatorId">{{ c.displayName }} (ID: {{ c.creatorId }})</option>
+              }
+            </select>
+            @if (licensorIdTouched() && !form.licensorId) {
+              <span class="err">Licensor is required</span>
+            }
           </div>
         </div>
         <div class="field"><label>Licensee Ref <span class="req">*</span></label>

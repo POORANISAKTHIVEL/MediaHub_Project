@@ -86,25 +86,32 @@ public class RoyaltyStatementService {
                         "Creator not found in Content Catalog");
             }
 
-            // ✅ LICENSING VALIDATION — creator must have an active license
-            Boolean hasActiveLicense =
-                    licensingClient.validateLicensor(
-                            statement.getCreatorID());
-
-            if (hasActiveLicense == null || !hasActiveLicense) {
-
-                logger.warn(
-                        "No active license agreement found for CreatorID: {}",
-                        statement.getCreatorID());
-
-                throw new BadRequestException(
-                        "No active license agreement found for this creator");
-            }
-
-            // ✅ EDITORIAL VALIDATION — at least one content must be editorially approved
+            // ✅ FETCH CREATOR CONTENT — used for both license and editorial validation
             List<Map<String, Object>> creatorContents =
                     contentCatalogClient.fetchByCreator(
                             statement.getCreatorID());
+
+            // ✅ LICENSING VALIDATION — at least one of the creator's content must have an active license
+            boolean hasActiveLicense = false;
+            if (creatorContents != null && !creatorContents.isEmpty()) {
+                for (Map<String, Object> content : creatorContents) {
+                    Object idObj = content.get("contentId");
+                    if (idObj == null) idObj = content.get("id");
+                    if (idObj != null) {
+                        int contentId = ((Number) idObj).intValue();
+                        Boolean licensed = licensingClient.validateByContent(contentId);
+                        if (licensed != null && licensed) {
+                            hasActiveLicense = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!hasActiveLicense) {
+                logger.warn("No active license agreement found for CreatorID: {}", statement.getCreatorID());
+                throw new BadRequestException("No active license agreement found for this creator");
+            }
 
             boolean hasApprovedContent = false;
 

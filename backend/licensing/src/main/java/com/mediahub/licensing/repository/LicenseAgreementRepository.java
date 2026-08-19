@@ -30,4 +30,7 @@ public interface LicenseAgreementRepository
 
     // ✅ ROYALTY VALIDATION — check if creator has an active license
     boolean existsByLicensorIdAndStatus(Integer licensorId, String status);
+
+    // ✅ ROYALTY VALIDATION — check if a specific content has an active license
+    boolean existsByContentIdAndStatus(Integer contentId, String status);
 }

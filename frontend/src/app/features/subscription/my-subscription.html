@@ -6,7 +6,7 @@
 } @else if (sub(); as s) {
   <div style="display:grid;grid-template-columns:1fr 260px;gap:20px;max-width:960px">
 
-    <!-- Left: plan detail card -->
+    
     <div class="card">
       <div class="card__head">
         <h3>{{ planName(s.planId) }} Plan</h3>
@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <!-- Right: actions card -->
+   
     @if (s.status === 'Active') {
       <div class="card" style="display:flex;flex-direction:column;gap:0">
         <div class="card__head"><h3>Actions</h3></div>

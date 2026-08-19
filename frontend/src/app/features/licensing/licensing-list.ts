@@ -10,6 +10,8 @@ import { Pagination } from '../../shared/components/pagination';
 import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { CONTENT_ID_MAX_DIGITS, clampContentId, clampDigits, contentIdError as contentIdErrorFor, digitFieldError, digitLimitMessage, textLimitMessage } from '../../shared/utils/content-id';
+import { ContentClient } from '../../core/api/content-client';
+import { Creator } from '../../core/models/content.models';
 
 const LICENSOR_ID_MAX_DIGITS = 10;
 const LICENSE_FEE_MAX_DIGITS = 4;
@@ -22,8 +24,11 @@ const LICENSEE_REF_MAX_LENGTH = 50;
 })
 export class LicensingList implements OnInit {
   private licensing = inject(LicensingClient);
+  private content = inject(ContentClient);
   private toast = inject(ToastService);
   private router = inject(Router);
+
+  creators = signal<Creator[]>([]);
 
   loading = signal(true);
   licenses = signal<LicenseAgreement[]>([]);
@@ -82,6 +87,7 @@ export class LicensingList implements OnInit {
 
   ngOnInit() {
     this.load();
+    this.content.fetchCreators().subscribe(list => this.creators.set(list.filter(c => c.status === 'Active')));
   }
 
   load() {

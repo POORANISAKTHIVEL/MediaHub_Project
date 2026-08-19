@@ -46,4 +46,22 @@ public class LicensingClient {
             return null;
         }
     }
+
+    public Boolean validateByContent(int contentId) {
+        try {
+            logger.info("Calling Licensing service to validate active license for contentId: {}", contentId);
+            Boolean result = webClient.get()
+                    .uri(licensingServiceUrl
+                            + "/mediaHub/contentLicensing/validateByContent/"
+                            + contentId)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .block();
+            logger.info("ContentId {} license validation result: {}", contentId, result);
+            return result;
+        } catch (Exception e) {
+            logger.error("Error calling Licensing service for contentId {}: {}", contentId, e.getMessage());
+            return null;
+        }
+    }
 }

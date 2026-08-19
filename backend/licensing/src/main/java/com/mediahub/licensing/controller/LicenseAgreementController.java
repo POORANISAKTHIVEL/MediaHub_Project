@@ -117,4 +117,12 @@ public class LicenseAgreementController {
             @PathVariable Integer licensorId) {
         return ResponseEntity.ok(service.validateLicensor(licensorId));
     }
+
+    // ✅ ROYALTY VALIDATION BY CONTENT — check if a content has an active license
+    @PreAuthorize("hasAuthority('license:manage')")
+    @GetMapping("/validateByContent/{contentId}")
+    public ResponseEntity<Boolean> validateByContent(
+            @PathVariable Integer contentId) {
+        return ResponseEntity.ok(service.validateByContent(contentId));
+    }
 }

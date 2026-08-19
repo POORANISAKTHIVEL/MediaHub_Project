@@ -1,7 +1,5 @@
 export type PlanStatus = 'Active' | 'Discontinued';
-/** 'Suspended' is a frontend-only extension — the real UserSubscription.status enum only has
- *  Active/Cancelled/Expired today. Suspend/Reactivate admin actions need a backend status value
- *  added before this can go live. */
+
 export type SubStatus = 'Active' | 'Cancelled' | 'Expired' | 'Suspended';
 
 export interface SubscriptionPlan {

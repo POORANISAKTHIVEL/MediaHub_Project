@@ -10,6 +10,8 @@ import { Pagination } from '../../shared/components/pagination';
 import { FitRowsDirective } from '../../shared/directives/fit-rows.directive';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ContentClient } from '../../core/api/content-client';
+import { Creator } from '../../core/models/content.models';
 
 @Component({
   selector: 'app-royalty-statements',
@@ -19,11 +21,13 @@ import { AuthService } from '../../core/auth/auth.service';
 export class RoyaltyStatements implements OnInit {
   auth = inject(AuthService);
   private royalty = inject(RoyaltyClient);
+  private content = inject(ContentClient);
   private toast = inject(ToastService);
   private router = inject(Router);
 
   loading = signal(true);
   statements = signal<RoyaltyStatement[]>([]);
+  creators = signal<Creator[]>([]);
 
   page = signal(0);
   pageSize = signal(10);
@@ -41,6 +45,7 @@ export class RoyaltyStatements implements OnInit {
 
   ngOnInit() {
     this.load();
+    this.content.fetchCreators().subscribe(list => this.creators.set(list.filter(c => c.status === 'Active')));
   }
 
   load() {

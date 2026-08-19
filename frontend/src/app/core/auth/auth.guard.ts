@@ -18,7 +18,7 @@ export const guestGuard: CanActivateFn = () => {
   return false;
 };
 
-/** Route data: { permissions: ['content:write'] } — passes if the user holds ANY listed permission. */
+
 export const permissionGuard: CanActivateFn = (route) => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -39,7 +39,16 @@
     <div class="modal">
       <div class="modal__head"><h3>Generate Royalty Statement</h3></div>
       <div class="modal__body">
-        <div class="field"><label>Creator ID <span class="req">*</span></label><input class="input" type="number" [(ngModel)]="form.creatorID"></div>
+        <div class="field">
+          <label>Creator <span class="req">*</span></label>
+          <select class="select" [(ngModel)]="form.creatorID">
+            <option [ngValue]="0" disabled>— Select Creator —</option>
+            @for (c of creators(); track c.creatorId) {
+              <option [ngValue]="c.creatorId">{{ c.displayName }} (ID: {{ c.creatorId }})</option>
+            }
+          </select>
+          <div class="hint">The Creator ID must match the Licensor ID set in the License Agreement.</div>
+        </div>
         <div class="field"><label>Period <span class="req">*</span></label><input class="input" [(ngModel)]="form.period" placeholder="e.g. 2026-Q3"></div>
         <div class="grid-2">
           <div class="field"><label>Total Views</label><input class="input" type="number" [(ngModel)]="form.totalViews"></div>

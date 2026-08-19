@@ -183,6 +183,14 @@ public LicenseAgreementResponseDTO createLicense(LicenseAgreementRequestDTO dto,
         return hasActiveLicense;
     }
 
+    // ✅ ROYALTY VALIDATION — check if a specific content has an active license
+    public boolean validateByContent(Integer contentId) {
+        log.info("Validating active license for contentId: {}", contentId);
+        boolean result = repo.existsByContentIdAndStatus(contentId, "Active");
+        log.info("ContentId {} has active license: {}", contentId, result);
+        return result;
+    }
+
     // ==========================
     // ANALYTICS METHOD
     // ==========================

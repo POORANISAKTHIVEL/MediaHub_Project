@@ -40,11 +40,10 @@ export class SubscriptionClient {
   private subs = new MockStore<UserSubscription>(SUB_SEED, 'subscriptionId');
   private history = new MockStore<SubscriptionHistory>(HISTORY_SEED, 'historyId');
 
-  /** Real-mode cache of plans-by-id, kept in sync every time fetchPlans() resolves, so
-   *  planName() can resolve real plan names instead of the (disconnected) mock array below. */
+ 
   private realPlanCache = new Map<number, SubscriptionPlan>();
 
-  // ---- Plans ----
+ 
   fetchPlans(): Observable<SubscriptionPlan[]> {
     if (!environment.useMockSubscription) {
       return this.http.get<SubscriptionPlan[]>(`${this.base}/plans/fetchPlans`).pipe(
@@ -61,10 +60,7 @@ export class SubscriptionClient {
     return mockOf({ message: 'Plan created successfully' });
   }
 
-  /** Real backend's UpdatePlanRequest only has price/billingCycle/maxDevices/downloadAllowed —
-   *  name, contentAccessLevel and status are silently ignored by the service if sent (no setter
-   *  reads them). Reject a status-only change explicitly so callers (see toggleStatus below)
-   *  don't get a false "success" toast for something that never actually persisted. */
+ 
   updatePlan(planId: number, payload: Partial<SubscriptionPlan>): Observable<{ message: string }> {
     if (!environment.useMockSubscription) {
       const keys = Object.keys(payload);
@@ -77,14 +73,13 @@ export class SubscriptionClient {
     return p ? mockOf({ message: 'Plan updated successfully' }) : mockError(404, 'Plan not found');
   }
 
-  // ---- User subscriptions ----
+  
   fetchSubscriptions(): Observable<UserSubscription[]> {
     if (!environment.useMockSubscription) return this.http.get<UserSubscription[]>(`${this.base}/usersubscriptions/fetchSubscriptions`);
     return mockOf(this.subs.all());
   }
 
-  /** Real backend has no "get subscription by userId" endpoint — only fetchSubscriptions() (all)
-   *  and fetchSubscription/{id} (by subscription id). Aggregate + filter client-side. */
+ 
   fetchSubscriptionForUser(userId: number): Observable<UserSubscription | undefined> {
     if (!environment.useMockSubscription) {
       return this.fetchSubscriptions().pipe(map(rows => rows.find(s => s.userId === userId && s.status === 'Active')));
@@ -104,8 +99,7 @@ export class SubscriptionClient {
     return mockOf(this.subs.filterBy(s => s.userId === userId).length);
   }
 
-  /** Frontend-only admin action — the real backend has no suspend/reactivate endpoint for a
-   *  subscription (only create/update/renew/cancel), so this can't be wired to anything real. */
+ 
   suspendSubscription(subscriptionId: number): Observable<{ message: string }> {
     if (!environment.useMockSubscription) return mockError(400, 'Suspending a subscription is not supported by the backend yet.');
     const s = this.subs.find(x => x.subscriptionId === subscriptionId);
@@ -114,7 +108,7 @@ export class SubscriptionClient {
     return mockOf({ message: 'Subscription suspended' });
   }
 
-  /** Frontend-only admin action — see suspendSubscription note. */
+
   reactivateSubscription(subscriptionId: number): Observable<{ message: string }> {
     if (!environment.useMockSubscription) return mockError(400, 'Reactivating a subscription is not supported by the backend yet.');
     const s = this.subs.find(x => x.subscriptionId === subscriptionId);
@@ -174,7 +168,7 @@ export class SubscriptionClient {
     });
   }
 
-  // ---- History ----
+ 
   fetchHistories(): Observable<SubscriptionHistory[]> {
     if (!environment.useMockSubscription) return this.http.get<SubscriptionHistory[]>(`${this.base}/subscriptionhistory/fetchHistories`);
     return mockOf(this.history.all());

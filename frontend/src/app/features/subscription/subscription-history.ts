@@ -49,8 +49,7 @@ export class SubscriptionHistoryPage implements OnInit {
     return planId ? this.subscription.planName(planId) : '—';
   }
 
-  /** Amount is derived, not stored — matches the plan price at the "to" side of the
-   *  change, minus the "from" side for Upgrade/Downgrade so it reads as a delta. */
+ 
   amount(h: HistoryModel): number {
     const toPrice = this.subscription.planPrice(h.toPlanId);
     if (h.changeType === 'Cancellation') return 0;

@@ -20,7 +20,7 @@ export const SUBSCRIPTION_ROUTES: Routes = [
     ]
   },
   {
-    // Backend relaxed GET /fetchSubscriptions to allow subscription:view (previously subscription:manage only)
+    
     path: 'subscriptions',
     canActivate: [permissionGuard],
     data: { permissions: ['subscription:manage', 'subscription:view'] },

@@ -9,9 +9,7 @@ import { ToastService } from '../../shared/services/toast.service';
 
 const CURATED_PLAN_NAMES = ['Basic', 'Standard', 'Premium', 'Enterprise'];
 
-/** Legacy plans (Standard/gold) predate this curated catalog and can't be renamed via the
- *  update API (UpdatePlanRequest has no name field) — they stay Active for existing
- *  subscribers but are hidden from this browse page in favor of the curated set. */
+
 const PLAN_META: Record<string, { desc: string; features: { label: string; yes: boolean }[] }> = {
   Basic: {
     desc: 'Great for individuals getting started.',
